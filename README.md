@@ -209,7 +209,7 @@ when (val status = authorize(userId, requesterId)) {
 
 ## Roadmap
 
-kiit-codes has been extracted from kiit framework and polished as a standalone module.
+kiit-codes has been extracted from the Kiit toolkit and polished as a standalone module.
 This has been used in production for over 4+ years to power mobile and server kotlin applications.
 Current work is focused on the Kotlin release, documentation, examples, and ecosystem integration.
 
@@ -252,7 +252,7 @@ Contributions and design feedback are welcome. See [BUILD.md](./BUILD.md) for bu
 
 <div align="center">
 
-**kiit-codes** is one module of [Kiit](https://www.kiit.dev) — a lightweight, modular Kotlin framework for building server applications, APIs, CLIs, and jobs.
+**kiit-codes** is one module of [Kiit](https://www.kiit.dev) — a lightweight, modular Kotlin toolkit for building server applications, APIs, CLIs, and jobs.
 
 **Adopt one module at a time.**
 
