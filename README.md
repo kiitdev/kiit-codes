@@ -1,6 +1,6 @@
 <div align="center">
 <h1>
-  <img src="./assets/kiit-codes-logo.png" width="42" align="absmiddle" />
+  <img src="./assets/kiit-codes-header.png"  align="center" />
 </h1>
 
 # kiit-codes
@@ -14,7 +14,7 @@ A small, dependency-free status and error taxonomy for application outcomes, wit
 [![License](https://img.shields.io/github/license/kiitdev/kiit-codes)](./LICENSE)
 [![Kotlin](https://img.shields.io/badge/kotlin-multiplatform-purple.svg)](https://kotlinlang.org)
 
-Part of [Kiit](https://www.kiit.dev) · [Docs](https://www.kiit.dev/codes) · [Blog](#)
+Part of [Kiit](https://www.kiit.dev) · [Docs](https://www.kiit.dev/docs/kiit-codes)
 
 </div>
 
@@ -24,17 +24,17 @@ Part of [Kiit](https://www.kiit.dev) · [Docs](https://www.kiit.dev/codes) · [B
 
 | # | | Topic | Description |
 |---:|:---:|---|---|
-| 1 | 💡 | [Why](#why) | Problems Codes is designed to solve |
-| 2 | 🚀 | [Start](#start) | Installation and a quick example |
-| 3 | 🗂️ | [Taxonomy](#taxonomy) | The Status → Group → Code model |
-| 4 | 🧩 | [Extensibility](#extensibility) | Built-in and custom domain codes |
-| 5 | 🔀 | [Protocols](#protocols) | HTTP, gRPC, and custom protocol mappings |
-| 6 | ⚙️ | [Usage](#usage) | Status, validation, exceptions, and Result |
-| 7 | 🗺️ | [Roadmap](#roadmap) | Planned improvements and future work |
-| 8 | 📖 | [Learn More](#learn-more) | Deeper documentation and design topics |
-| 9 | 📋 | [Requirements](#requirements) | Platforms and dependencies |
-| 10 | 🤝 | [Contributing](#contributing) | Build, test, and contribute |
-| 11 | 📄 | [License](#license) | Apache 2.0 license |
+| 1 | 💡 | [Why](#why) | The recurring problems Codes is designed to solve, and how it solves them |
+| 2 | 🚀 | [Start](#start) | Installation, a quick example, and what built-in codes look like |
+| 3 | 🗂️ | [Taxonomy](#taxonomy) | The fixed Status → Group → Code model that everything else builds on |
+| 4 | 🧩 | [Extensibility](#extensibility) | Adding custom, domain-specific codes on top of the built-in taxonomy |
+| 5 | 🔀 | [Protocols](#protocols) | Mapping application outcomes to HTTP, gRPC, and other transports |
+| 6 | ⚙️ | [Usage](#usage) | Status handling, validation, exceptions, and Result covered in the docs |
+| 7 | 🗺️ | [Roadmap](#roadmap) | Project history, current focus, and planned improvements |
+| 8 | 📖 | [Learn More](#learn-more) | Deeper documentation, design rationale, and FAQ on kiit.dev |
+| 9 | 📋 | [Requirements](#requirements) | Supported platforms and runtime dependencies |
+| 10 | 🤝 | [Contributing](#contributing) | How to build, test, and contribute changes |
+| 11 | 📄 | [License](#license) | Apache 2.0 license terms |
 
 ## Why
 Applications need to communicate a simple idea consistently: **what happened?**
@@ -209,7 +209,7 @@ when (val status = authorize(userId, requesterId)) {
 
 ## Roadmap
 
-kiit-codes has been extracted from kiit framework and polished as a standalone module.
+kiit-codes has been extracted from the Kiit toolkit and polished as a standalone module.
 This has been used in production for over 4+ years to power mobile and server kotlin applications.
 Current work is focused on the Kotlin release, documentation, examples, and ecosystem integration.
 
@@ -225,14 +225,14 @@ See [GitHub Issues](https://github.com/kiitdev/kiit-codes/issues) for current wo
 
 | # | Topic | Description |
 |---:|---|---|
-| 1 | **Taxonomy** | Explore every built-in group and code, their intended meanings, defaults, and distinctions. [Read the taxonomy docs](https://www.kiit.dev/docs/codes/taxonomy). |
-| 2 | **Extensibility** | Learn how extensibility works and how to create domain-specific codes while keeping the shared taxonomy intact. [Read the extensibility docs](https://www.kiit.dev/docs/codes/extensibility). |
-| 3 | **Protocols** | See the complete HTTP and gRPC mappings and learn how to create custom mappings. [Read the protocol docs](https://www.kiit.dev/docs/codes/protocols). |
-| 4 | **Validation** | Learn how `Err`, `Checked`, and `collect` model validation and accumulate multiple errors. [Read the validation docs](https://www.kiit.dev/docs/codes/validation). |
-| 5 | **Exceptions** | See the typed exception hierarchy and patterns for integrating Codes with exception-based boundaries. [Read the exception docs](https://www.kiit.dev/docs/codes/exceptions). |
-| 6 | **Result** | Learn how the separate `kiit-result` module builds `Result<T, E>` handling on top of the same Codes taxonomy. [Read the Result docs](https://www.kiit.dev/docs/codes/result). |
-| 7 | **FAQ** | Answers to common questions about the taxonomy, design choices, alternatives, adoption, AI considerations, and project maturity. [Read the FAQ](https://www.kiit.dev/docs/codes/faq). |
-| 8 | **Design** | Read more about the reasoning behind fixed groups, extensible codes, protocol independence, and where Codes fits relative to domain errors. [Read the design docs](https://www.kiit.dev/docs/codes/design). |
+| 1 | **Taxonomy** | Explore every built-in group and code, their intended meanings, defaults, and distinctions. [Read the taxonomy docs](https://www.kiit.dev/docs/kiit-codes#taxonomy). |
+| 2 | **Extensibility** | Learn how extensibility works and how to create domain-specific codes while keeping the shared taxonomy intact. [Read the extensibility docs](https://www.kiit.dev/docs/kiit-codes#philosophy). |
+| 3 | **Protocols** | See the complete HTTP and gRPC mappings and learn how to create custom mappings. [Read the protocol docs](https://www.kiit.dev/docs/kiit-codes#protocols). |
+| 4 | **Validation** | Learn how `Err`, `Checked`, and `collect` model validation and accumulate multiple errors. [Read the validation docs](https://www.kiit.dev/docs/kiit-codes#checked). |
+| 5 | **Exceptions** | See the typed exception hierarchy and patterns for integrating Codes with exception-based boundaries. [Read the exception docs](https://www.kiit.dev/docs/kiit-codes#exceptions). |
+| 6 | **Result** | Learn how the separate `kiit-result` module builds `Result<T, E>` handling on top of the same Codes taxonomy. [Read the kiit-result README](https://github.com/kiitdev/kiit-result#readme). |
+| 7 | **FAQ** | Answers to common questions about the taxonomy, design choices, alternatives, adoption, AI considerations, and project maturity. [Read the FAQ](https://www.kiit.dev/docs/kiit-codes#faq). |
+| 8 | **Design** | Read more about the reasoning behind fixed groups, extensible codes, protocol independence, and where Codes fits relative to domain errors. [Read the design docs](https://www.kiit.dev/docs/kiit-codes#design). |
 
 ## Requirements
 
@@ -252,7 +252,7 @@ Contributions and design feedback are welcome. See [BUILD.md](./BUILD.md) for bu
 
 <div align="center">
 
-**kiit-codes** is one module of [Kiit](https://www.kiit.dev) — a lightweight, modular Kotlin framework for building server applications, APIs, CLIs, and jobs.
+**kiit-codes** is one module of [Kiit](https://www.kiit.dev) — a lightweight, modular Kotlin toolkit for building server applications, APIs, CLIs, and jobs.
 
 **Adopt one module at a time.**
 
