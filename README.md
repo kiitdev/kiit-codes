@@ -1,6 +1,6 @@
 <div align="center">
 <h1>
-  <img src="./assets/kiit-codes-logo.png" width="42" align="absmiddle" />
+  <img src="./assets/kiit-codes-header.png"  align="center" />
 </h1>
 
 # kiit-codes
@@ -14,7 +14,7 @@ A small, dependency-free status and error taxonomy for application outcomes, wit
 [![License](https://img.shields.io/github/license/kiitdev/kiit-codes)](./LICENSE)
 [![Kotlin](https://img.shields.io/badge/kotlin-multiplatform-purple.svg)](https://kotlinlang.org)
 
-Part of [Kiit](https://www.kiit.dev) · [Docs](https://www.kiit.dev/codes) · [Blog](#)
+Part of [Kiit](https://www.kiit.dev) · [Docs](https://www.kiit.dev/codes)
 
 </div>
 
@@ -24,17 +24,17 @@ Part of [Kiit](https://www.kiit.dev) · [Docs](https://www.kiit.dev/codes) · [B
 
 | # | | Topic | Description |
 |---:|:---:|---|---|
-| 1 | 💡 | [Why](#why) | Problems Codes is designed to solve |
-| 2 | 🚀 | [Start](#start) | Installation and a quick example |
-| 3 | 🗂️ | [Taxonomy](#taxonomy) | The Status → Group → Code model |
-| 4 | 🧩 | [Extensibility](#extensibility) | Built-in and custom domain codes |
-| 5 | 🔀 | [Protocols](#protocols) | HTTP, gRPC, and custom protocol mappings |
-| 6 | ⚙️ | [Usage](#usage) | Status, validation, exceptions, and Result |
-| 7 | 🗺️ | [Roadmap](#roadmap) | Planned improvements and future work |
-| 8 | 📖 | [Learn More](#learn-more) | Deeper documentation and design topics |
-| 9 | 📋 | [Requirements](#requirements) | Platforms and dependencies |
-| 10 | 🤝 | [Contributing](#contributing) | Build, test, and contribute |
-| 11 | 📄 | [License](#license) | Apache 2.0 license |
+| 1 | 💡 | [Why](#why) | The recurring problems Codes is designed to solve, and how it solves them |
+| 2 | 🚀 | [Start](#start) | Installation, a quick example, and what built-in codes look like |
+| 3 | 🗂️ | [Taxonomy](#taxonomy) | The fixed Status → Group → Code model that everything else builds on |
+| 4 | 🧩 | [Extensibility](#extensibility) | Adding custom, domain-specific codes on top of the built-in taxonomy |
+| 5 | 🔀 | [Protocols](#protocols) | Mapping application outcomes to HTTP, gRPC, and other transports |
+| 6 | ⚙️ | [Usage](#usage) | Status handling, validation, exceptions, and Result covered in the docs |
+| 7 | 🗺️ | [Roadmap](#roadmap) | Project history, current focus, and planned improvements |
+| 8 | 📖 | [Learn More](#learn-more) | Deeper documentation, design rationale, and FAQ on kiit.dev |
+| 9 | 📋 | [Requirements](#requirements) | Supported platforms and runtime dependencies |
+| 10 | 🤝 | [Contributing](#contributing) | How to build, test, and contribute changes |
+| 11 | 📄 | [License](#license) | Apache 2.0 license terms |
 
 ## Why
 Applications need to communicate a simple idea consistently: **what happened?**
