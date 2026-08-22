@@ -121,14 +121,14 @@
         <mxCell id="IWWrRvEPOaNE1A3Aa0WM-5" parent="IWWrRvEPOaNE1A3Aa0WM-3" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=24;fillColor=none;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;strokeColor=#38BDF8;" value="&lt;font style=&quot;font-size: 72px;&quot;&gt;&lt;b style=&quot;color: rgb(3, 105, 161);&quot;&gt;C&lt;/b&gt;&lt;/font&gt;" vertex="1">
           <mxGeometry height="92.57873357228198" width="97.33469636363637" x="45.53754545454546" y="42.73309438470729" as="geometry" />
         </mxCell>
-        <mxCell id="IWWrRvEPOaNE1A3Aa0WM-6" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontColor=#007FFF;" value="&lt;b style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 84px;&quot;&gt;kiit-&lt;span style=&quot;color: rgb(51, 51, 51);&quot;&gt;codes&lt;/span&gt;&lt;/font&gt;&lt;/b&gt;" vertex="1">
-          <mxGeometry height="83" width="430" x="499" y="797" as="geometry" />
+        <mxCell id="IWWrRvEPOaNE1A3Aa0WM-6" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontColor=#007FFF;" value="&lt;b style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 90px;&quot;&gt;kiit-&lt;span style=&quot;color: rgb(51, 51, 51);&quot;&gt;codes&lt;/span&gt;&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="83" width="430" x="474" y="789" as="geometry" />
         </mxCell>
-        <mxCell id="IWWrRvEPOaNE1A3Aa0WM-7" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontSize=32;fontColor=#808080;" value="&lt;font&gt;&lt;span&gt;&lt;b&gt;Classify and handle success and failure&lt;/b&gt;&lt;/span&gt;&lt;/font&gt;" vertex="1">
-          <mxGeometry height="61.25" width="634" x="499" y="893.75" as="geometry" />
+        <mxCell id="IWWrRvEPOaNE1A3Aa0WM-7" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontSize=26;fontColor=#808080;" value="&lt;b&gt;A taxonomy to classify and handle success and failure&lt;/b&gt;" vertex="1">
+          <mxGeometry height="77.25" width="776" x="474" y="891" as="geometry" />
         </mxCell>
         <mxCell id="IWWrRvEPOaNE1A3Aa0WM-9" connectable="0" parent="1" style="group" value="" vertex="1">
-          <mxGeometry height="170" width="178.73" x="259" y="785" as="geometry" />
+          <mxGeometry height="170" width="178.73" x="230" y="777.5" as="geometry" />
         </mxCell>
         <mxCell id="IWWrRvEPOaNE1A3Aa0WM-10" parent="IWWrRvEPOaNE1A3Aa0WM-9" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=28;fillColor=none;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;strokeColor=#007FFF;" value="" vertex="1">
           <mxGeometry height="170" width="178.73" as="geometry" />
