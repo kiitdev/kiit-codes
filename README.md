@@ -111,7 +111,7 @@ The two statuses are:
 - **Passed** — `Succeeded`, `Pending`, `Excluded`, `Information`
 - **Failed** — `Restricted`, `Invalid`, `Rejected`, `Unserved`
 
-Each code provides an `id`, `name`, `group`, `origin`, `message`, and `success` flag. Built-in codes use the `kiit` origin and each group has a default code for cases where more precision is unnecessary.
+Each code provides a `name`, `group`, `origin`, `message`, and `success` flag. Built-in codes use the `kiit` origin and each group has a default code for cases where more precision is unnecessary.
 
 The built-in taxonomy contains common application outcomes such as `SUCCESS`, `CREATED`, `DENIED`, `INVALID_VALUE`, `CONFLICT`, `TIMEOUT`, and `UNEXPECTED`.
 
