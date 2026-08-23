@@ -19,9 +19,9 @@ import kotlin.jvm.JvmStatic
  * 2. [Codes] itself declares no constants. Each one lives on its own type's companion object so
  *    IDE autocomplete stays scoped per group. This object is just the aggregate list and
  *    reverse lookup, see [Passed] and [Failed] for the actual values.
- * 3. Uniqueness of every [Status.id] is enforced at object init time, a collision fails loudly
- *    right away instead of surfacing as a silent wrong lookup later. IDs are scoped to
- *    `origin.name`, so custom codes never collide with a built-in one.
+ * 3. Uniqueness of every built-in [Status]'s [Status.id] (origin+group+name) is enforced at
+ *    object init time, a collision fails loudly right away instead of surfacing as a silent
+ *    wrong lookup later, see [statusFor].
  * 4. [codesAll] and [codesStatusFor] are thin proxy functions for JS/TS callers, since plain
  *    Kotlin `object`s like this one don't export usable static members to JS.
  */
@@ -58,9 +58,9 @@ object Codes {
         }
     }
 
-    /** Looks up a built-in [Status] by its [Status.origin]/[Status.name] pair, or null if none matches. */
+    /** Looks up a built-in [Status] by its [Status.origin]/[Status.group]/[Status.name], or null if none matches. */
     @JvmStatic
-    fun statusFor(origin: String, name: String): Status? = byId["$origin.$name"]
+    fun statusFor(origin: String, group: String, name: String): Status? = byId["$origin.$group.$name"]
 }
 
 /** JS/TS-reachable proxy for [Codes.all], see [Codes]'s KDoc for why this exists. */
@@ -69,7 +69,7 @@ fun codesAll(): List<Status> = Codes.all
 
 /** JS/TS-reachable proxy for [Codes.statusFor], see [Codes]'s KDoc for why this exists. */
 @JsExport
-fun codesStatusFor(origin: String, name: String): Status? = Codes.statusFor(origin, name)
+fun codesStatusFor(origin: String, group: String, name: String): Status? = Codes.statusFor(origin, group, name)
 
 /**
  * Bidirectional conversion between a [Status] and a target protocol's status code (e.g. HTTP).
@@ -113,7 +113,7 @@ open class CodesToHttp
         private val overrides: Map<String, Int> = DEFAULT_OVERRIDES,
     ) : CodeLookup {
         override fun toCode(status: Status): Int {
-            overrides[toKey(status)]?.let { return it }
+            overrides[status.id]?.let { return it }
             return when (status) {
                 is Passed.Succeeded -> 200
                 is Passed.Pending -> 202
@@ -140,42 +140,33 @@ open class CodesToHttp
                 ?: Codes.all.firstOrNull { toCode(it) == code }
 
         companion object {
-            /**
-             * Composite key for [overrides]: `"$group.$name"`. Deliberately excludes
-             * [Status.origin], unlike [Status.id] — an override describes protocol behavior for
-             * a group+name identity (e.g. "Invalid.NOT_FOUND maps to 404"), and this way two
-             * statuses in different groups can never collide on the same key even if they share
-             * the same [Status.name] and [Status.origin], see [toCode].
-             */
-            private fun toKey(status: Status): String = "${status.group}.${status.name}"
-
             @JvmField
             val DEFAULT_OVERRIDES: Map<String, Int> =
                 mapOf(
-                    toKey(Succeeded.CREATED) to 201,
-                    toKey(Succeeded.HANDLED) to 204,
-                    toKey(Pending.CONFIRM) to 200,
-                    toKey(Excluded.CANCELLED) to 499,
-                    toKey(Pending.REDIRECTED) to 307,
-                    toKey(Invalid.NOT_FOUND) to 404,
-                    toKey(Rejected.NOT_EXISTS) to 404,
-                    toKey(Restricted.FORBIDDEN) to 403,
+                    Succeeded.CREATED.id to 201,
+                    Succeeded.HANDLED.id to 204,
+                    Pending.CONFIRM.id to 200,
+                    Excluded.CANCELLED.id to 499,
+                    Pending.REDIRECTED.id to 307,
+                    Invalid.NOT_FOUND.id to 404,
+                    Rejected.NOT_EXISTS.id to 404,
+                    Restricted.FORBIDDEN.id to 403,
                     // closer to Forbidden than Unauthenticated, the caller is known
-                    toKey(Restricted.SUSPENDED) to 403,
-                    toKey(Restricted.LOCKED) to 423,
-                    toKey(Rejected.EXPIRED) to 410,
-                    toKey(Rejected.GONE) to 410,
+                    Restricted.SUSPENDED.id to 403,
+                    Restricted.LOCKED.id to 423,
+                    Rejected.EXPIRED.id to 410,
+                    Rejected.GONE.id to 410,
                     // CONFLICT needs no override, 409 is already Rejected's own group default
-                    toKey(Invalid.PAYLOAD_TOO_LARGE) to 413,
+                    Invalid.PAYLOAD_TOO_LARGE.id to 413,
                     // HTTP has no separate "unsupported" code
-                    toKey(Unserved.UNSUPPORTED) to 501,
+                    Unserved.UNSUPPORTED.id to 501,
                     // deadline exceeded waiting on something else, not a slow client (408)
-                    toKey(Unserved.TIMEOUT) to 504,
-                    toKey(Unserved.RATE_LIMITED) to 429,
+                    Unserved.TIMEOUT.id to 504,
+                    Unserved.RATE_LIMITED.id to 429,
                     // same axis as RATE_LIMITED, HTTP doesn't distinguish the two
-                    toKey(Unserved.RESOURCE_LIMITED) to 429,
-                    toKey(Unserved.UNEXPECTED) to 500,
-                    toKey(Unserved.LEGAL_BLOCK) to 451,
+                    Unserved.RESOURCE_LIMITED.id to 429,
+                    Unserved.UNEXPECTED.id to 500,
+                    Unserved.LEGAL_BLOCK.id to 451,
                 )
 
             /**
@@ -213,7 +204,7 @@ open class CodesToGrpc
         private val overrides: Map<String, Int> = DEFAULT_OVERRIDES,
     ) : CodeLookup {
         override fun toCode(status: Status): Int {
-            overrides[toKey(status)]?.let { return it }
+            overrides[status.id]?.let { return it }
             return when (status) {
                 is Passed.Succeeded -> 0
                 is Passed.Pending -> 0
@@ -236,42 +227,33 @@ open class CodesToGrpc
                 ?: Codes.all.firstOrNull { toCode(it) == code }
 
         companion object {
-            /**
-             * Composite key for [overrides]: `"$group.$name"`. Deliberately excludes
-             * [Status.origin], unlike [Status.id] — an override describes protocol behavior for
-             * a group+name identity (e.g. "Invalid.NOT_FOUND maps to 5"), and this way two
-             * statuses in different groups can never collide on the same key even if they share
-             * the same [Status.name] and [Status.origin], see [toCode].
-             */
-            private fun toKey(status: Status): String = "${status.group}.${status.name}"
-
             @JvmField
             val DEFAULT_OVERRIDES: Map<String, Int> =
                 mapOf(
-                    toKey(Excluded.CANCELLED) to 1,
-                    toKey(Restricted.UNAUTHENTICATED) to 16,
-                    toKey(Invalid.INVALID_VALUE) to 3,
-                    toKey(Invalid.NOT_FOUND) to 5,
-                    toKey(Invalid.OUT_OF_RANGE) to 11,
-                    toKey(Restricted.DENIED) to 7,
+                    Excluded.CANCELLED.id to 1,
+                    Restricted.UNAUTHENTICATED.id to 16,
+                    Invalid.INVALID_VALUE.id to 3,
+                    Invalid.NOT_FOUND.id to 5,
+                    Invalid.OUT_OF_RANGE.id to 11,
+                    Restricted.DENIED.id to 7,
                     // ALREADY_EXISTS, was previously falling through to Rejected's group default
-                    toKey(Rejected.CONFLICT) to 6,
-                    toKey(Rejected.PRECONDITION_FAILED) to 9,
+                    Rejected.CONFLICT.id to 6,
+                    Rejected.PRECONDITION_FAILED.id to 9,
                     // takes over gRPC's UNIMPLEMENTED slot now that UNIMPLEMENTED and UNSUPPORTED merged
                     // into one Status code
-                    toKey(Unserved.UNSUPPORTED) to 12,
-                    toKey(Unserved.UNREACHABLE) to 14,
-                    toKey(Unserved.TIMEOUT) to 4,
-                    toKey(Unserved.RATE_LIMITED) to 8,
+                    Unserved.UNSUPPORTED.id to 12,
+                    Unserved.UNREACHABLE.id to 14,
+                    Unserved.TIMEOUT.id to 4,
+                    Unserved.RATE_LIMITED.id to 8,
                     // RESOURCE_EXHAUSTED, same axis as RATE_LIMITED
-                    toKey(Unserved.RESOURCE_LIMITED) to 8,
-                    toKey(Unserved.UNEXPECTED) to 2,
-                    toKey(Unserved.INTERNAL) to 13,
-                    toKey(Unserved.DATA_LOSS) to 15,
+                    Unserved.RESOURCE_LIMITED.id to 8,
+                    Unserved.UNEXPECTED.id to 2,
+                    Unserved.INTERNAL.id to 13,
+                    Unserved.DATA_LOSS.id to 15,
                     // RESOURCE_EXHAUSTED, a widely used real-world convention, not an official mapping
-                    toKey(Invalid.PAYLOAD_TOO_LARGE) to 8,
+                    Invalid.PAYLOAD_TOO_LARGE.id to 8,
                     // exact match, closes the previously honest null gap at 10
-                    toKey(Unserved.ABORTED) to 10,
+                    Unserved.ABORTED.id to 10,
                     // DEGRADED and LEGAL_BLOCK have no closer gRPC equivalent, so they fall through
                     // to Unserved's own group default (13, INTERNAL)
                 )
@@ -295,12 +277,13 @@ open class CodesToGrpc
  * directions.
  *
  * A couple of details worth knowing:
- * 1. [extensions] is keyed by the actual [Status] instance, not [Status.id], so [toStatus] can
- *    hand back the specific custom instance for statuses outside the [Codes.all] registry.
- *    There's no other place to recover it from.
- * 2. [toCode]'s forward lookup avoids [Map]'s built-in `equals`/`hashCode`-based `[]` access,
- *    since [Status] is a data class that compares every field. A status with the same
- *    [Status.id] but a different [Status.message] would otherwise miss the override.
+ * 1. [extensions] is keyed by the actual [Status] instance, so [toStatus] can hand back the
+ *    specific custom instance for statuses outside the [Codes.all] registry. There's no other
+ *    place to recover it from.
+ * 2. [toCode]'s forward lookup matches on [Status.origin]/[Status.name] directly rather than
+ *    [Map]'s built-in `equals`/`hashCode`-based `[]` access, since [Status] is a data class that
+ *    compares every field. A status with the same origin/name but a different [Status.message]
+ *    would otherwise miss the override.
  *
  * ```kotlin
  * val MY_DOMAIN_CODE = Failed.Rejected("PAYMENT_DECLINED", "Payment declined")
@@ -313,7 +296,7 @@ class CompositeLookup(
     private val extensions: Map<Status, Int>,
 ) : CodeLookup {
     override fun toCode(status: Status): Int =
-        extensions.entries.firstOrNull { it.key.id == status.id }?.value
+        extensions.entries.firstOrNull { it.key.origin == status.origin && it.key.name == status.name }?.value
             ?: base.toCode(status)
 
     override fun toStatus(code: Int): Status? {

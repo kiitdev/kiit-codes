@@ -108,13 +108,13 @@ class StatusTest {
     }
 
     // -------------------------------------------------------------------------
-    // id: "$origin.$name", derived, usable as a map/lookup key
+    // id: "$origin.$group.$name", module-internal, used to key CodesToHttp/CodesToGrpc overrides
     // -------------------------------------------------------------------------
 
     @Test
-    fun idIsOriginDotName() {
+    fun idIsOriginDotGroupDotName() {
         val s = Failed.Restricted("RESTRICTED", "Restricted", origin = StatusConstants.KIIT)
-        assertEquals("kiit.RESTRICTED", s.id)
+        assertEquals("kiit.Restricted.RESTRICTED", s.id)
     }
 
     // -------------------------------------------------------------------------
