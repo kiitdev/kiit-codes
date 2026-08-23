@@ -19,9 +19,9 @@ import kotlin.jvm.JvmStatic
  * 2. [Codes] itself declares no constants. Each one lives on its own type's companion object so
  *    IDE autocomplete stays scoped per group. This object is just the aggregate list and
  *    reverse lookup, see [Passed] and [Failed] for the actual values.
- * 3. Uniqueness of every [Status.id] is enforced at object init time, a collision fails loudly
- *    right away instead of surfacing as a silent wrong lookup later. IDs are scoped to
- *    `origin.name`, so custom codes never collide with a built-in one.
+ * 3. Uniqueness of every built-in [Status]'s [Status.id] (origin+group+name) is enforced at
+ *    object init time, a collision fails loudly right away instead of surfacing as a silent
+ *    wrong lookup later, see [statusFor].
  * 4. [codesAll] and [codesStatusFor] are thin proxy functions for JS/TS callers, since plain
  *    Kotlin `object`s like this one don't export usable static members to JS.
  */
@@ -58,9 +58,9 @@ object Codes {
         }
     }
 
-    /** Looks up a built-in [Status] by its [Status.origin]/[Status.name] pair, or null if none matches. */
+    /** Looks up a built-in [Status] by its [Status.origin]/[Status.group]/[Status.name], or null if none matches. */
     @JvmStatic
-    fun statusFor(origin: String, name: String): Status? = byId["$origin.$name"]
+    fun statusFor(origin: String, group: String, name: String): Status? = byId["$origin.$group.$name"]
 }
 
 /** JS/TS-reachable proxy for [Codes.all], see [Codes]'s KDoc for why this exists. */
@@ -69,7 +69,7 @@ fun codesAll(): List<Status> = Codes.all
 
 /** JS/TS-reachable proxy for [Codes.statusFor], see [Codes]'s KDoc for why this exists. */
 @JsExport
-fun codesStatusFor(origin: String, name: String): Status? = Codes.statusFor(origin, name)
+fun codesStatusFor(origin: String, group: String, name: String): Status? = Codes.statusFor(origin, group, name)
 
 /**
  * Bidirectional conversion between a [Status] and a target protocol's status code (e.g. HTTP).
@@ -277,12 +277,13 @@ open class CodesToGrpc
  * directions.
  *
  * A couple of details worth knowing:
- * 1. [extensions] is keyed by the actual [Status] instance, not [Status.id], so [toStatus] can
- *    hand back the specific custom instance for statuses outside the [Codes.all] registry.
- *    There's no other place to recover it from.
- * 2. [toCode]'s forward lookup avoids [Map]'s built-in `equals`/`hashCode`-based `[]` access,
- *    since [Status] is a data class that compares every field. A status with the same
- *    [Status.id] but a different [Status.message] would otherwise miss the override.
+ * 1. [extensions] is keyed by the actual [Status] instance, so [toStatus] can hand back the
+ *    specific custom instance for statuses outside the [Codes.all] registry. There's no other
+ *    place to recover it from.
+ * 2. [toCode]'s forward lookup matches on [Status.origin]/[Status.name] directly rather than
+ *    [Map]'s built-in `equals`/`hashCode`-based `[]` access, since [Status] is a data class that
+ *    compares every field. A status with the same origin/name but a different [Status.message]
+ *    would otherwise miss the override.
  *
  * ```kotlin
  * val MY_DOMAIN_CODE = Failed.Rejected("PAYMENT_DECLINED", "Payment declined")
@@ -295,7 +296,7 @@ class CompositeLookup(
     private val extensions: Map<Status, Int>,
 ) : CodeLookup {
     override fun toCode(status: Status): Int =
-        extensions.entries.firstOrNull { it.key.id == status.id }?.value
+        extensions.entries.firstOrNull { it.key.origin == status.origin && it.key.name == status.name }?.value
             ?: base.toCode(status)
 
     override fun toStatus(code: Int): Status? {

@@ -25,11 +25,11 @@ object StatusConstants {
  *
  * Shape (maps directly to JSON / API error responses):
  * {
- *      "id"      : "kiit.TOKEN_EXPIRED",
- *      "name"    : "TOKEN_EXPIRED",
+ *      "id"      : "kiit.Restricted.DENIED",
+ *      "name"    : "DENIED",
  *      "group"   : "Restricted",
  *      "origin"  : "kiit",
- *      "message" : "Session token expired",
+ *      "message" : "The request was denied.",
  *      "success" : false
  * }
  *
@@ -55,9 +55,6 @@ sealed interface Status {
      * [StatusConstants.KIIT], so a status can never accidentally misrepresent where it came from.
      */
     val origin: String
-
-    /** Stable identity, `"$origin.$name"`, unique across every [Status] and usable as a map key. */
-    val id: String get() = "$origin.$name"
 
     /**
      * Human-readable constant description, never constructed from runtime data. Per-instance
@@ -108,6 +105,16 @@ sealed interface Status {
             }
     }
 }
+
+/**
+ * Module-internal identity, `"$origin.$group.$name"`. Not part of the public API/JSON shape (see
+ * [Status]'s own KDoc) — used by [CodesToHttp] and [CodesToGrpc] to key their `overrides` maps,
+ * and unique across every [Status] since it's scoped by group as well as origin+name.
+ *
+ * An extension rather than an interface member since Kotlin interfaces can't declare `internal`
+ * members.
+ */
+internal val Status.id: String get() = "$origin.$group.$name"
 
 /**
  * Parent sealed type for all non-failure statuses (success = true for every subtype).

@@ -101,12 +101,6 @@ class CodesTest {
         val keys = Codes.all.map { it.origin to it.name }
         assertEquals(keys.size, keys.toSet().size)
     }
-
-    @Test
-    fun everyBuiltInCodeHasAUniqueId() {
-        val ids = Codes.all.map { it.id }
-        assertEquals(ids.size, ids.toSet().size)
-    }
 }
 
 // =================================================================================================
@@ -250,14 +244,35 @@ class CodesToHttpTest {
     }
 
     /**
-     * [overrides] is keyed by [Status.id] (origin+name), not full structural equality. A status
-     * sharing NOT_FOUND's identity but a different message still resolves to its override, since
-     * [Status] being a data class would otherwise compare every field including [Status.message].
+     * [overrides] is keyed by [Status.id] (origin+group+name), not full structural equality. A
+     * status sharing NOT_FOUND's identity but a different message still resolves to its
+     * override, since [Status] being a data class would otherwise compare every field including
+     * [Status.message].
      */
     @Test
     fun overrideMatchesByIdentityNotFullStatusEquality() {
         val differentMessage = Failed.Invalid("NOT_FOUND", "A completely different message.", origin = StatusConstants.KIIT)
         assertEquals(404, http.toCode(differentMessage))
+    }
+
+    /**
+     * A custom status can share a built-in override's origin+name while belonging to a
+     * completely different group, e.g. this shares [Succeeded.CREATED]'s origin ("kiit") and
+     * name ("CREATED") even though it's a [Failed.Invalid]. Since [Status.id] includes group,
+     * the two don't actually share an id, so this must still resolve to Invalid's own group
+     * default, not CREATED's 201.
+     */
+    @Test
+    fun overrideDoesNotApplyAcrossDifferentGroupsWithSameOriginAndName() {
+        val collidesWithCreated = Failed.Invalid("CREATED", "failure", origin = StatusConstants.KIIT)
+        assertEquals(400, http.toCode(collidesWithCreated))
+    }
+
+    /** Same cross-group origin+name collision in the other direction, against a different overridden code. */
+    @Test
+    fun overrideDoesNotApplyAcrossDifferentGroupsWithSameOriginAndNameReverse() {
+        val collidesWithNotFound = Succeeded("NOT_FOUND", "ok", origin = StatusConstants.KIIT)
+        assertEquals(200, http.toCode(collidesWithNotFound))
     }
 
     // -------------------------------------------------------------------------
@@ -478,6 +493,26 @@ class CodesToGrpcTest {
         assertEquals(8, grpc.toCode(Unserved.RESOURCE_LIMITED))
     }
 
+    /**
+     * A custom status can share a built-in override's origin+name while belonging to a different
+     * group, e.g. this shares [Invalid.NOT_FOUND]'s origin ("kiit") and name ("NOT_FOUND")
+     * (overridden to 5) even though it's a [Passed.Succeeded]. Since [Status.id] includes group,
+     * the two don't actually share an id, so this must still resolve to Passed's own group
+     * default (0), not NOT_FOUND's 5.
+     */
+    @Test
+    fun overrideDoesNotApplyAcrossDifferentGroupsWithSameOriginAndName() {
+        val collidesWithNotFound = Succeeded("NOT_FOUND", "ok", origin = StatusConstants.KIIT)
+        assertEquals(0, grpc.toCode(collidesWithNotFound))
+    }
+
+    /** Same cross-group origin+name collision in the other direction, against a different overridden code. */
+    @Test
+    fun overrideDoesNotApplyAcrossDifferentGroupsWithSameOriginAndNameReverse() {
+        val collidesWithCancelled = Failed.Rejected("CANCELLED", "failure", origin = StatusConstants.KIIT)
+        assertEquals(9, grpc.toCode(collidesWithCancelled))
+    }
+
     // -------------------------------------------------------------------------
     // toStatus: deterministic canonical choice for gRPC codes shared by multiple statuses
     // -------------------------------------------------------------------------
@@ -580,8 +615,9 @@ class CompositeLookupTest {
     }
 
     /**
-     * [CompositeLookup.toCode] matches by [Status.id], not full [Status] equality. A status
-     * sharing [customCode]'s identity but a different message still resolves to its extension.
+     * [CompositeLookup.toCode] matches by [Status.origin]/[Status.name], not full [Status]
+     * equality. A status sharing [customCode]'s identity but a different message still resolves
+     * to its extension.
      */
     @Test
     fun extensionMatchesByIdentityNotFullStatusEquality() {

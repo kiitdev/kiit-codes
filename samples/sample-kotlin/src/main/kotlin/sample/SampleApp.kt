@@ -20,6 +20,7 @@ import kotlin.random.Random
 private val http = CodesToHttp()
 
 fun main() {
+    test0()
     test1()
     test2()
     test3()
@@ -50,6 +51,18 @@ private fun report(label: String, status: Status) {
             is Failed -> "failed"
         }
     println("$label -> ${status.name} ($outcome, http=${http.toCode(status)})")
+}
+
+fun test0() {
+    val status =
+        Failed.Invalid(
+            name = "CREATED",
+            message = "failure",
+            origin = "kiit"
+        )
+
+    println(status.success) // false
+    println(CodesToHttp().toCode(status)) // 400
 }
 
 fun test2() {
