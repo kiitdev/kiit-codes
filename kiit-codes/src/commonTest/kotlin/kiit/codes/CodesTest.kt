@@ -260,6 +260,25 @@ class CodesToHttpTest {
         assertEquals(404, http.toCode(differentMessage))
     }
 
+    /**
+     * A custom status can share a built-in override's [Status.id] (origin+name) while belonging
+     * to a completely different group, e.g. this shares [Succeeded.CREATED]'s id ("kiit.CREATED")
+     * even though it's a [Failed.Invalid]. Overrides are keyed by group+name, not [Status.id], so
+     * this must still resolve to Invalid's own group default, not CREATED's 201.
+     */
+    @Test
+    fun overrideDoesNotApplyAcrossDifferentGroupsWithSameId() {
+        val collidesWithCreated = Failed.Invalid("CREATED", "failure", origin = StatusConstants.KIIT)
+        assertEquals(400, http.toCode(collidesWithCreated))
+    }
+
+    /** Same cross-group id collision in the other direction, against a different overridden code. */
+    @Test
+    fun overrideDoesNotApplyAcrossDifferentGroupsWithSameIdReverse() {
+        val collidesWithNotFound = Succeeded("NOT_FOUND", "ok", origin = StatusConstants.KIIT)
+        assertEquals(200, http.toCode(collidesWithNotFound))
+    }
+
     // -------------------------------------------------------------------------
     // toStatus: reverse lookup, derived from toCode
     // -------------------------------------------------------------------------
@@ -370,7 +389,7 @@ class CodesToHttpTest {
      */
     @Test
     fun toStatusStaysInSyncWithCustomOverridesNotJustDefaults() {
-        val custom = CodesToHttp(overrides = mapOf(Unserved.TIMEOUT.id to 599))
+        val custom = CodesToHttp(overrides = mapOf("${Unserved.TIMEOUT.group}.${Unserved.TIMEOUT.name}" to 599))
         assertSame(Unserved.TIMEOUT, custom.toStatus(599))
         assertNull(custom.toStatus(504)) // TIMEOUT no longer resolves to 504 for this instance
     }
@@ -478,6 +497,25 @@ class CodesToGrpcTest {
         assertEquals(8, grpc.toCode(Unserved.RESOURCE_LIMITED))
     }
 
+    /**
+     * A custom status can share a built-in override's [Status.id] (origin+name) while belonging
+     * to a different group, e.g. this collides with [Invalid.NOT_FOUND]'s id (overridden to 5)
+     * even though it's a [Passed.Succeeded]. The override must not apply across groups; this must
+     * still resolve to Passed's own group default (0), not NOT_FOUND's 5.
+     */
+    @Test
+    fun overrideDoesNotApplyAcrossDifferentGroupsWithSameId() {
+        val collidesWithNotFound = Succeeded("NOT_FOUND", "ok", origin = StatusConstants.KIIT)
+        assertEquals(0, grpc.toCode(collidesWithNotFound))
+    }
+
+    /** Same cross-group collision in the other direction, against a different overridden id. */
+    @Test
+    fun overrideDoesNotApplyAcrossDifferentGroupsWithSameIdReverse() {
+        val collidesWithCancelled = Failed.Rejected("CANCELLED", "failure", origin = StatusConstants.KIIT)
+        assertEquals(9, grpc.toCode(collidesWithCancelled))
+    }
+
     // -------------------------------------------------------------------------
     // toStatus: deterministic canonical choice for gRPC codes shared by multiple statuses
     // -------------------------------------------------------------------------
@@ -546,7 +584,7 @@ class CodesToGrpcTest {
 
     @Test
     fun toStatusStaysInSyncWithCustomOverridesNotJustDefaults() {
-        val custom = CodesToGrpc(overrides = mapOf(Unserved.TIMEOUT.id to 99))
+        val custom = CodesToGrpc(overrides = mapOf("${Unserved.TIMEOUT.group}.${Unserved.TIMEOUT.name}" to 99))
         assertSame(Unserved.TIMEOUT, custom.toStatus(99))
         assertNull(custom.toStatus(4)) // TIMEOUT no longer resolves to 4 for this instance
     }

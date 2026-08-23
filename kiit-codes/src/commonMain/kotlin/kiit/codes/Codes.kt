@@ -113,7 +113,7 @@ open class CodesToHttp
         private val overrides: Map<String, Int> = DEFAULT_OVERRIDES,
     ) : CodeLookup {
         override fun toCode(status: Status): Int {
-            overrides[status.id]?.let { return it }
+            overrides[toKey(status)]?.let { return it }
             return when (status) {
                 is Passed.Succeeded -> 200
                 is Passed.Pending -> 202
@@ -140,33 +140,42 @@ open class CodesToHttp
                 ?: Codes.all.firstOrNull { toCode(it) == code }
 
         companion object {
+            /**
+             * Composite key for [overrides]: `"$group.$name"`. Deliberately excludes
+             * [Status.origin], unlike [Status.id] — an override describes protocol behavior for
+             * a group+name identity (e.g. "Invalid.NOT_FOUND maps to 404"), and this way two
+             * statuses in different groups can never collide on the same key even if they share
+             * the same [Status.name] and [Status.origin], see [toCode].
+             */
+            private fun toKey(status: Status): String = "${status.group}.${status.name}"
+
             @JvmField
             val DEFAULT_OVERRIDES: Map<String, Int> =
                 mapOf(
-                    Succeeded.CREATED.id to 201,
-                    Succeeded.HANDLED.id to 204,
-                    Pending.CONFIRM.id to 200,
-                    Excluded.CANCELLED.id to 499,
-                    Pending.REDIRECTED.id to 307,
-                    Invalid.NOT_FOUND.id to 404,
-                    Rejected.NOT_EXISTS.id to 404,
-                    Restricted.FORBIDDEN.id to 403,
+                    toKey(Succeeded.CREATED) to 201,
+                    toKey(Succeeded.HANDLED) to 204,
+                    toKey(Pending.CONFIRM) to 200,
+                    toKey(Excluded.CANCELLED) to 499,
+                    toKey(Pending.REDIRECTED) to 307,
+                    toKey(Invalid.NOT_FOUND) to 404,
+                    toKey(Rejected.NOT_EXISTS) to 404,
+                    toKey(Restricted.FORBIDDEN) to 403,
                     // closer to Forbidden than Unauthenticated, the caller is known
-                    Restricted.SUSPENDED.id to 403,
-                    Restricted.LOCKED.id to 423,
-                    Rejected.EXPIRED.id to 410,
-                    Rejected.GONE.id to 410,
+                    toKey(Restricted.SUSPENDED) to 403,
+                    toKey(Restricted.LOCKED) to 423,
+                    toKey(Rejected.EXPIRED) to 410,
+                    toKey(Rejected.GONE) to 410,
                     // CONFLICT needs no override, 409 is already Rejected's own group default
-                    Invalid.PAYLOAD_TOO_LARGE.id to 413,
+                    toKey(Invalid.PAYLOAD_TOO_LARGE) to 413,
                     // HTTP has no separate "unsupported" code
-                    Unserved.UNSUPPORTED.id to 501,
+                    toKey(Unserved.UNSUPPORTED) to 501,
                     // deadline exceeded waiting on something else, not a slow client (408)
-                    Unserved.TIMEOUT.id to 504,
-                    Unserved.RATE_LIMITED.id to 429,
+                    toKey(Unserved.TIMEOUT) to 504,
+                    toKey(Unserved.RATE_LIMITED) to 429,
                     // same axis as RATE_LIMITED, HTTP doesn't distinguish the two
-                    Unserved.RESOURCE_LIMITED.id to 429,
-                    Unserved.UNEXPECTED.id to 500,
-                    Unserved.LEGAL_BLOCK.id to 451,
+                    toKey(Unserved.RESOURCE_LIMITED) to 429,
+                    toKey(Unserved.UNEXPECTED) to 500,
+                    toKey(Unserved.LEGAL_BLOCK) to 451,
                 )
 
             /**
@@ -204,7 +213,7 @@ open class CodesToGrpc
         private val overrides: Map<String, Int> = DEFAULT_OVERRIDES,
     ) : CodeLookup {
         override fun toCode(status: Status): Int {
-            overrides[status.id]?.let { return it }
+            overrides[toKey(status)]?.let { return it }
             return when (status) {
                 is Passed.Succeeded -> 0
                 is Passed.Pending -> 0
@@ -227,33 +236,42 @@ open class CodesToGrpc
                 ?: Codes.all.firstOrNull { toCode(it) == code }
 
         companion object {
+            /**
+             * Composite key for [overrides]: `"$group.$name"`. Deliberately excludes
+             * [Status.origin], unlike [Status.id] — an override describes protocol behavior for
+             * a group+name identity (e.g. "Invalid.NOT_FOUND maps to 5"), and this way two
+             * statuses in different groups can never collide on the same key even if they share
+             * the same [Status.name] and [Status.origin], see [toCode].
+             */
+            private fun toKey(status: Status): String = "${status.group}.${status.name}"
+
             @JvmField
             val DEFAULT_OVERRIDES: Map<String, Int> =
                 mapOf(
-                    Excluded.CANCELLED.id to 1,
-                    Restricted.UNAUTHENTICATED.id to 16,
-                    Invalid.INVALID_VALUE.id to 3,
-                    Invalid.NOT_FOUND.id to 5,
-                    Invalid.OUT_OF_RANGE.id to 11,
-                    Restricted.DENIED.id to 7,
+                    toKey(Excluded.CANCELLED) to 1,
+                    toKey(Restricted.UNAUTHENTICATED) to 16,
+                    toKey(Invalid.INVALID_VALUE) to 3,
+                    toKey(Invalid.NOT_FOUND) to 5,
+                    toKey(Invalid.OUT_OF_RANGE) to 11,
+                    toKey(Restricted.DENIED) to 7,
                     // ALREADY_EXISTS, was previously falling through to Rejected's group default
-                    Rejected.CONFLICT.id to 6,
-                    Rejected.PRECONDITION_FAILED.id to 9,
+                    toKey(Rejected.CONFLICT) to 6,
+                    toKey(Rejected.PRECONDITION_FAILED) to 9,
                     // takes over gRPC's UNIMPLEMENTED slot now that UNIMPLEMENTED and UNSUPPORTED merged
                     // into one Status code
-                    Unserved.UNSUPPORTED.id to 12,
-                    Unserved.UNREACHABLE.id to 14,
-                    Unserved.TIMEOUT.id to 4,
-                    Unserved.RATE_LIMITED.id to 8,
+                    toKey(Unserved.UNSUPPORTED) to 12,
+                    toKey(Unserved.UNREACHABLE) to 14,
+                    toKey(Unserved.TIMEOUT) to 4,
+                    toKey(Unserved.RATE_LIMITED) to 8,
                     // RESOURCE_EXHAUSTED, same axis as RATE_LIMITED
-                    Unserved.RESOURCE_LIMITED.id to 8,
-                    Unserved.UNEXPECTED.id to 2,
-                    Unserved.INTERNAL.id to 13,
-                    Unserved.DATA_LOSS.id to 15,
+                    toKey(Unserved.RESOURCE_LIMITED) to 8,
+                    toKey(Unserved.UNEXPECTED) to 2,
+                    toKey(Unserved.INTERNAL) to 13,
+                    toKey(Unserved.DATA_LOSS) to 15,
                     // RESOURCE_EXHAUSTED, a widely used real-world convention, not an official mapping
-                    Invalid.PAYLOAD_TOO_LARGE.id to 8,
+                    toKey(Invalid.PAYLOAD_TOO_LARGE) to 8,
                     // exact match, closes the previously honest null gap at 10
-                    Unserved.ABORTED.id to 10,
+                    toKey(Unserved.ABORTED) to 10,
                     // DEGRADED and LEGAL_BLOCK have no closer gRPC equivalent, so they fall through
                     // to Unserved's own group default (13, INTERNAL)
                 )
