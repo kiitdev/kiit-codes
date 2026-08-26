@@ -3,9 +3,7 @@
   <img src="./assets/kiit-codes-header.png"  align="center" />
 </h1>
 
-# kiit-codes
-
-**A Kotlin library for classifying and handling success and failure.**
+**A Kotlin library to classify and handle success and failure.**
 
 A small, dependency-free status and error taxonomy for application outcomes, with extensible codes, protocol mappings, validation, typed exceptions, and optional `Result<T, E>` integration.
 
@@ -18,7 +16,7 @@ Part of [Kiit](https://www.kiit.dev) · [Docs](https://www.kiit.dev/docs/kiit-co
 
 </div>
 
-![Kiit Codes overview](./assets/kiit-codes-overview.png)
+![Kiit Codes overview](./assets/kiit-codes-overview-pub.png)
 
 ## 📚 Table of Contents
 
