@@ -26,25 +26,29 @@ import kotlin.jvm.JvmStatic
  *    [Passed]/[Failed], since one [Checked] instance can represent either outcome.
  */
 @JsExport
-class Checked private constructor(override val status: Status, override val errors: List<Err>) : HasErrors, HasStatus<Status> {
-    val isValid: Boolean get() = errors.isEmpty()
+class Checked
+    private constructor(
+        override val status: Status,
+        override val errors: List<Err>,
+    ) : HasErrors, HasStatus<Status> {
+        val isValid: Boolean get() = errors.isEmpty()
 
-    companion object {
-        /** A passing check with no errors. */
-        @JvmStatic
-        @JsStatic
-        @JvmOverloads
-        fun success(status: Passed = Succeeded.SUCCESS): Checked = Checked(status, emptyList())
+        companion object {
+            /** A passing check with no errors. */
+            @JvmStatic
+            @JsStatic
+            @JvmOverloads
+            fun success(status: Passed = Succeeded.SUCCESS): Checked = Checked(status, emptyList())
 
-        /** A failing check with one or more [errors]. */
-        @JvmStatic
-        @JsStatic
-        fun failure(status: Failed, errors: List<Err>): Checked {
-            require(errors.isNotEmpty()) { "failure requires at least one Err" }
-            return Checked(status, errors)
+            /** A failing check with one or more [errors]. */
+            @JvmStatic
+            @JsStatic
+            fun failure(status: Failed, errors: List<Err>): Checked {
+                require(errors.isNotEmpty()) { "failure requires at least one Err" }
+                return Checked(status, errors)
+            }
         }
     }
-}
 
 /** [collect] over varargs, the JS/TS-friendlier shape (see the [List] overload below). */
 @JsExport
