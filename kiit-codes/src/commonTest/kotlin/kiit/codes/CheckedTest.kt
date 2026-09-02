@@ -84,6 +84,13 @@ class CheckedTest {
         assertEquals(checked.errors, hasErrors.errors)
     }
 
+    @Test
+    fun implementsHasStatus() {
+        val checked = Checked.failure(Invalid.BAD_REQUEST, listOf(Err.of("bad field")))
+        val hasStatus: HasStatus<Status> = checked
+        assertEquals(checked.status, hasStatus.status)
+    }
+
     // -------------------------------------------------------------------------
     // collect
     // -------------------------------------------------------------------------

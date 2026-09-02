@@ -22,11 +22,11 @@ import kotlin.jvm.JvmStatic
  * 2. Construction is only through [success]/[failure] so [status] and [errors] can never be out
  *    of sync: a passing [Checked] always has an empty [errors] list, a failing one always has
  *    at least one entry in it.
- * 3. Implements [HasErrors]. Deliberately skips an equivalent "has status" interface: [status]
- *    is typed [Status], not [Failed], since one [Checked] instance can represent either outcome.
+ * 3. Implements [HasErrors] and [HasStatus]. [status] is typed [Status] rather than narrowed to
+ *    [Passed]/[Failed], since one [Checked] instance can represent either outcome.
  */
 @JsExport
-class Checked private constructor(val status: Status, override val errors: List<Err>) : HasErrors {
+class Checked private constructor(override val status: Status, override val errors: List<Err>) : HasErrors, HasStatus<Status> {
     val isValid: Boolean get() = errors.isEmpty()
 
     companion object {
