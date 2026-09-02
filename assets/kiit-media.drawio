@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="G-l95LGLhHp-YvUkW8iq">
-    <mxGraphModel dx="2537" dy="1417" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2220" dy="1240" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -136,7 +136,7 @@
         <mxCell id="BE1jb6oVZNDIJ4OajRk2-3" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontColor=#007FFF;" value="&lt;b style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 90px;&quot;&gt;kiit-&lt;span style=&quot;color: rgb(51, 51, 51);&quot;&gt;result&lt;/span&gt;&lt;/font&gt;&lt;/b&gt;" vertex="1">
           <mxGeometry height="83" width="430" x="474.5" y="1241" as="geometry" />
         </mxCell>
-        <mxCell id="BE1jb6oVZNDIJ4OajRk2-4" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontSize=26;fontColor=#808080;" value="&lt;b&gt;A taxonomy to classify and handle success and failure&lt;/b&gt;" vertex="1">
+        <mxCell id="BE1jb6oVZNDIJ4OajRk2-4" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontSize=26;fontColor=#808080;" value="&lt;b&gt;A Result&amp;lt;T,E&amp;gt; that also tells you the kind of success/failure&lt;/b&gt;" vertex="1">
           <mxGeometry height="77.25" width="776" x="474.5" y="1343" as="geometry" />
         </mxCell>
         <mxCell id="BE1jb6oVZNDIJ4OajRk2-17" connectable="0" parent="1" style="group" value="" vertex="1">
@@ -208,23 +208,29 @@
             <mxPoint x="88.1895" y="62.76583034647551" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="BE1jb6oVZNDIJ4OajRk2-47" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;fillColor=#F6F8FB;" value="" vertex="1">
-          <mxGeometry height="132" width="896.5" x="210" y="1646" as="geometry" />
+        <mxCell id="BE1jb6oVZNDIJ4OajRk2-66" connectable="0" parent="1" style="group" value="" vertex="1">
+          <mxGeometry height="179.25" width="896.5" x="210" y="1646" as="geometry" />
         </mxCell>
-        <mxCell id="BE1jb6oVZNDIJ4OajRk2-48" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontColor=#007FFF;" value="&lt;b style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 28px;&quot;&gt;kiit-&lt;span style=&quot;color: rgb(51, 51, 51);&quot;&gt;codes&lt;/span&gt;&lt;/font&gt;&lt;/b&gt;" vertex="1">
-          <mxGeometry height="45" width="205" x="428.5" y="1659" as="geometry" />
+        <mxCell id="BE1jb6oVZNDIJ4OajRk2-61" parent="BE1jb6oVZNDIJ4OajRk2-66" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=none;fillColor=#0F1E33;" value="" vertex="1">
+          <mxGeometry height="77.25" width="896.5" y="102" as="geometry" />
         </mxCell>
-        <mxCell id="BE1jb6oVZNDIJ4OajRk2-49" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontSize=26;fontColor=#808080;" value="&lt;b&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;A taxonomy to classify and handle success and failure&lt;/font&gt;&lt;/b&gt;" vertex="1">
-          <mxGeometry height="40.94" width="552.5" x="428.5" y="1704" as="geometry" />
+        <mxCell id="BE1jb6oVZNDIJ4OajRk2-47" parent="BE1jb6oVZNDIJ4OajRk2-66" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;fillColor=#F6F8FB;" value="" vertex="1">
+          <mxGeometry height="132" width="896.5" as="geometry" />
         </mxCell>
-        <mxCell id="BE1jb6oVZNDIJ4OajRk2-50" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeColor=#C9D6E8;" value="">
+        <mxCell id="BE1jb6oVZNDIJ4OajRk2-48" parent="BE1jb6oVZNDIJ4OajRk2-66" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontColor=#007FFF;" value="&lt;b style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 28px;&quot;&gt;kiit-&lt;span style=&quot;color: rgb(51, 51, 51);&quot;&gt;result&lt;/span&gt;&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="45" width="205" x="218.5" y="13" as="geometry" />
+        </mxCell>
+        <mxCell id="BE1jb6oVZNDIJ4OajRk2-49" parent="BE1jb6oVZNDIJ4OajRk2-66" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontSize=26;fontColor=#808080;" value="&lt;b&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;A taxonomy to classify and handle success and failure&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="40.94" width="552.5" x="218.5" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="BE1jb6oVZNDIJ4OajRk2-50" edge="1" parent="BE1jb6oVZNDIJ4OajRk2-66" style="endArrow=none;html=1;rounded=0;strokeColor=#C9D6E8;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="392.47767441860856" y="1674" as="sourcePoint" />
-            <mxPoint x="392.48" y="1739.81" as="targetPoint" />
+            <mxPoint x="182.47767441860856" y="28" as="sourcePoint" />
+            <mxPoint x="182.48000000000002" y="93.80999999999995" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="BE1jb6oVZNDIJ4OajRk2-51" connectable="0" parent="1" style="group" value="" vertex="1">
-          <mxGeometry height="86.55" width="91" x="254.5" y="1668.73" as="geometry" />
+        <mxCell id="BE1jb6oVZNDIJ4OajRk2-51" connectable="0" parent="BE1jb6oVZNDIJ4OajRk2-66" style="group" value="" vertex="1">
+          <mxGeometry height="86.55" width="91" x="44.5" y="22.730000000000018" as="geometry" />
         </mxCell>
         <mxCell id="BE1jb6oVZNDIJ4OajRk2-52" parent="BE1jb6oVZNDIJ4OajRk2-51" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=4;fillColor=#007FFF;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;strokeColor=#007FFF;" value="" vertex="1">
           <mxGeometry height="86.55" width="91" as="geometry" />
@@ -258,6 +264,9 @@
             <mxPoint x="25.231818181818184" y="41.362007168458774" as="sourcePoint" />
             <mxPoint x="45.913636363636364" y="32.675985663082436" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="BE1jb6oVZNDIJ4OajRk2-65" parent="BE1jb6oVZNDIJ4OajRk2-66" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=26;fontColor=#808080;fontStyle=1" value="&lt;font style=&quot;font-size: 14px; color: rgb(79, 195, 232);&quot;&gt;Hand-crafted software design, code &amp;amp; diagrams&amp;nbsp; &amp;nbsp;|&amp;nbsp; &amp;nbsp;Plus AI-assisted coding, tests, docs&lt;/font&gt;" vertex="1">
+          <mxGeometry height="34" width="876" x="10.25" y="136" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

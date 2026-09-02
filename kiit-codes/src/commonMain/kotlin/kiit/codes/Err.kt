@@ -21,6 +21,18 @@ interface HasErrors {
 }
 
 /**
+ * Capability interface for a domain type (success or error) that carries its own [Status], so a
+ * sealed hierarchy of domain-specific outcomes can pair each variant with its matching kiit-codes
+ * category at definition time, instead of choosing one per call site. [S] narrows this to
+ * [Passed] for domain success types or [Failed] for domain error types. Used by kiit-result's
+ * `success`/`failure`/`build` helpers to wire a domain type's own status into a `Result`.
+ */
+@JsExport
+interface HasStatus<out S : Status> {
+    val status: S
+}
+
+/**
  * Err is an error representation for use with `Result`/`Outcome`-style types and can be
  * created from
  * 1. simple strings
