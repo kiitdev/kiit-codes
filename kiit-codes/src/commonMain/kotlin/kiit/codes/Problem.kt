@@ -13,6 +13,19 @@ import kotlin.jvm.JvmOverloads
  * kiit-side name for RFC 9457's "problem details object"
  * (https://www.rfc-editor.org/rfc/rfc9457.html). Opt-in output shape, never returned by default
  * from anything — build one explicitly via [toProblemDetail].
+ *
+ * Shape:
+ * ```json
+ * {
+ *      "type"   : "https://stripe.com/problems/payments.cards/rejected/duplicate-charge",
+ *      "title"  : "This charge has already been processed",
+ *      "status" : 409
+ * }
+ * ```
+ *
+ * For internal service-to-service calls, background jobs, or anywhere else an HTTP status code
+ * and a URI `type` don't mean anything, see [CodeDetail] — kiit-codes' own native equivalent,
+ * built from [Status.path]/[Status.code] rather than converted to RFC 9457's vocabulary.
  */
 @JsExport
 data class ProblemDetail(
@@ -37,16 +50,22 @@ data class ProblemError(
 /**
  * Default [toProblemDetail] `type` construction: the relative path segment of the URI (everything
  * after `baseUrl`), lowercase-dash transformed. Includes [Status.group] — the confirmed
- * "near-superset" addition RFC 9457 has no equivalent for — so two codes sharing [Status.origin]/
- * [Status.scope]/[Status.name] but differing in [Status.group] don't collide here either.
- * [Status.scope] is included only when non-empty.
+ * "near-superset" addition RFC 9457 has no equivalent for — so two codes sharing [Status.scope]/
+ * [Status.name] but differing in [Status.group] don't collide here either. [Status.scope] is
+ * included only when non-empty.
+ *
+ * Deliberately excludes [Status.origin]: [toProblemDetail] already requires [baseUrl] to be
+ * specific to one origin (defaulted only for kiit-codes' own built-ins, required explicitly for
+ * every other origin), so restating it in the path would just repeat what the host in [baseUrl]
+ * already says, e.g. `https://stripe.com/problems/com.stripe/...` naming Stripe twice.
  *
  * Pass a different function as `toProblemDetail`'s `typeBuilder` to override this entirely, e.g.
- * for a consumer with their own, already-stable URI scheme for problem types.
+ * for a consumer with their own, already-stable URI scheme for problem types, or one whose
+ * `baseUrl` deliberately aggregates more than one origin and needs origin back in the path.
  */
 fun defaultTypeBuilder(status: Status): String {
     fun String.toUriSegment() = lowercase().replace("_", "-")
-    val segments = listOfNotNull(status.origin, status.scope.ifEmpty { null }, status.group, status.name)
+    val segments = listOfNotNull(status.scope.ifEmpty { null }, status.group, status.name)
     return segments.joinToString("/") { it.toUriSegment() }
 }
 

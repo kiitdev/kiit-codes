@@ -18,7 +18,7 @@ class ProblemTest {
     fun baseUrlDefaultsForKiitOrigin() {
         val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = StatusConstants.KIIT)
         val problem = toProblemDetail(status)
-        assertEquals("https://kiit.dev/problems/dev.kiit/restricted/payment-requires-3ds", problem.type)
+        assertEquals("https://kiit.dev/problems/restricted/payment-requires-3ds", problem.type)
     }
 
     @Test
@@ -31,14 +31,14 @@ class ProblemTest {
     fun explicitBaseUrlOverridesTheKiitDefault() {
         val status = Restricted.DENIED
         val problem = toProblemDetail(status, baseUrl = "https://example.com/probs")
-        assertEquals("https://example.com/probs/dev.kiit/restricted/denied", problem.type)
+        assertEquals("https://example.com/probs/restricted/denied", problem.type)
     }
 
     @Test
     fun explicitBaseUrlSatisfiesNonKiitOrigin() {
         val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "com.stripe")
         val problem = toProblemDetail(status, baseUrl = "https://stripe.com/problems")
-        assertEquals("https://stripe.com/problems/com.stripe/restricted/payment-requires-3ds", problem.type)
+        assertEquals("https://stripe.com/problems/restricted/payment-requires-3ds", problem.type)
     }
 
     // -------------------------------------------------------------------------
@@ -49,7 +49,7 @@ class ProblemTest {
     fun typeOmitsScopeSegmentWhenScopeIsUnset() {
         val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "com.stripe")
         val problem = toProblemDetail(status, baseUrl = "https://stripe.com/problems")
-        assertEquals("https://stripe.com/problems/com.stripe/restricted/payment-requires-3ds", problem.type)
+        assertEquals("https://stripe.com/problems/restricted/payment-requires-3ds", problem.type)
     }
 
     @Test
@@ -57,17 +57,17 @@ class ProblemTest {
         val status =
             Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "com.stripe", scope = "payments.cards")
         val problem = toProblemDetail(status, baseUrl = "https://stripe.com/problems")
-        assertEquals("https://stripe.com/problems/com.stripe/payments.cards/restricted/payment-requires-3ds", problem.type)
+        assertEquals("https://stripe.com/problems/payments.cards/restricted/payment-requires-3ds", problem.type)
     }
 
     @Test
-    fun typeDistinguishesCodesSharingOriginAndNameButDifferingGroup() {
+    fun typeDistinguishesCodesSharingNameButDifferingGroup() {
         val created = Succeeded("CREATED", "Created", origin = "com.acme")
         val createdFailed = Failed.Invalid("CREATED", "Creation failed", origin = "com.acme")
         val a = toProblemDetail(created, baseUrl = "https://acme.example/problems")
         val b = toProblemDetail(createdFailed, baseUrl = "https://acme.example/problems")
-        assertEquals("https://acme.example/problems/com.acme/succeeded/created", a.type)
-        assertEquals("https://acme.example/problems/com.acme/invalid/created", b.type)
+        assertEquals("https://acme.example/problems/succeeded/created", a.type)
+        assertEquals("https://acme.example/problems/invalid/created", b.type)
     }
 
     // -------------------------------------------------------------------------

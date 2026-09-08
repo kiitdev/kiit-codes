@@ -2,6 +2,8 @@ package sample;
 
 import kiit.codes.Checked;
 import kiit.codes.Checks;
+import kiit.codes.CodeDetail;
+import kiit.codes.CodeDetails;
 import kiit.codes.CodesToHttp;
 import kiit.codes.Err;
 import kiit.codes.Failed;
@@ -70,12 +72,21 @@ public class SampleApp {
                         "payments.cards");
         System.out.println("http code: " + http.toCode(duplicateCharge));
 
-        // @file:JvmName("Problems") + @JvmOverloads: Problems.toProblemDetail(status, err, baseUrl).
+        // Two independent converters off the same Status, pick whichever fits the boundary:
+
+        // @file:JvmName("Problems") + @JvmOverloads: the RFC 9457 shape, for an HTTP API response.
         // baseUrl is required here since origin isn't kiit-codes' own ("dev.kiit").
         ProblemDetail stripeProblem = Problems.toProblemDetail(duplicateCharge, null, "https://stripe.com/problems");
-        System.out.println("type: " + stripeProblem.getType());
-        System.out.println("title: " + stripeProblem.getTitle());
-        System.out.println("status: " + stripeProblem.getStatus());
+        System.out.println("[rfc]  type: " + stripeProblem.getType());
+        System.out.println("[rfc]  title: " + stripeProblem.getTitle());
+        System.out.println("[rfc]  status: " + stripeProblem.getStatus());
+
+        // @file:JvmName("CodeDetails") + @JvmOverloads: kiit-codes' own shape, no baseUrl or HTTP
+        // status needed. Useful for internal service-to-service calls and background jobs.
+        CodeDetail stripeCode = CodeDetails.toCodeDetail(duplicateCharge, null);
+        System.out.println("[kiit] path: " + stripeCode.getPath());
+        System.out.println("[kiit] code: " + stripeCode.getCode());
+        System.out.println("[kiit] message: " + stripeCode.getMessage());
 
         // A built-in Status needs no baseUrl, it defaults to kiit-codes' own https://kiit.dev/problems.
         ProblemDetail kiitProblem = Problems.toProblemDetail(Failed.Invalid.NOT_FOUND, null, null);
