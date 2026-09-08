@@ -15,6 +15,9 @@ import kiit.codes.Status
 import kiit.codes.StatusException
 import kiit.codes.Succeeded
 import kiit.codes.Unserved
+import kiit.codes.code
+import kiit.codes.path
+import kiit.codes.toProblemDetail
 import kotlin.random.Random
 
 private val http = CodesToHttp()
@@ -24,6 +27,7 @@ fun main() {
     test1()
     test2()
     test3()
+    test4()
 }
 
 fun test1() {
@@ -113,6 +117,39 @@ fun test3() {
     println(check4)
     println(check5)
     println(check6)
+}
+
+fun test4() {
+    // Custom, consumer-defined Status: a non-kiit origin plus an internal-organization scope,
+    // distinct from kiit-codes' own built-in registry (see Codes.kt).
+    val duplicateCharge =
+        Rejected(
+            name = "DUPLICATE_CHARGE",
+            message = "This charge has already been processed",
+            origin = "com.stripe",
+            scope = "payments.cards",
+        )
+    println("path: ${duplicateCharge.path}") // com.stripe:payments.cards
+    println("code: ${duplicateCharge.code}") // Failed:Rejected:DUPLICATE_CHARGE
+
+    // toProblemDetail: baseUrl is required here since origin isn't kiit-codes' own ("dev.kiit").
+    val stripeProblem = toProblemDetail(duplicateCharge, baseUrl = "https://stripe.com/problems")
+    println("type: ${stripeProblem.type}")
+    println("title: ${stripeProblem.title}")
+    println("status: ${stripeProblem.status}")
+
+    // A built-in Status needs no baseUrl, it defaults to kiit-codes' own https://kiit.dev/problems.
+    // An Err.ErrorList populates ProblemDetail.errors, one ProblemError per wrapped Err.
+    val validationProblem =
+        toProblemDetail(
+            Invalid.INVALID_VALUE,
+            Err.ErrorList(
+                errors = listOf(Err.on("phone", "1234567890123", "Too long")),
+                message = "Validation failed",
+            ),
+        )
+    println("validation type: ${validationProblem.type}")
+    println("validation errors: ${validationProblem.errors}")
 }
 
 fun validatePhone(phone: String, caller: String = "guest"): Checked {

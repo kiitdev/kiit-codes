@@ -1,10 +1,12 @@
 /** url: www.kiit.dev */
 @file:OptIn(ExperimentalJsExport::class)
+@file:JvmName("Problems")
 
 package kiit.codes
 
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
+import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 
 /**

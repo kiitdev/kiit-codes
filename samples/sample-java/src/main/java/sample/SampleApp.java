@@ -6,6 +6,8 @@ import kiit.codes.CodesToHttp;
 import kiit.codes.Err;
 import kiit.codes.Failed;
 import kiit.codes.Passed;
+import kiit.codes.ProblemDetail;
+import kiit.codes.Problems;
 import kiit.codes.Status;
 import kiit.codes.StatusException;
 import kiit.codes.StatusExceptions;
@@ -57,6 +59,27 @@ public class SampleApp {
         // @file:JvmName("StatusExceptions") + @JvmOverloads: no explicit errors list needed
         StatusException fromStatus = StatusExceptions.toException(Failed.Invalid.NOT_FOUND);
         System.out.println("converted: " + fromStatus.getClass().getSimpleName());
+
+        // Custom, consumer-defined Status: a non-kiit origin plus an internal-organization scope.
+        // Failed.Rejected has no @JvmOverloads, so every constructor parameter must be supplied.
+        Failed.Rejected duplicateCharge =
+                new Failed.Rejected(
+                        "DUPLICATE_CHARGE",
+                        "This charge has already been processed",
+                        "com.stripe",
+                        "payments.cards");
+        System.out.println("http code: " + http.toCode(duplicateCharge));
+
+        // @file:JvmName("Problems") + @JvmOverloads: Problems.toProblemDetail(status, err, baseUrl).
+        // baseUrl is required here since origin isn't kiit-codes' own ("dev.kiit").
+        ProblemDetail stripeProblem = Problems.toProblemDetail(duplicateCharge, null, "https://stripe.com/problems");
+        System.out.println("type: " + stripeProblem.getType());
+        System.out.println("title: " + stripeProblem.getTitle());
+        System.out.println("status: " + stripeProblem.getStatus());
+
+        // A built-in Status needs no baseUrl, it defaults to kiit-codes' own https://kiit.dev/problems.
+        ProblemDetail kiitProblem = Problems.toProblemDetail(Failed.Invalid.NOT_FOUND, null, null);
+        System.out.println("kiit problem type: " + kiitProblem.getType());
     }
 
     // JDK 21 pattern-matching switch, exhaustive with no `default` branch. Only compiles because
