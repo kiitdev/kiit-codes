@@ -3,6 +3,7 @@ package kiit.codes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -108,13 +109,98 @@ class StatusTest {
     }
 
     // -------------------------------------------------------------------------
-    // id: "$origin.$group.$name", module-internal, used to key CodesToHttp/CodesToGrpc overrides
+    // scope: defaulted field on every concrete Passed/Failed subtype, "" means unset
     // -------------------------------------------------------------------------
 
     @Test
-    fun idIsOriginDotGroupDotName() {
+    fun scopeDefaultsToEmptyString() {
+        assertEquals("", Failed.Restricted("RESTRICTED", "Restricted").scope)
+        assertEquals("", Succeeded.SUCCESS.scope)
+    }
+
+    @Test
+    fun scopeIsSettableViaConstructor() {
+        val s = Failed.Restricted("RESTRICTED", "Restricted", origin = StatusConstants.KIIT, scope = "payments.cards")
+        assertEquals("payments.cards", s.scope)
+    }
+
+    @Test
+    fun scopeIsSettableViaCopyOnAnExistingInstanceIncludingBuiltIns() {
+        val scoped = Succeeded.CREATED.copy(scope = "payments.cards")
+        assertEquals("payments.cards", scoped.scope)
+        assertEquals(Succeeded.CREATED.name, scoped.name)
+        assertEquals(Succeeded.CREATED.origin, scoped.origin)
+    }
+
+    // -------------------------------------------------------------------------
+    // statusKey: module-internal StatusKey(origin, scope, group, name), used to key
+    // CodesToHttp/CodesToGrpc overrides.
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun statusKeyHasEmptyScopeByDefault() {
         val s = Failed.Restricted("RESTRICTED", "Restricted", origin = StatusConstants.KIIT)
-        assertEquals("kiit.Restricted.RESTRICTED", s.id)
+        assertEquals(StatusKey(StatusConstants.KIIT, "", "Restricted", "RESTRICTED"), s.statusKey)
+    }
+
+    @Test
+    fun statusKeyIncludesScopeWhenSet() {
+        val s = Failed.Restricted("RESTRICTED", "Restricted", origin = StatusConstants.KIIT, scope = "payments.cards")
+        assertEquals(StatusKey(StatusConstants.KIIT, "payments.cards", "Restricted", "RESTRICTED"), s.statusKey)
+    }
+
+    @Test
+    fun statusKeyDiffersByScopeForOtherwiseIdenticalStatuses() {
+        val base = Failed.Restricted("RESTRICTED", "Restricted", origin = StatusConstants.KIIT)
+        val scopedA = base.copy(scope = "payments.cards")
+        val scopedB = base.copy(scope = "payments.wallets")
+        assertNotEquals(scopedA.statusKey, scopedB.statusKey)
+        assertNotEquals(base.statusKey, scopedA.statusKey)
+    }
+
+    // -------------------------------------------------------------------------
+    // path: "$origin:$scope" when scope is set, else just $origin
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun pathIsJustOriginWhenScopeIsUnset() {
+        val s = Failed.Restricted("RESTRICTED", "Restricted", origin = StatusConstants.KIIT)
+        assertEquals(StatusConstants.KIIT, s.path)
+    }
+
+    @Test
+    fun pathIncludesScopeWhenSet() {
+        val s = Failed.Restricted("RESTRICTED", "Restricted", origin = StatusConstants.KIIT, scope = "payments.cards")
+        assertEquals("${StatusConstants.KIIT}:payments.cards", s.path)
+    }
+
+    // -------------------------------------------------------------------------
+    // code: "${Passed|Failed}:$group:$name", stable across scope, not unique
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun codeForPassedStatus() {
+        assertEquals("Passed:Succeeded:SUCCESS", Succeeded.SUCCESS.code)
+    }
+
+    @Test
+    fun codeForFailedStatus() {
+        val s = Failed.Restricted("RESTRICTED", "Restricted", origin = StatusConstants.KIIT)
+        assertEquals("Failed:Restricted:RESTRICTED", s.code)
+    }
+
+    @Test
+    fun codeIsUnaffectedByScope() {
+        val s = Succeeded.SUCCESS.copy(scope = "payments.cards")
+        assertEquals("Passed:Succeeded:SUCCESS", s.code)
+    }
+
+    @Test
+    fun codeIsNotUniqueAcrossDifferentOriginsOrScopes() {
+        val kiitDenied = Failed.Restricted("DENIED", "Denied", origin = StatusConstants.KIIT)
+        val customDenied = Failed.Restricted("DENIED", "Custom denied", origin = "com.acme")
+        assertEquals(kiitDenied.code, customDenied.code)
+        assertNotEquals(kiitDenied.statusKey, customDenied.statusKey)
     }
 
     // -------------------------------------------------------------------------
