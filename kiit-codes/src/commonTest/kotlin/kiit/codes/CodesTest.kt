@@ -392,7 +392,7 @@ class CodesToHttpTest {
 
     // -------------------------------------------------------------------------
     // toCode: scope is just a field on the same concrete type (no wrapper). StatusKey includes
-    // it, so a scoped copy is a distinct override-map identity from the bare status — a scoped
+    // it, so a scoped copy is a distinct override-map identity from the bare status. A scoped
     // variant only inherits a built-in's own override if that exact scope is also registered,
     // otherwise it falls through to the group default like any other unregistered status.
     // -------------------------------------------------------------------------

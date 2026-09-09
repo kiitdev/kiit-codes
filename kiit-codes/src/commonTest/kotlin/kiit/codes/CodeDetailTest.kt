@@ -41,7 +41,7 @@ class CodeDetailTest {
 
     @Test
     fun noHttpStatusOrTypeIsBuilt() {
-        // Deliberately not a thing CodeDetail has, unlike ProblemDetail's type/status.
+        // Not something CodeDetail has, unlike ProblemDetail's type/status.
         val detail = toCodeDetail(Restricted.DENIED)
         assertEquals("dev.kiit", detail.path)
         assertEquals("Failed:Restricted:DENIED", detail.code)

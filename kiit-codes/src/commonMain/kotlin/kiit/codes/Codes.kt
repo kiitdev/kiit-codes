@@ -19,9 +19,9 @@ import kotlin.jvm.JvmStatic
  * 2. [Codes] itself declares no constants. Each one lives on its own type's companion object so
  *    IDE autocomplete stays scoped per group. This object is just the aggregate list and
  *    reverse lookup, see [Passed] and [Failed] for the actual values.
- * 3. Uniqueness of every built-in [Status]'s [StatusKey] (origin+scope+group+name) is
- *    enforced at object init time, a collision fails loudly right away instead of surfacing as a
- *    silent wrong lookup later, see [statusFor].
+ * 3. Uniqueness of every built-in [Status]'s [StatusKey] (origin+scope+group+name) is enforced
+ *    at object init time. A collision fails loudly right away, instead of surfacing later as a
+ *    silent wrong lookup, see [statusFor].
  * 4. [codesAll] and [codesStatusFor] are thin proxy functions for JS/TS callers, since plain
  *    Kotlin `object`s like this one don't export usable static members to JS.
  */

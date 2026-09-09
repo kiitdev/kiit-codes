@@ -60,16 +60,16 @@ sealed interface Status {
     val origin: String
 
     /**
-     * Optional, free-form internal-organization label — a department, product area, route, or
+     * Optional, free-form internal-organization label: a department, product area, route, or
      * anything else the consumer wants to attach, e.g. `"payments"`, `"payments.cards"`.
      * `kiit-codes` never parses or enforces [scope]'s internal shape, only that it doesn't
      * contain `:` (reserved, see [path]).
      *
-     * Empty string means unset — defaults to `""` on every built-in and on any [Passed]/[Failed]
-     * subtype that doesn't set it explicitly. A real, defaulted field rather than a separate
-     * capability interface, since consumers construct concrete [Passed]/[Failed] subtypes
-     * directly (or `.copy()` an existing instance) and can't retroactively add an interface to
-     * one afterwards.
+     * Empty string means unset. It defaults to `""` on every built-in and on any
+     * [Passed]/[Failed] subtype that doesn't set it explicitly. This is a real, defaulted field
+     * rather than a separate capability interface, since consumers construct concrete
+     * [Passed]/[Failed] subtypes directly (or `.copy()` an existing instance) and can't add an
+     * interface to one after the fact.
      */
     val scope: String
 
@@ -125,12 +125,14 @@ sealed interface Status {
 
 /**
  * Module-internal identity, replacing the old `"$origin.$group.$name"` string key. A real data
- * class gets correct `equals`/`hashCode` for free and includes [scope] so a [Status] with a
- * non-empty [Status.scope] can't silently collide with one that shares only
- * [origin]/[group]/[name]. Never public, never serialized — used by [Codes]' own registry lookup.
- * [CodesToHttp]/[CodesToGrpc]'s `overrides` maps stay `Map<String, Int>` (an existing, published
- * constructor signature this release can't break), so they use [Status.key] instead — a string
- * built from the same fields as this class.
+ * class gets correct `equals`/`hashCode` for free, and now includes [scope] too, so a [Status]
+ * with a non-empty [Status.scope] won't collide with one that only matches on
+ * [origin]/[group]/[name]. Never public, never serialized, only used by [Codes]' own registry
+ * lookup.
+ *
+ * [CodesToHttp]/[CodesToGrpc]'s `overrides` maps stay `Map<String, Int>` since that constructor
+ * signature is already published and this release can't break it. They use [Status.key] instead,
+ * a string built from the same fields as this class.
  */
 internal data class StatusKey(
     val origin: String,
@@ -147,23 +149,23 @@ internal val Status.statusKey: StatusKey
     get() = StatusKey(origin = origin, scope = scope, group = group, name = name)
 
 /**
- * String form of [statusKey], for [CodesToHttp]/[CodesToGrpc]'s `overrides` maps, whose
- * constructor/`DEFAULT_OVERRIDES` are public and therefore can't declare an `internal`-typed
- * key (Kotlin forbids exposing an internal type in a public signature) without breaking that
- * already-published API. Same collision-safety as [StatusKey] otherwise: scoped by
+ * String form of [statusKey], for [CodesToHttp]/[CodesToGrpc]'s `overrides` maps. Their
+ * constructor and `DEFAULT_OVERRIDES` are public, so they can't declare an `internal`-typed key
+ * (Kotlin won't let a public signature expose an internal type) without breaking an
+ * already-published API. Same collision safety as [StatusKey] otherwise: scoped by
  * origin+scope+group+name, not just origin+group+name like the old `id` this replaces.
  */
 internal val Status.key: String
     get() = statusKey.let { "${it.origin}:${it.scope}:${it.group}:${it.name}" }
 
 /**
- * Public, display-oriented, `:`-delimited identity for logging/debugging. Not for lookups or
- * comparison, since [Status.scope] is consumer-defined and can change over time — see [code] for
- * a value that's actually safe to compare across releases.
+ * Public, display-oriented, `:`-delimited identity for logging and debugging. Not for lookups
+ * or comparison, since [Status.scope] is consumer-defined and can change over time. See [code]
+ * for a value that's actually safe to compare across releases.
  *
  * Feeds into [toProblemDetail]'s RFC 9457 `type` construction by default (see
- * [defaultTypeBuilder]). If you rely on `type`'s stability, [Status.origin]/[Status.scope]
- * inherit that same obligation — they are consumer-defined and only as stable as you keep them.
+ * [defaultTypeBuilder]). If you rely on `type` staying stable, [Status.origin]/[Status.scope]
+ * inherit that same obligation: they're consumer-defined and only as stable as you keep them.
  */
 val Status.path: String
     get() = if (scope.isNotEmpty()) "$origin:$scope" else origin
@@ -174,7 +176,7 @@ val Status.path: String
  *
  * Not unique. Two [Status]es can share the same [code] while differing in [Status.origin]/
  * [Status.scope] (e.g. two different consumers both defining a `Failed.Rejected("CONFLICT", ...)`).
- * Do not use [code] for identity, lookup, or equality checks — compare fields directly, or use
+ * Do not use [code] for identity, lookup, or equality checks. Compare fields directly, or use
  * the internal `StatusKey` (origin+scope+group+name) if you're inside this module.
  */
 val Status.code: String
