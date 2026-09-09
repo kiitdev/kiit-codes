@@ -20,6 +20,7 @@ import kotlin.jvm.JvmOverloads
  * {
  *      "path"    : "com.stripe:payments.cards",
  *      "code"    : "Failed:Rejected:DUPLICATE_CHARGE",
+ *      "success" : false,
  *      "message" : "This charge has already been processed"
  * }
  * ```
@@ -31,6 +32,7 @@ import kotlin.jvm.JvmOverloads
 data class CodeDetail(
     val path: String,
     val code: String,
+    val success: Boolean,
     val message: String,
     val detail: String? = null,
     val instance: String? = null,
@@ -45,6 +47,8 @@ data class CodeDetail(
  * Field mapping:
  * - [Status.path] -> [CodeDetail.path].
  * - [Status.code] -> [CodeDetail.code].
+ * - [Status.success] -> [CodeDetail.success], a quick, convenient `Passed`/`Failed` check without
+ *   pattern matching on [status] itself.
  * - [Status.message] -> [CodeDetail.message].
  * - [Err.message] -> [CodeDetail.detail] (occurrence-specific, never on [status] itself).
  * - [Err.ref] -> [CodeDetail.instance].
@@ -61,6 +65,7 @@ fun toCodeDetail(status: Status, err: Err? = null): CodeDetail {
             CodeDetail(
                 path = status.path,
                 code = status.code,
+                success = status.success,
                 message = status.message,
                 detail = err.message,
                 errors = err.errors.map { ProblemError((it as? Err.ErrorField)?.field, it.message) },
@@ -69,6 +74,7 @@ fun toCodeDetail(status: Status, err: Err? = null): CodeDetail {
             CodeDetail(
                 path = status.path,
                 code = status.code,
+                success = status.success,
                 message = status.message,
                 detail = err?.message,
                 instance = err?.ref?.toString(),

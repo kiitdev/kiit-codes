@@ -86,6 +86,7 @@ public class SampleApp {
         CodeDetail stripeCode = CodeDetails.toCodeDetail(duplicateCharge, null);
         System.out.println("[kiit] path: " + stripeCode.getPath());
         System.out.println("[kiit] code: " + stripeCode.getCode());
+        System.out.println("[kiit] success: " + stripeCode.getSuccess());
         System.out.println("[kiit] message: " + stripeCode.getMessage());
 
         // A built-in Status needs no baseUrl, it defaults to kiit-codes' own https://kiit.dev/problems.

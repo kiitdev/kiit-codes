@@ -2,7 +2,9 @@ package kiit.codes
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 // =================================================================================================
 // CodeDetailTest: toCodeDetail() kiit-native occurrence-detail converter
@@ -10,16 +12,23 @@ import kotlin.test.assertNull
 
 class CodeDetailTest {
     // -------------------------------------------------------------------------
-    // path / code / message: read straight off Status, no baseUrl or HTTP status involved
+    // path / code / success / message: read straight off Status, no baseUrl or HTTP status involved
     // -------------------------------------------------------------------------
 
     @Test
-    fun pathCodeAndMessageComeStraightFromStatus() {
+    fun pathCodeSuccessAndMessageComeStraightFromStatus() {
         val status = Restricted.DENIED
         val detail = toCodeDetail(status)
         assertEquals(status.path, detail.path)
         assertEquals(status.code, detail.code)
+        assertEquals(status.success, detail.success)
         assertEquals(status.message, detail.message)
+    }
+
+    @Test
+    fun successIsTrueForPassedAndFalseForFailed() {
+        assertTrue(toCodeDetail(Succeeded.SUCCESS).success)
+        assertFalse(toCodeDetail(Restricted.DENIED).success)
     }
 
     @Test

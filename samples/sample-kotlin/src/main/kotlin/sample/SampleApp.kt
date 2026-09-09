@@ -148,6 +148,7 @@ fun test4() {
     val stripeCode = toCodeDetail(duplicateCharge)
     println("[kiit] path: ${stripeCode.path}")
     println("[kiit] code: ${stripeCode.code}")
+    println("[kiit] success: ${stripeCode.success}")
     println("[kiit] message: ${stripeCode.message}")
 
     // A built-in Status needs no baseUrl, it defaults to kiit-codes' own https://kiit.dev/problems.
