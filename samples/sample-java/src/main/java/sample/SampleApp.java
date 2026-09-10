@@ -2,17 +2,20 @@ package sample;
 
 import kiit.codes.Checked;
 import kiit.codes.Checks;
-import kiit.codes.CodeDetail;
-import kiit.codes.CodeDetails;
 import kiit.codes.CodesToHttp;
 import kiit.codes.Err;
 import kiit.codes.Failed;
 import kiit.codes.Passed;
-import kiit.codes.ProblemDetail;
-import kiit.codes.Problems;
 import kiit.codes.Status;
 import kiit.codes.StatusException;
 import kiit.codes.StatusExceptions;
+import kiit.codes.formats.Catalog;
+import kiit.codes.formats.CodeDetail;
+import kiit.codes.formats.CodeDetails;
+import kiit.codes.formats.CodesToProblem;
+import kiit.codes.formats.ErrorDetail;
+import kiit.codes.formats.ErrorItem;
+import kiit.codes.formats.Problem;
 
 import java.util.List;
 
@@ -72,26 +75,74 @@ public class SampleApp {
                         "payments.cards");
         System.out.println("http code: " + http.toCode(duplicateCharge));
 
+        // Catalog supplies baseUrl per origin; a built-in Status needs no registration, it
+        // defaults to kiit-codes' own https://kiit.dev/problems.
+        Catalog catalog = new Catalog();
+        catalog.register("com.stripe", "https://stripe.com/problems");
+        CodesToProblem problems = new CodesToProblem(catalog, http);
+
         // Two independent converters off the same Status, pick whichever fits the boundary:
 
-        // @file:JvmName("Problems") + @JvmOverloads: the RFC 9457 shape, for an HTTP API response.
-        // baseUrl is required here since origin isn't kiit-codes' own ("dev.kiit").
-        ProblemDetail stripeProblem = Problems.toProblemDetail(duplicateCharge, null, "https://stripe.com/problems");
+        // CodesToProblem.build (@JvmOverloads): the RFC 9457 shape, for an HTTP API response.
+        Problem<ErrorDetail> stripeProblem = problems.build(duplicateCharge);
         System.out.println("[rfc]  type: " + stripeProblem.getType());
         System.out.println("[rfc]  title: " + stripeProblem.getTitle());
         System.out.println("[rfc]  status: " + stripeProblem.getStatus());
 
         // @file:JvmName("CodeDetails") + @JvmOverloads: kiit-codes' own shape, no baseUrl or HTTP
         // status needed. Useful for internal service-to-service calls and background jobs.
-        CodeDetail stripeCode = CodeDetails.toCodeDetail(duplicateCharge, null);
+        CodeDetail<ErrorDetail> stripeCode = CodeDetails.toCodeDetail(duplicateCharge);
         System.out.println("[kiit] path: " + stripeCode.getPath());
         System.out.println("[kiit] code: " + stripeCode.getCode());
         System.out.println("[kiit] success: " + stripeCode.getSuccess());
         System.out.println("[kiit] message: " + stripeCode.getMessage());
 
-        // A built-in Status needs no baseUrl, it defaults to kiit-codes' own https://kiit.dev/problems.
-        ProblemDetail kiitProblem = Problems.toProblemDetail(Failed.Invalid.NOT_FOUND, null, null);
+        Problem<ErrorDetail> kiitProblem = problems.build(Failed.Invalid.NOT_FOUND);
         System.out.println("kiit problem type: " + kiitProblem.getType());
+
+        // Custom error shape: supply your own ErrorItem when field + message isn't enough.
+        Err.ErrorList validationErr =
+                new Err.ErrorList(List.of(Err.on("phone", "1234567890123", "Too long")), "Validation failed");
+        CodeDetail<DetailedError> customCode =
+                CodeDetails.toCodeDetail(
+                        Failed.Invalid.INVALID_VALUE,
+                        validationErr,
+                        e ->
+                                new DetailedError(
+                                        e instanceof Err.ErrorField f ? f.getField() : null,
+                                        e.getMessage(),
+                                        "check formatting"));
+        System.out.println("[custom] code: " + customCode.getCode());
+        System.out.println("[custom] errors: " + customCode.getErrors());
+    }
+
+    // Custom ErrorItem: field + message plus a hint, for when the default ErrorDetail shape
+    // (field + message only) isn't enough.
+    static final class DetailedError implements ErrorItem {
+        private final String field;
+        private final String message;
+        private final String hint;
+
+        DetailedError(String field, String message, String hint) {
+            this.field = field;
+            this.message = message;
+            this.hint = hint;
+        }
+
+        @Override
+        public String getField() {
+            return field;
+        }
+
+        @Override
+        public String getMessage() {
+            return message;
+        }
+
+        @Override
+        public String toString() {
+            return "DetailedError(field=" + field + ", message=" + message + ", hint=" + hint + ")";
+        }
     }
 
     // JDK 21 pattern-matching switch, exhaustive with no `default` branch. Only compiles because

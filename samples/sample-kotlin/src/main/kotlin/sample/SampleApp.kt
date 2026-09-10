@@ -16,12 +16,16 @@ import kiit.codes.StatusException
 import kiit.codes.Succeeded
 import kiit.codes.Unserved
 import kiit.codes.code
+import kiit.codes.formats.Catalog
+import kiit.codes.formats.CodesToProblem
+import kiit.codes.formats.ErrorItem
+import kiit.codes.formats.toCodeDetail
 import kiit.codes.path
-import kiit.codes.toCodeDetail
-import kiit.codes.toProblemDetail
 import kotlin.random.Random
 
 private val http = CodesToHttp()
+private val catalog = Catalog().apply { register("com.stripe", "https://stripe.com/problems") }
+private val problems = CodesToProblem(catalog, http)
 
 fun main() {
     test0()
@@ -135,9 +139,10 @@ fun test4() {
 
     // Two independent converters off the same Status, pick whichever fits the boundary:
 
-    // toProblemDetail: the RFC 9457 shape, for an HTTP API response. baseUrl is required here
-    // since origin isn't kiit-codes' own ("dev.kiit").
-    val stripeProblem = toProblemDetail(duplicateCharge, baseUrl = "https://stripe.com/problems")
+    // CodesToProblem.build: the RFC 9457 shape, for an HTTP API response. baseUrl comes from
+    // catalog, registered above for "com.stripe" (a built-in Status needs no registration, it
+    // defaults to kiit-codes' own https://kiit.dev/problems).
+    val stripeProblem = problems.build(duplicateCharge)
     println("[rfc]  type: ${stripeProblem.type}")
     println("[rfc]  title: ${stripeProblem.title}")
     println("[rfc]  status: ${stripeProblem.status}")
@@ -151,18 +156,26 @@ fun test4() {
     println("[kiit] success: ${stripeCode.success}")
     println("[kiit] message: ${stripeCode.message}")
 
-    // A built-in Status needs no baseUrl, it defaults to kiit-codes' own https://kiit.dev/problems.
-    // An Err.ErrorList populates errors[], one ProblemError per wrapped Err, in both shapes.
+    // An Err.ErrorList populates errors[], one ErrorDetail per wrapped Err, in both shapes.
     val validationErr =
         Err.ErrorList(
             errors = listOf(Err.on("phone", "1234567890123", "Too long")),
             message = "Validation failed",
         )
-    val validationProblem = toProblemDetail(Invalid.INVALID_VALUE, validationErr)
+    val validationProblem = problems.build(Invalid.INVALID_VALUE, validationErr)
     val validationCode = toCodeDetail(Invalid.INVALID_VALUE, validationErr)
     println("[rfc]  validation type: ${validationProblem.type}")
     println("[kiit] validation code: ${validationCode.code}")
     println("[kiit] validation errors: ${validationCode.errors}")
+
+    // Custom error shape: supply your own ErrorItem when field + message isn't enough.
+    data class DetailedError(override val field: String?, override val message: String, val hint: String) : ErrorItem
+    val customCode =
+        toCodeDetail(Invalid.INVALID_VALUE, validationErr) { err ->
+            DetailedError((err as? Err.ErrorField)?.field, err.message, hint = "check formatting")
+        }
+    println("[custom] code: ${customCode.code}")
+    println("[custom] errors: ${customCode.errors}")
 }
 
 fun validatePhone(phone: String, caller: String = "guest"): Checked {

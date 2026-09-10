@@ -20,6 +20,7 @@ import kotlin.jvm.JvmOverloads
  */
 class CodesToProblem(private val catalog: Catalog, private val mapping: CodesToHttp) {
     /** Builds a [Problem]\<[kiit.codes.formats.ErrorDetail]\> for [status], baseUrl from [catalog]. */
+    @Suppress("ktlint:standard:function-signature")
     @JvmOverloads
     fun build(
         status: Status,
