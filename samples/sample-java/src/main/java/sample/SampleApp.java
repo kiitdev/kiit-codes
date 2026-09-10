@@ -96,6 +96,12 @@ public class SampleApp {
         System.out.println("[kiit] code: " + stripeCode.getCode());
         System.out.println("[kiit] success: " + stripeCode.getSuccess());
         System.out.println("[kiit] message: " + stripeCode.getMessage());
+        System.out.println("[kiit] status: " + stripeCode.getStatus()); // null, no mapping supplied
+
+        // Pass a mapping when this shape is still going out over HTTP and the status is worth
+        // carrying alongside it.
+        CodeDetail<ErrorDetail> stripeCodeWithStatus = CodeDetails.toCodeDetail(duplicateCharge, null, http);
+        System.out.println("[kiit] status (with mapping): " + stripeCodeWithStatus.getStatus());
 
         Problem<ErrorDetail> kiitProblem = problems.build(Failed.Invalid.NOT_FOUND);
         System.out.println("kiit problem type: " + kiitProblem.getType());
@@ -107,6 +113,7 @@ public class SampleApp {
                 CodeDetails.toCodeDetail(
                         Failed.Invalid.INVALID_VALUE,
                         validationErr,
+                        null,
                         e ->
                                 new DetailedError(
                                         e instanceof Err.ErrorField f ? f.getField() : null,

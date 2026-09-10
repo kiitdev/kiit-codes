@@ -155,6 +155,12 @@ fun test4() {
     println("[kiit] code: ${stripeCode.code}")
     println("[kiit] success: ${stripeCode.success}")
     println("[kiit] message: ${stripeCode.message}")
+    println("[kiit] status: ${stripeCode.status}") // null, no mapping supplied
+
+    // Pass a mapping when this shape is still going out over HTTP and the status is worth
+    // carrying alongside it.
+    val stripeCodeWithStatus = toCodeDetail(duplicateCharge, mapping = http)
+    println("[kiit] status (with mapping): ${stripeCodeWithStatus.status}")
 
     // An Err.ErrorList populates errors[], one ErrorDetail per wrapped Err, in both shapes.
     val validationErr =

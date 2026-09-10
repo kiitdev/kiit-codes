@@ -1,5 +1,6 @@
 package kiit.codes.formats
 
+import kiit.codes.CodesToHttp
 import kiit.codes.Err
 import kiit.codes.Invalid
 import kiit.codes.Restricted
@@ -35,6 +36,25 @@ class CodeDetailTest {
         assertNull(detail.detail)
         assertNull(detail.instance)
         assertNull(detail.errors)
+    }
+
+    @Test
+    fun statusIsNullWithoutAMapping() {
+        assertNull(toCodeDetail(Restricted.DENIED).status)
+    }
+
+    @Test
+    fun statusIsPopulatedWhenMappingIsSupplied() {
+        val detail = toCodeDetail(Restricted.DENIED, mapping = CodesToHttp())
+        assertEquals(401, detail.status)
+    }
+
+    @Test
+    fun genericToCodeDetailAlsoPopulatesStatusWhenMappingIsSupplied() {
+        data class RichError(override val field: String?, override val message: String) : ErrorItem
+
+        val detail = toCodeDetail(Restricted.DENIED, null, CodesToHttp()) { RichError(null, it.message) }
+        assertEquals(401, detail.status)
     }
 
     @Test

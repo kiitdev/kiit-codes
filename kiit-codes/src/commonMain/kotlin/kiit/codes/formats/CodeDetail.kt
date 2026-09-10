@@ -4,6 +4,7 @@
 
 package kiit.codes.formats
 
+import kiit.codes.CodesToHttp
 import kiit.codes.Err
 import kiit.codes.Status
 import kiit.codes.code
@@ -26,9 +27,11 @@ import kotlin.jvm.JvmOverloads
  * }
  * ```
  *
- * 1. No HTTP status code, meant for internal service-to-service calls.
+ * 1. Meant for internal service-to-service calls.
  * 2. Also useful for background jobs and other non-API calls where an HTTP status isn't relevant.
  * 3. Self-contained, no need for a public URI: [Status.origin]:[Status.scope] is enough.
+ * 4. [status] is optional — pass a `mapping` to [toCodeDetail] when this shape is still going out
+ *    over HTTP and the status code is worth carrying alongside it.
  */
 @JsExport
 data class CodeDetail<T : ErrorItem>(
@@ -39,21 +42,33 @@ data class CodeDetail<T : ErrorItem>(
     val detail: String? = null,
     val instance: String? = null,
     val errors: List<T>? = null,
+    val status: Int? = null,
 )
 
-/** Builds the default [CodeDetail]\<[ErrorDetail]\> for [status] (and optionally [err]). */
+/**
+ * Builds the default [CodeDetail]\<[ErrorDetail]\> for [status] (and optionally [err]). Pass
+ * [mapping] to also populate [CodeDetail.status] with the equivalent HTTP status code.
+ */
 @JsExport
 @JvmOverloads
-fun toCodeDetail(status: Status, err: Err? = null): CodeDetail<ErrorDetail> {
-    return toCodeDetail(status, err, ::defaultErrorItem)
+fun toCodeDetail(status: Status, err: Err? = null, mapping: CodesToHttp? = null): CodeDetail<ErrorDetail> {
+    return toCodeDetail(status, err, mapping, ::defaultErrorItem)
 }
 
 /**
  * Builds a [CodeDetail]\<[T]\> for [status], mapping each entry of an [Err.ErrorList] through
  * [mapper]. Use this when the default [ErrorDetail] shape (field + message only) isn't enough —
- * `err.ref` is the usual place to stash whatever extra context [mapper] needs.
+ * `err.ref` is the usual place to stash whatever extra context [mapper] needs. Pass [mapping] to
+ * also populate [CodeDetail.status].
  */
-fun <T : ErrorItem> toCodeDetail(status: Status, err: Err?, mapper: (Err) -> T): CodeDetail<T> {
+@Suppress("ktlint:standard:function-signature")
+fun <T : ErrorItem> toCodeDetail(
+    status: Status,
+    err: Err?,
+    mapping: CodesToHttp? = null,
+    mapper: (Err) -> T,
+): CodeDetail<T> {
+    val httpStatus = mapping?.toCode(status)
     return when (err) {
         is Err.ErrorList ->
             CodeDetail(
@@ -63,6 +78,7 @@ fun <T : ErrorItem> toCodeDetail(status: Status, err: Err?, mapper: (Err) -> T):
                 message = status.message,
                 detail = err.message,
                 errors = err.errors.map(mapper),
+                status = httpStatus,
             )
         else ->
             CodeDetail(
@@ -72,6 +88,7 @@ fun <T : ErrorItem> toCodeDetail(status: Status, err: Err?, mapper: (Err) -> T):
                 message = status.message,
                 detail = err?.message,
                 instance = err?.ref?.toString(),
+                status = httpStatus,
             )
     }
 }
