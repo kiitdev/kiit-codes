@@ -8,7 +8,7 @@ import kotlin.test.assertNull
 class CatalogTest {
     @Test
     fun kiitOriginDefaultsWhenNotSupplied() {
-        assertEquals("https://kiit.dev/problems", Catalog.of().baseUrlFor(StatusConstants.KIIT))
+        assertEquals("https://www.kiit.dev/docs/kiit-codes#taxonomy", Catalog.of().baseUrlFor(StatusConstants.KIIT))
     }
 
     @Test

@@ -6,6 +6,7 @@ package kiit.codes.formats
 import kiit.codes.CodesToHttp
 import kiit.codes.Err
 import kiit.codes.Status
+import kiit.codes.StatusConstants
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
@@ -48,7 +49,7 @@ class CodesToProblem(private val catalog: Catalog, private val mapping: CodesToH
         val baseUrl =
             catalog.baseUrlFor(status.origin)
                 ?: throw IllegalArgumentException(
-                    "No baseUrl registered for origin '${status.origin}'. Register one via Catalog.register().",
+                    "No baseUrl registered for origin '${status.origin}'. Add one via Catalog.of().",
                 )
         return toProblem(status, err, baseUrl, typeBuilder, mapper)
     }
@@ -80,7 +81,13 @@ class CodesToProblem(private val catalog: Catalog, private val mapping: CodesToH
         typeBuilder: (Status) -> String,
         mapper: (Err) -> T,
     ): Problem<T> {
-        val type = "$baseUrl/${typeBuilder(status)}"
+        val path = typeBuilder(status)
+        val type =
+            when {
+                path.isEmpty() -> baseUrl
+                path.startsWith("?") || path.startsWith("#") -> "$baseUrl$path"
+                else -> "$baseUrl/$path"
+            }
         val code = mapping.toCode(status)
         return when (err) {
             is Err.ErrorList ->
@@ -107,8 +114,13 @@ class CodesToProblem(private val catalog: Catalog, private val mapping: CodesToH
  * Default `type` path segment (everything after `baseUrl`): `scope`/`group`/`name`, lowercase-
  * dash. `origin` is left out on purpose, `baseUrl` is already specific to one origin (see
  * [CodesToProblem]), so repeating it would just name that origin twice in the URL.
+ *
+ * [StatusConstants.KIIT] is the exception: kiit-codes' own docs don't have a per-code anchor yet,
+ * just the taxonomy page `baseUrl` already points to, so this returns "" and [CodesToProblem]
+ * uses `baseUrl` as the whole `type`, unchanged.
  */
 fun defaultTypeBuilder(status: Status): String {
+    if (status.origin == StatusConstants.KIIT) return ""
     fun String.toUriSegment() = lowercase().replace("_", "-")
     val segments = listOfNotNull(status.scope.ifEmpty { null }, status.group, status.name)
     return segments.joinToString("/") { it.toUriSegment() }
