@@ -13,7 +13,7 @@ plugins {
 // Single source of truth for the published version — feeds Maven Central (below), the JS
 // package.json (in the js(IR) block below), and the release workflow's printVersion task, so
 // the git tag, GitHub release, Maven artifact, and npm package version can never drift apart.
-val libraryVersion = "1.0.3"
+val libraryVersion = "1.1.0"
 
 kotlin {
     jvm {

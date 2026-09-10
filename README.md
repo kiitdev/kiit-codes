@@ -57,7 +57,7 @@ A fixed taxonomy provides consistent classification, extensible codes preserve d
 
 ```kotlin
 dependencies {
-    implementation("dev.kiit:kiit-codes:1.0.2")
+    implementation("dev.kiit:kiit-codes:1.1.0")
 }
 ```
 
@@ -82,7 +82,7 @@ Built-in codes expose stable fields suitable for application logic, logging, API
 {
     "name"    : "CONFLICT",
     "group"   : "Rejected",
-    "origin"  : "kiit",
+    "origin"  : "dev.kiit",
     "success" : false,
     "message" : "The request conflicts with the current state"
 }
@@ -109,7 +109,7 @@ The two statuses are:
 - **Passed** — `Succeeded`, `Pending`, `Excluded`, `Information`
 - **Failed** — `Restricted`, `Invalid`, `Rejected`, `Unserved`
 
-Each code provides a `name`, `group`, `origin`, `message`, and `success` flag. Built-in codes use the `kiit` origin and each group has a default code for cases where more precision is unnecessary.
+Each code provides a `name`, `group`, `origin`, `message`, and `success` flag. Built-in codes use the `dev.kiit` origin and each group has a default code for cases where more precision is unnecessary.
 
 The built-in taxonomy contains common application outcomes such as `SUCCESS`, `CREATED`, `DENIED`, `INVALID_VALUE`, `CONFLICT`, `TIMEOUT`, and `UNEXPECTED`.
 
@@ -169,6 +169,27 @@ val grpc = CodesToGrpc()
 
 grpc.toCode(Restricted.DENIED)   // 7, PERMISSION_DENIED
 grpc.toStatus(6)?.name           // "CONFLICT", ALREADY_EXISTS reversed
+```
+
+### RFC 9457 (Problem Details)
+
+`CodesToProblem` converts a status into an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html) problem details object, for an HTTP API response. `Catalog` supplies the base URL per origin. A kiit-native equivalent, `CodeDetail`, covers boundaries an HTTP-shaped response doesn't fit — service-to-service calls, background jobs, and similar.
+
+```kotlin
+import kiit.codes.formats.*
+
+val catalog = Catalog.of(mapOf("payments" to "https://example.com/problems"))
+val problems = CodesToProblem(catalog, CodesToHttp())
+
+problems.build(PAYMENT_DECLINED)
+```
+
+```json
+{
+    "type": "https://example.com/problems/rejected/payment-declined",
+    "title": "Payment declined",
+    "status": 409
+}
 ```
 
 The mapping abstraction is not limited to HTTP and gRPC. `CodeLookup` and `CompositeLookup` can be used to define or extend mappings for other protocols.
