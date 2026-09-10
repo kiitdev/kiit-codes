@@ -77,7 +77,7 @@ public class SampleApp {
         System.out.println("http code: " + http.toCode(duplicateCharge));
 
         // Catalog supplies baseUrl per origin; a built-in Status needs no registration, it
-        // defaults to kiit-codes' own https://kiit.dev/problems.
+        // defaults to kiit-codes' own taxonomy docs.
         Catalog catalog = Catalog.of(Map.of("com.stripe", "https://stripe.com/problems"));
         CodesToProblem problems = new CodesToProblem(catalog, http);
 

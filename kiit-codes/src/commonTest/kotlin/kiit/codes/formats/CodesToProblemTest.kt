@@ -16,10 +16,13 @@ class CodesToProblemTest {
     private val codesToProblem = CodesToProblem(catalog, CodesToHttp())
 
     @Test
-    fun baseUrlDefaultsForKiitOrigin() {
+    fun baseUrlDefaultsForKiitOriginWithCodeAsQueryParam() {
         val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = StatusConstants.KIIT)
         val problem = codesToProblem.build(status)
-        assertEquals("https://kiit.dev/problems/restricted/payment-requires-3ds", problem.type)
+        assertEquals(
+            "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:PAYMENT_REQUIRES_3DS#taxonomy",
+            problem.type,
+        )
     }
 
     @Test
@@ -38,8 +41,9 @@ class CodesToProblemTest {
 
     @Test
     fun convertUsesExplicitBaseUrlRegardlessOfCatalog() {
-        val problem = codesToProblem.convert(Restricted.DENIED, baseUrl = "https://example.com/probs")
-        assertEquals("https://example.com/probs/restricted/denied", problem.type)
+        val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "com.stripe")
+        val problem = codesToProblem.convert(status, baseUrl = "https://example.com/probs")
+        assertEquals("https://example.com/probs/restricted/payment-requires-3ds", problem.type)
     }
 
     @Test

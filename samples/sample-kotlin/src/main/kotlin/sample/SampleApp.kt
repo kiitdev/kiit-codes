@@ -141,7 +141,7 @@ fun test4() {
 
     // CodesToProblem.build: the RFC 9457 shape, for an HTTP API response. baseUrl comes from
     // catalog, registered above for "com.stripe" (a built-in Status needs no registration, it
-    // defaults to kiit-codes' own https://kiit.dev/problems).
+    // defaults to kiit-codes' own taxonomy docs).
     val stripeProblem = problems.build(duplicateCharge)
     println("[rfc]  type: ${stripeProblem.type}")
     println("[rfc]  title: ${stripeProblem.title}")

@@ -7,6 +7,7 @@ import kiit.codes.CodesToHttp
 import kiit.codes.Err
 import kiit.codes.Status
 import kiit.codes.StatusConstants
+import kiit.codes.code
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
@@ -111,16 +112,18 @@ class CodesToProblem(private val catalog: Catalog, private val mapping: CodesToH
 }
 
 /**
- * Default `type` path segment (everything after `baseUrl`): `scope`/`group`/`name`, lowercase-
- * dash. `origin` is left out on purpose, `baseUrl` is already specific to one origin (see
- * [CodesToProblem]), so repeating it would just name that origin twice in the URL.
+ * Default `type` suffix appended to `baseUrl`: `scope`/`group`/`name`, lowercase-dash. `origin`
+ * is left out on purpose, `baseUrl` is already specific to one origin (see [CodesToProblem]), so
+ * repeating it would just name that origin twice in the URL.
  *
  * [StatusConstants.KIIT] is the exception: kiit-codes' own docs don't have a per-code anchor yet,
- * just the taxonomy page `baseUrl` already points to, so this returns "" and [CodesToProblem]
- * uses `baseUrl` as the whole `type`, unchanged.
+ * just the taxonomy page as a whole, so every kiit-origin [Status] instead gets `status.code` as
+ * a query param on that same page, e.g. `?code=Failed:Invalid:INVALID_VALUE#taxonomy`. A `code`
+ * is a colon-delimited identifier (letters, digits, underscores), safe unencoded in a URI query.
  */
 fun defaultTypeBuilder(status: Status): String {
-    if (status.origin == StatusConstants.KIIT) return ""
+    if (status.origin == StatusConstants.KIIT) return "?code=${status.code}#taxonomy"
+
     fun String.toUriSegment() = lowercase().replace("_", "-")
     val segments = listOfNotNull(status.scope.ifEmpty { null }, status.group, status.name)
     return segments.joinToString("/") { it.toUriSegment() }
