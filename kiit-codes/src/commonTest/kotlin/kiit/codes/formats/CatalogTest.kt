@@ -7,19 +7,24 @@ import kotlin.test.assertNull
 
 class CatalogTest {
     @Test
-    fun kiitOriginIsPreRegistered() {
-        assertEquals("https://kiit.dev/problems", Catalog().baseUrlFor(StatusConstants.KIIT))
+    fun kiitOriginDefaultsWhenNotSupplied() {
+        assertEquals("https://kiit.dev/problems", Catalog.of().baseUrlFor(StatusConstants.KIIT))
     }
 
     @Test
     fun unregisteredOriginReturnsNull() {
-        assertNull(Catalog().baseUrlFor("com.stripe"))
+        assertNull(Catalog.of().baseUrlFor("com.stripe"))
     }
 
     @Test
-    fun registerAddsAnOrigin() {
-        val catalog = Catalog()
-        catalog.register("com.stripe", "https://stripe.com/problems")
+    fun ofAddsEachSuppliedOrigin() {
+        val catalog = Catalog.of(mapOf("com.stripe" to "https://stripe.com/problems"))
         assertEquals("https://stripe.com/problems", catalog.baseUrlFor("com.stripe"))
+    }
+
+    @Test
+    fun ofOverridesKiitDefaultWhenSupplied() {
+        val catalog = Catalog.of(mapOf(StatusConstants.KIIT to "https://example.com/problems"))
+        assertEquals("https://example.com/problems", catalog.baseUrlFor(StatusConstants.KIIT))
     }
 }

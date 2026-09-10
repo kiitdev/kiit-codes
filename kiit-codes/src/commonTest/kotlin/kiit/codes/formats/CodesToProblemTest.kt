@@ -12,7 +12,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class CodesToProblemTest {
-    private val catalog = Catalog()
+    private val catalog = Catalog.of()
     private val codesToProblem = CodesToProblem(catalog, CodesToHttp())
 
     @Test
@@ -30,9 +30,9 @@ class CodesToProblemTest {
 
     @Test
     fun buildUsesRegisteredBaseUrlAndFullTypePath() {
-        catalog.register("com.stripe", "https://stripe.com/problems")
+        val stripeCatalog = Catalog.of(mapOf("com.stripe" to "https://stripe.com/problems"))
         val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "com.stripe", scope = "payments.cards")
-        val problem = codesToProblem.build(status)
+        val problem = CodesToProblem(stripeCatalog, CodesToHttp()).build(status)
         assertEquals("https://stripe.com/problems/payments.cards/restricted/payment-requires-3ds", problem.type)
     }
 

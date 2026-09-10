@@ -24,7 +24,7 @@ import kiit.codes.path
 import kotlin.random.Random
 
 private val http = CodesToHttp()
-private val catalog = Catalog().apply { register("com.stripe", "https://stripe.com/problems") }
+private val catalog = Catalog.of(mapOf("com.stripe" to "https://stripe.com/problems"))
 private val problems = CodesToProblem(catalog, http)
 
 fun main() {
