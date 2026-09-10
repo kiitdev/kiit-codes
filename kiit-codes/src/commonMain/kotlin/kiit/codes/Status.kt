@@ -12,8 +12,11 @@ import kotlin.jvm.JvmStatic
 
 /** Well-known [Status.origin] values. */
 object StatusConstants {
-    /** Origin for every built-in [Codes] entry. */
-    const val KIIT = "kiit"
+    /**
+     * Origin for every built-in [Codes] entry. Reverse-DNS, matching kiit-codes' own naming
+     * guideline for [Status.origin] (mirrors Gradle's `groupId`, `dev.kiit`).
+     */
+    const val KIIT = "dev.kiit"
 
     /** Default origin for consumer/custom statuses that don't specify one explicitly. */
     const val CUSTOM = "custom"
@@ -25,10 +28,10 @@ object StatusConstants {
  *
  * Shape (maps directly to JSON / API error responses):
  * {
- *      "id"      : "kiit.Restricted.DENIED",
  *      "name"    : "DENIED",
  *      "group"   : "Restricted",
- *      "origin"  : "kiit",
+ *      "origin"  : "dev.kiit",
+ *      "scope"   : "",
  *      "message" : "The request was denied.",
  *      "success" : false
  * }
@@ -55,6 +58,20 @@ sealed interface Status {
      * [StatusConstants.KIIT], so a status can never accidentally misrepresent where it came from.
      */
     val origin: String
+
+    /**
+     * Optional, free-form internal-organization label: a department, product area, route, or
+     * anything else the consumer wants to attach, e.g. `"payments"`, `"payments.cards"`.
+     * `kiit-codes` never parses or enforces [scope]'s internal shape, only that it doesn't
+     * contain `:` (reserved, see [path]).
+     *
+     * Empty string means unset. It defaults to `""` on every built-in and on any
+     * [Passed]/[Failed] subtype that doesn't set it explicitly. This is a real, defaulted field
+     * rather than a separate capability interface, since consumers construct concrete
+     * [Passed]/[Failed] subtypes directly (or `.copy()` an existing instance) and can't add an
+     * interface to one after the fact.
+     */
+    val scope: String
 
     /**
      * Human-readable constant description, never constructed from runtime data. Per-instance
@@ -107,14 +124,71 @@ sealed interface Status {
 }
 
 /**
- * Module-internal identity, `"$origin.$group.$name"`. Not part of the public API/JSON shape (see
- * [Status]'s own KDoc) — used by [CodesToHttp] and [CodesToGrpc] to key their `overrides` maps,
- * and unique across every [Status] since it's scoped by group as well as origin+name.
+ * Module-internal identity, replacing the old `"$origin.$group.$name"` string key. A real data
+ * class gets correct `equals`/`hashCode` for free, and now includes [scope] too, so a [Status]
+ * with a non-empty [Status.scope] won't collide with one that only matches on
+ * [origin]/[group]/[name]. Never public, never serialized, only used by [Codes]' own registry
+ * lookup.
  *
- * An extension rather than an interface member since Kotlin interfaces can't declare `internal`
- * members.
+ * [CodesToHttp]/[CodesToGrpc]'s `overrides` maps stay `Map<String, Int>` since that constructor
+ * signature is already published and this release can't break it. They use [Status.key] instead,
+ * a string built from the same fields as this class.
  */
-internal val Status.id: String get() = "$origin.$group.$name"
+internal data class StatusKey(
+    val origin: String,
+    val scope: String,
+    val group: String,
+    val name: String,
+)
+
+/**
+ * Builds this [Status]'s [StatusKey]. An extension rather than an interface member since Kotlin
+ * interfaces can't declare `internal` members.
+ */
+internal val Status.statusKey: StatusKey
+    get() = StatusKey(origin = origin, scope = scope, group = group, name = name)
+
+/**
+ * String form of [statusKey], for [CodesToHttp]/[CodesToGrpc]'s `overrides` maps. Their
+ * constructor and `DEFAULT_OVERRIDES` are public, so they can't declare an `internal`-typed key
+ * (Kotlin won't let a public signature expose an internal type) without breaking an
+ * already-published API. Same collision safety as [StatusKey] otherwise: scoped by
+ * origin+scope+group+name, not just origin+group+name like the old `id` this replaces.
+ */
+internal val Status.key: String
+    get() = statusKey.let { "${it.origin}:${it.scope}:${it.group}:${it.name}" }
+
+/**
+ * Public, display-oriented, `:`-delimited identity for logging and debugging. Not for lookups
+ * or comparison, since [Status.scope] is consumer-defined and can change over time. See [code]
+ * for a value that's actually safe to compare across releases.
+ *
+ * Feeds into [toProblemDetail]'s RFC 9457 `type` construction by default (see
+ * [defaultTypeBuilder]). If you rely on `type` staying stable, [Status.origin]/[Status.scope]
+ * inherit that same obligation: they're consumer-defined and only as stable as you keep them.
+ */
+val Status.path: String
+    get() = if (scope.isNotEmpty()) "$origin:$scope" else origin
+
+/**
+ * Public, `:`-delimited identity built entirely from hard-rule, compiler-enforced fields
+ * ([success], [group], [name]). Safe to log, diff, or compare across releases, unlike [path].
+ *
+ * Not unique. Two [Status]es can share the same [code] while differing in [Status.origin]/
+ * [Status.scope] (e.g. two different consumers both defining a `Failed.Rejected("CONFLICT", ...)`).
+ * Do not use [code] for identity, lookup, or equality checks. Compare fields directly, or use
+ * the internal `StatusKey` (origin+scope+group+name) if you're inside this module.
+ */
+val Status.code: String
+    get() = "${if (success) "Passed" else "Failed"}:$group:$name"
+
+/** JS/TS-reachable proxy for [Status.path], see [Codes]'s KDoc for why these proxies exist. */
+@JsExport
+fun statusPath(status: Status): String = status.path
+
+/** JS/TS-reachable proxy for [Status.code], see [Codes]'s KDoc for why these proxies exist. */
+@JsExport
+fun statusCode(status: Status): String = status.code
 
 /**
  * Parent sealed type for all non-failure statuses (success = true for every subtype).
@@ -155,6 +229,7 @@ sealed class Passed : Status {
         override val name: String,
         override val message: String,
         override val origin: String = StatusConstants.CUSTOM,
+        override val scope: String = "",
     ) : Passed() {
         companion object {
             @JvmField
@@ -245,6 +320,7 @@ sealed class Passed : Status {
         override val name: String,
         override val message: String,
         override val origin: String = StatusConstants.CUSTOM,
+        override val scope: String = "",
     ) : Passed() {
         companion object {
             @JvmField
@@ -310,6 +386,7 @@ sealed class Passed : Status {
         override val name: String,
         override val message: String,
         override val origin: String = StatusConstants.CUSTOM,
+        override val scope: String = "",
     ) : Passed() {
         companion object {
             @JvmField
@@ -373,6 +450,7 @@ sealed class Passed : Status {
         override val name: String,
         override val message: String,
         override val origin: String = StatusConstants.CUSTOM,
+        override val scope: String = "",
     ) : Passed() {
         companion object {
             @JvmField
@@ -467,6 +545,7 @@ sealed class Failed : Status {
         override val name: String,
         override val message: String,
         override val origin: String = StatusConstants.CUSTOM,
+        override val scope: String = "",
     ) : Failed() {
         companion object {
             @JvmField
@@ -530,6 +609,7 @@ sealed class Failed : Status {
         override val name: String,
         override val message: String,
         override val origin: String = StatusConstants.CUSTOM,
+        override val scope: String = "",
     ) : Failed() {
         companion object {
             @JvmField
@@ -593,6 +673,7 @@ sealed class Failed : Status {
         override val name: String,
         override val message: String,
         override val origin: String = StatusConstants.CUSTOM,
+        override val scope: String = "",
     ) : Failed() {
         companion object {
             @JvmField
@@ -662,6 +743,7 @@ sealed class Failed : Status {
         override val name: String,
         override val message: String,
         override val origin: String = StatusConstants.CUSTOM,
+        override val scope: String = "",
     ) : Failed() {
         companion object {
             @JvmField

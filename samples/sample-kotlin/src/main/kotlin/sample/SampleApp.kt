@@ -15,15 +15,24 @@ import kiit.codes.Status
 import kiit.codes.StatusException
 import kiit.codes.Succeeded
 import kiit.codes.Unserved
+import kiit.codes.code
+import kiit.codes.formats.Catalog
+import kiit.codes.formats.CodesToProblem
+import kiit.codes.formats.ErrorItem
+import kiit.codes.formats.toCodeDetail
+import kiit.codes.path
 import kotlin.random.Random
 
 private val http = CodesToHttp()
+private val catalog = Catalog.of(mapOf("com.stripe" to "https://stripe.com/problems"))
+private val problems = CodesToProblem(catalog, http)
 
 fun main() {
     test0()
     test1()
     test2()
     test3()
+    test4()
 }
 
 fun test1() {
@@ -113,6 +122,66 @@ fun test3() {
     println(check4)
     println(check5)
     println(check6)
+}
+
+fun test4() {
+    // Custom, consumer-defined Status: a non-kiit origin plus an internal-organization scope,
+    // distinct from kiit-codes' own built-in registry (see Codes.kt).
+    val duplicateCharge =
+        Rejected(
+            name = "DUPLICATE_CHARGE",
+            message = "This charge has already been processed",
+            origin = "com.stripe",
+            scope = "payments.cards",
+        )
+    println("path: ${duplicateCharge.path}") // com.stripe:payments.cards
+    println("code: ${duplicateCharge.code}") // Failed:Rejected:DUPLICATE_CHARGE
+
+    // Two independent converters off the same Status, pick whichever fits the boundary:
+
+    // CodesToProblem.build: the RFC 9457 shape, for an HTTP API response. baseUrl comes from
+    // catalog, registered above for "com.stripe" (a built-in Status needs no registration, it
+    // defaults to kiit-codes' own taxonomy docs).
+    val stripeProblem = problems.build(duplicateCharge)
+    println("[rfc]  type: ${stripeProblem.type}")
+    println("[rfc]  title: ${stripeProblem.title}")
+    println("[rfc]  status: ${stripeProblem.status}")
+
+    // toCodeDetail: kiit-codes' own shape, no baseUrl or HTTP status needed, since path/code are
+    // already a complete identity. Useful for internal service-to-service calls, background jobs,
+    // and anywhere else an HTTP-shaped response doesn't apply.
+    val stripeCode = toCodeDetail(duplicateCharge)
+    println("[kiit] path: ${stripeCode.path}")
+    println("[kiit] code: ${stripeCode.code}")
+    println("[kiit] success: ${stripeCode.success}")
+    println("[kiit] message: ${stripeCode.message}")
+    println("[kiit] status: ${stripeCode.status}") // null, no mapping supplied
+
+    // Pass a mapping when this shape is still going out over HTTP and the status is worth
+    // carrying alongside it.
+    val stripeCodeWithStatus = toCodeDetail(duplicateCharge, mapping = http)
+    println("[kiit] status (with mapping): ${stripeCodeWithStatus.status}")
+
+    // An Err.ErrorList populates errors[], one ErrorDetail per wrapped Err, in both shapes.
+    val validationErr =
+        Err.ErrorList(
+            errors = listOf(Err.on("phone", "1234567890123", "Too long")),
+            message = "Validation failed",
+        )
+    val validationProblem = problems.build(Invalid.INVALID_VALUE, validationErr)
+    val validationCode = toCodeDetail(Invalid.INVALID_VALUE, validationErr)
+    println("[rfc]  validation type: ${validationProblem.type}")
+    println("[kiit] validation code: ${validationCode.code}")
+    println("[kiit] validation errors: ${validationCode.errors}")
+
+    // Custom error shape: supply your own ErrorItem when field + message isn't enough.
+    data class DetailedError(override val field: String?, override val message: String, val hint: String) : ErrorItem
+    val customCode =
+        toCodeDetail(Invalid.INVALID_VALUE, validationErr) { err ->
+            DetailedError((err as? Err.ErrorField)?.field, err.message, hint = "check formatting")
+        }
+    println("[custom] code: ${customCode.code}")
+    println("[custom] errors: ${customCode.errors}")
 }
 
 fun validatePhone(phone: String, caller: String = "guest"): Checked {

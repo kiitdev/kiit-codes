@@ -244,10 +244,10 @@ class CodesToHttpTest {
     }
 
     /**
-     * [overrides] is keyed by [Status.id] (origin+group+name), not full structural equality. A
-     * status sharing NOT_FOUND's identity but a different message still resolves to its
-     * override, since [Status] being a data class would otherwise compare every field including
-     * [Status.message].
+     * [overrides] is keyed by `StatusKey` (origin+area+domain+group+name), not full structural
+     * equality. A status sharing NOT_FOUND's identity but a different message still resolves to
+     * its override, since [Status] being a data class would otherwise compare every field
+     * including [Status.message].
      */
     @Test
     fun overrideMatchesByIdentityNotFullStatusEquality() {
@@ -257,9 +257,9 @@ class CodesToHttpTest {
 
     /**
      * A custom status can share a built-in override's origin+name while belonging to a
-     * completely different group, e.g. this shares [Succeeded.CREATED]'s origin ("kiit") and
-     * name ("CREATED") even though it's a [Failed.Invalid]. Since [Status.id] includes group,
-     * the two don't actually share an id, so this must still resolve to Invalid's own group
+     * completely different group, e.g. this shares [Succeeded.CREATED]'s origin ("dev.kiit") and
+     * name ("CREATED") even though it's a [Failed.Invalid]. Since `StatusKey` includes group,
+     * the two don't actually share a key, so this must still resolve to Invalid's own group
      * default, not CREATED's 201.
      */
     @Test
@@ -385,9 +385,43 @@ class CodesToHttpTest {
      */
     @Test
     fun toStatusStaysInSyncWithCustomOverridesNotJustDefaults() {
-        val custom = CodesToHttp(overrides = mapOf(Unserved.TIMEOUT.id to 599))
+        val custom = CodesToHttp(overrides = mapOf(Unserved.TIMEOUT.key to 599))
         assertSame(Unserved.TIMEOUT, custom.toStatus(599))
         assertNull(custom.toStatus(504)) // TIMEOUT no longer resolves to 504 for this instance
+    }
+
+    // -------------------------------------------------------------------------
+    // toCode: scope is just a field on the same concrete type (no wrapper). StatusKey includes
+    // it, so a scoped copy is a distinct override-map identity from the bare status. A scoped
+    // variant only inherits a built-in's own override if that exact scope is also registered,
+    // otherwise it falls through to the group default like any other unregistered status.
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun toCodeIsUnaffectedByScopeWhenTheGroupDefaultAlreadyApplies() {
+        // RULE_VIOLATION has no override of its own to begin with, so there's nothing scope could
+        // cause it to lose.
+        val scoped = Rejected.RULE_VIOLATION.copy(scope = "payments.cards")
+        assertEquals(409, http.toCode(scoped)) // Rejected's group default, unaffected by scope
+    }
+
+    @Test
+    fun toCodeFallsBackToGroupDefaultWhenAScopedCopyHasNoOwnOverride() {
+        // CREATED's 201 override is registered for the bare (unscoped) status only; scoping it
+        // is a distinct StatusKey, so it falls through to Succeeded's plain group default.
+        val scoped = Succeeded.CREATED.copy(scope = "payments.cards")
+        assertEquals(200, http.toCode(scoped))
+    }
+
+    @Test
+    fun overrideCanBeScopedToOneScopeWithoutAffectingTheBareOrOtherScopes() {
+        val cardsCreated = Succeeded.CREATED.copy(scope = "payments.cards")
+        val walletsCreated = Succeeded.CREATED.copy(scope = "payments.wallets")
+        val scoped = CodesToHttp(overrides = CodesToHttp.DEFAULT_OVERRIDES + (cardsCreated.key to 250))
+
+        assertEquals(250, scoped.toCode(cardsCreated)) // scope-specific override applies
+        assertEquals(200, scoped.toCode(walletsCreated)) // different scope, no own override, falls to the group default
+        assertEquals(201, scoped.toCode(Succeeded.CREATED)) // bare status, unaffected by the scoped override
     }
 }
 
@@ -495,9 +529,9 @@ class CodesToGrpcTest {
 
     /**
      * A custom status can share a built-in override's origin+name while belonging to a different
-     * group, e.g. this shares [Invalid.NOT_FOUND]'s origin ("kiit") and name ("NOT_FOUND")
-     * (overridden to 5) even though it's a [Passed.Succeeded]. Since [Status.id] includes group,
-     * the two don't actually share an id, so this must still resolve to Passed's own group
+     * group, e.g. this shares [Invalid.NOT_FOUND]'s origin ("dev.kiit") and name ("NOT_FOUND")
+     * (overridden to 5) even though it's a [Passed.Succeeded]. Since `StatusKey` includes group,
+     * the two don't actually share a key, so this must still resolve to Passed's own group
      * default (0), not NOT_FOUND's 5.
      */
     @Test
@@ -581,9 +615,17 @@ class CodesToGrpcTest {
 
     @Test
     fun toStatusStaysInSyncWithCustomOverridesNotJustDefaults() {
-        val custom = CodesToGrpc(overrides = mapOf(Unserved.TIMEOUT.id to 99))
+        val custom = CodesToGrpc(overrides = mapOf(Unserved.TIMEOUT.key to 99))
         assertSame(Unserved.TIMEOUT, custom.toStatus(99))
         assertNull(custom.toStatus(4)) // TIMEOUT no longer resolves to 4 for this instance
+    }
+
+    @Test
+    fun toCodeFallsBackToGroupDefaultWhenAScopedCopyHasNoOwnOverride() {
+        // UNAUTHENTICATED's 16 override is registered for the bare (unscoped) status only;
+        // scoping it is a distinct StatusKey, so it falls through to Restricted's group default.
+        val scoped = Restricted.UNAUTHENTICATED.copy(scope = "payments.cards")
+        assertEquals(7, grpc.toCode(scoped))
     }
 }
 

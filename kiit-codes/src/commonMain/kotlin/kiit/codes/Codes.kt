@@ -19,9 +19,9 @@ import kotlin.jvm.JvmStatic
  * 2. [Codes] itself declares no constants. Each one lives on its own type's companion object so
  *    IDE autocomplete stays scoped per group. This object is just the aggregate list and
  *    reverse lookup, see [Passed] and [Failed] for the actual values.
- * 3. Uniqueness of every built-in [Status]'s [Status.id] (origin+group+name) is enforced at
- *    object init time, a collision fails loudly right away instead of surfacing as a silent
- *    wrong lookup later, see [statusFor].
+ * 3. Uniqueness of every built-in [Status]'s [StatusKey] (origin+scope+group+name) is enforced
+ *    at object init time. A collision fails loudly right away, instead of surfacing later as a
+ *    silent wrong lookup, see [statusFor].
  * 4. [codesAll] and [codesStatusFor] are thin proxy functions for JS/TS callers, since plain
  *    Kotlin `object`s like this one don't export usable static members to JS.
  */
@@ -49,18 +49,19 @@ object Codes {
             Unserved.INTERNAL, Unserved.DATA_LOSS, Unserved.DEGRADED, Unserved.LEGAL_BLOCK, Unserved.ABORTED,
         )
 
-    private val byId: Map<String, Status> = all.associateBy { it.id }
+    private val byKey: Map<StatusKey, Status> = all.associateBy { it.statusKey }
 
     init {
-        check(byId.size == all.size) {
-            val duplicates = all.groupBy { it.id }.filterValues { it.size > 1 }.keys
+        check(byKey.size == all.size) {
+            val duplicates = all.groupBy { it.statusKey }.filterValues { it.size > 1 }.keys
             "Duplicate Status codes detected in Codes registry: $duplicates"
         }
     }
 
     /** Looks up a built-in [Status] by its [Status.origin]/[Status.group]/[Status.name], or null if none matches. */
     @JvmStatic
-    fun statusFor(origin: String, group: String, name: String): Status? = byId["$origin.$group.$name"]
+    fun statusFor(origin: String, group: String, name: String): Status? =
+        byKey[StatusKey(origin = origin, scope = "", group = group, name = name)]
 }
 
 /** JS/TS-reachable proxy for [Codes.all], see [Codes]'s KDoc for why this exists. */
@@ -113,7 +114,7 @@ open class CodesToHttp
         private val overrides: Map<String, Int> = DEFAULT_OVERRIDES,
     ) : CodeLookup {
         override fun toCode(status: Status): Int {
-            overrides[status.id]?.let { return it }
+            overrides[status.key]?.let { return it }
             return when (status) {
                 is Passed.Succeeded -> 200
                 is Passed.Pending -> 202
@@ -143,30 +144,30 @@ open class CodesToHttp
             @JvmField
             val DEFAULT_OVERRIDES: Map<String, Int> =
                 mapOf(
-                    Succeeded.CREATED.id to 201,
-                    Succeeded.HANDLED.id to 204,
-                    Pending.CONFIRM.id to 200,
-                    Excluded.CANCELLED.id to 499,
-                    Pending.REDIRECTED.id to 307,
-                    Invalid.NOT_FOUND.id to 404,
-                    Rejected.NOT_EXISTS.id to 404,
-                    Restricted.FORBIDDEN.id to 403,
+                    Succeeded.CREATED.key to 201,
+                    Succeeded.HANDLED.key to 204,
+                    Pending.CONFIRM.key to 200,
+                    Excluded.CANCELLED.key to 499,
+                    Pending.REDIRECTED.key to 307,
+                    Invalid.NOT_FOUND.key to 404,
+                    Rejected.NOT_EXISTS.key to 404,
+                    Restricted.FORBIDDEN.key to 403,
                     // closer to Forbidden than Unauthenticated, the caller is known
-                    Restricted.SUSPENDED.id to 403,
-                    Restricted.LOCKED.id to 423,
-                    Rejected.EXPIRED.id to 410,
-                    Rejected.GONE.id to 410,
+                    Restricted.SUSPENDED.key to 403,
+                    Restricted.LOCKED.key to 423,
+                    Rejected.EXPIRED.key to 410,
+                    Rejected.GONE.key to 410,
                     // CONFLICT needs no override, 409 is already Rejected's own group default
-                    Invalid.PAYLOAD_TOO_LARGE.id to 413,
+                    Invalid.PAYLOAD_TOO_LARGE.key to 413,
                     // HTTP has no separate "unsupported" code
-                    Unserved.UNSUPPORTED.id to 501,
+                    Unserved.UNSUPPORTED.key to 501,
                     // deadline exceeded waiting on something else, not a slow client (408)
-                    Unserved.TIMEOUT.id to 504,
-                    Unserved.RATE_LIMITED.id to 429,
+                    Unserved.TIMEOUT.key to 504,
+                    Unserved.RATE_LIMITED.key to 429,
                     // same axis as RATE_LIMITED, HTTP doesn't distinguish the two
-                    Unserved.RESOURCE_LIMITED.id to 429,
-                    Unserved.UNEXPECTED.id to 500,
-                    Unserved.LEGAL_BLOCK.id to 451,
+                    Unserved.RESOURCE_LIMITED.key to 429,
+                    Unserved.UNEXPECTED.key to 500,
+                    Unserved.LEGAL_BLOCK.key to 451,
                 )
 
             /**
@@ -204,7 +205,7 @@ open class CodesToGrpc
         private val overrides: Map<String, Int> = DEFAULT_OVERRIDES,
     ) : CodeLookup {
         override fun toCode(status: Status): Int {
-            overrides[status.id]?.let { return it }
+            overrides[status.key]?.let { return it }
             return when (status) {
                 is Passed.Succeeded -> 0
                 is Passed.Pending -> 0
@@ -230,30 +231,30 @@ open class CodesToGrpc
             @JvmField
             val DEFAULT_OVERRIDES: Map<String, Int> =
                 mapOf(
-                    Excluded.CANCELLED.id to 1,
-                    Restricted.UNAUTHENTICATED.id to 16,
-                    Invalid.INVALID_VALUE.id to 3,
-                    Invalid.NOT_FOUND.id to 5,
-                    Invalid.OUT_OF_RANGE.id to 11,
-                    Restricted.DENIED.id to 7,
+                    Excluded.CANCELLED.key to 1,
+                    Restricted.UNAUTHENTICATED.key to 16,
+                    Invalid.INVALID_VALUE.key to 3,
+                    Invalid.NOT_FOUND.key to 5,
+                    Invalid.OUT_OF_RANGE.key to 11,
+                    Restricted.DENIED.key to 7,
                     // ALREADY_EXISTS, was previously falling through to Rejected's group default
-                    Rejected.CONFLICT.id to 6,
-                    Rejected.PRECONDITION_FAILED.id to 9,
+                    Rejected.CONFLICT.key to 6,
+                    Rejected.PRECONDITION_FAILED.key to 9,
                     // takes over gRPC's UNIMPLEMENTED slot now that UNIMPLEMENTED and UNSUPPORTED merged
                     // into one Status code
-                    Unserved.UNSUPPORTED.id to 12,
-                    Unserved.UNREACHABLE.id to 14,
-                    Unserved.TIMEOUT.id to 4,
-                    Unserved.RATE_LIMITED.id to 8,
+                    Unserved.UNSUPPORTED.key to 12,
+                    Unserved.UNREACHABLE.key to 14,
+                    Unserved.TIMEOUT.key to 4,
+                    Unserved.RATE_LIMITED.key to 8,
                     // RESOURCE_EXHAUSTED, same axis as RATE_LIMITED
-                    Unserved.RESOURCE_LIMITED.id to 8,
-                    Unserved.UNEXPECTED.id to 2,
-                    Unserved.INTERNAL.id to 13,
-                    Unserved.DATA_LOSS.id to 15,
+                    Unserved.RESOURCE_LIMITED.key to 8,
+                    Unserved.UNEXPECTED.key to 2,
+                    Unserved.INTERNAL.key to 13,
+                    Unserved.DATA_LOSS.key to 15,
                     // RESOURCE_EXHAUSTED, a widely used real-world convention, not an official mapping
-                    Invalid.PAYLOAD_TOO_LARGE.id to 8,
+                    Invalid.PAYLOAD_TOO_LARGE.key to 8,
                     // exact match, closes the previously honest null gap at 10
-                    Unserved.ABORTED.id to 10,
+                    Unserved.ABORTED.key to 10,
                     // DEGRADED and LEGAL_BLOCK have no closer gRPC equivalent, so they fall through
                     // to Unserved's own group default (13, INTERNAL)
                 )
