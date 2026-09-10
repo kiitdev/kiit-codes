@@ -48,29 +48,6 @@ class Problems(private val catalog: Catalog,
      * Builds an RFC 9457 [Problem] for [status] (and optionally [err]), the exact structure
      * https://www.rfc-editor.org/rfc/rfc9457.html describes. [status] and [Status] itself are never
      * modified.
-     *
-     * [baseUrl] is only defaulted for kiit-codes' own built-ins ([StatusConstants.KIIT] origin),
-     * since `kiit-codes` genuinely documents those. Every other [Status.origin] (a consumer's own,
-     * or a future extension) must supply [baseUrl] explicitly. A silent, plausible-looking default
-     * pointing nowhere real would be worse than no default, so this throws instead. That's a clear,
-     * developer-time configuration error at this converter's own boundary, not a runtime invariant
-     * on [Status] itself. [Status.scope] and the rest of [Status]'s fields still carry no runtime
-     * validation of their own, by design, so behavior stays consistent across every KMP target.
-     *
-     * [typeBuilder] (default [defaultTypeBuilder]) controls how `type`'s path segment is built from
-     * [status]; [baseUrl] is always prepended to its result.
-     *
-     * Field mapping:
-     * - [baseUrl] + [typeBuilder] -> [Problem.type].
-     * - [Status.message] -> [Problem.title].
-     * - [CodesToHttp.toCode] -> [Problem.status].
-     * - [Err.message] -> [Problem.detail] (occurrence-specific, never on [status] itself).
-     * - [Err.ref] -> [Problem.instance].
-     * - [Err.ErrorList.errors] -> [Problem.errors], any other [Err] shape leaves it null.
-     *
-     * Not `@JsExport`ed directly, since a function-typed parameter like [typeBuilder] isn't
-     * representable in Kotlin/JS's export surface. JS/TS consumers who only need the default
-     * construction, without the override, can use [problemDetailFor] instead.
      */
     @JvmOverloads
     fun convert(
