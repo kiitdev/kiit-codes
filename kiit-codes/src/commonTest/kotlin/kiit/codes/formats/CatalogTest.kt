@@ -23,8 +23,8 @@ class CatalogTest {
     }
 
     @Test
-    fun ofOverridesKiitDefaultWhenSupplied() {
+    fun ofIgnoresASuppliedKiitOverride() {
         val catalog = Catalog.of(mapOf(StatusConstants.KIIT to "https://example.com/problems"))
-        assertEquals("https://example.com/problems", catalog.baseUrlFor(StatusConstants.KIIT))
+        assertEquals("https://www.kiit.dev/docs/kiit-codes", catalog.baseUrlFor(StatusConstants.KIIT))
     }
 }

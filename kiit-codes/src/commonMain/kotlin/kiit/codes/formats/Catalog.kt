@@ -13,8 +13,8 @@ import kotlin.jvm.JvmStatic
  * Immutable map of [kiit.codes.Status.origin] to the `baseUrl` [CodesToProblem] should use for
  * it. Build one via [Catalog.of].
  *
- * [StatusConstants.KIIT] is always present, defaulting to kiit-codes' own taxonomy docs, unless
- * overridden in [of]'s [baseUrls].
+ * [StatusConstants.KIIT] is always present and always resolves to kiit-codes' own taxonomy
+ * docs — [of]'s [baseUrls] cannot override it, kiit-origin statuses always point back here.
  */
 @JsExport
 class Catalog private constructor(private val baseUrls: Map<String, String>) {
@@ -24,10 +24,11 @@ class Catalog private constructor(private val baseUrls: Map<String, String>) {
     companion object {
         private const val DEFAULT_KIIT_BASE_URL = "https://www.kiit.dev/docs/kiit-codes"
 
-        /** Builds a [Catalog] from [baseUrls], upserting [StatusConstants.KIIT]'s default entry. */
+        /** Builds a [Catalog] from [baseUrls], with [StatusConstants.KIIT] fixed to its own docs. */
         @JvmStatic
         @JvmOverloads
-        fun of(baseUrls: Map<String, String> = emptyMap()): Catalog =
-            Catalog(mapOf(StatusConstants.KIIT to DEFAULT_KIIT_BASE_URL) + baseUrls)
+        fun of(baseUrls: Map<String, String> = emptyMap()): Catalog {
+            return Catalog(baseUrls + (StatusConstants.KIIT to DEFAULT_KIIT_BASE_URL))
+        }
     }
 }
