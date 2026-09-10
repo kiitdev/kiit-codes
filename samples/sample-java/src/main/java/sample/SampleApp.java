@@ -18,6 +18,7 @@ import kiit.codes.formats.ErrorItem;
 import kiit.codes.formats.Problem;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Living documentation of kiit-codes from plain Java. Each section below only compiles because
@@ -77,8 +78,7 @@ public class SampleApp {
 
         // Catalog supplies baseUrl per origin; a built-in Status needs no registration, it
         // defaults to kiit-codes' own https://kiit.dev/problems.
-        Catalog catalog = new Catalog();
-        catalog.register("com.stripe", "https://stripe.com/problems");
+        Catalog catalog = Catalog.of(Map.of("com.stripe", "https://stripe.com/problems"));
         CodesToProblem problems = new CodesToProblem(catalog, http);
 
         // Two independent converters off the same Status, pick whichever fits the boundary:
