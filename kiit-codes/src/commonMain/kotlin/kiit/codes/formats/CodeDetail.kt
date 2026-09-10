@@ -44,7 +44,12 @@ data class CodeDetail<T : ErrorItem>(
 /** Builds the default [CodeDetail]\<[ErrorDetail]\> for [status] (and optionally [err]). */
 @JsExport
 @JvmOverloads
-fun toCodeDetail(status: Status, err: Err? = null): CodeDetail<ErrorDetail> = toCodeDetail(status, err, ::defaultErrorItem)
+fun toCodeDetail(
+    status: Status,
+    err: Err? = null,
+): CodeDetail<ErrorDetail> {
+    return toCodeDetail(status, err, ::defaultErrorItem)
+}
 
 /**
  * Builds a [CodeDetail]\<[T]\> for [status], mapping each entry of an [Err.ErrorList] through

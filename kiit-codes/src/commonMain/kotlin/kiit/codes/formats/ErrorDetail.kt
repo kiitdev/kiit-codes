@@ -33,5 +33,4 @@ data class ErrorDetail(
 ) : ErrorItem
 
 /** Builds the default [ErrorDetail] from one [Err], used by the non-generic converter overloads. */
-internal fun defaultErrorItem(err: Err): ErrorDetail =
-    ErrorDetail((err as? Err.ErrorField)?.field, err.message)
+internal fun defaultErrorItem(err: Err): ErrorDetail = ErrorDetail((err as? Err.ErrorField)?.field, err.message)

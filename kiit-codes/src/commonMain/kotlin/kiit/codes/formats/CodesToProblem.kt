@@ -21,26 +21,35 @@ import kotlin.jvm.JvmOverloads
 class CodesToProblem(private val catalog: Catalog, private val mapping: CodesToHttp) {
     /** Builds a [Problem]\<[kiit.codes.formats.ErrorDetail]\> for [status], baseUrl from [catalog]. */
     @JvmOverloads
-    fun build(status: Status, err: Err? = null, typeBuilder: (Status) -> String = ::defaultTypeBuilder): Problem<ErrorDetail> =
-        buildCustom(status, err, ::defaultErrorItem, typeBuilder)
+    fun build(
+        status: Status,
+        err: Err? = null,
+        typeBuilder: (Status) -> String = ::defaultTypeBuilder,
+    ): Problem<ErrorDetail> {
+        return buildCustom(status, err, typeBuilder, ::defaultErrorItem)
+    }
 
     /**
      * Builds a [Problem]\<[T]\>, mapping each [Err.ErrorList] entry through [mapper]. Use this for
      * anything richer than field + message, see [ErrorItem]. Named differently from [build]
      * (not an overload) since both take a trailing function parameter — Kotlin can't tell a
      * `build(status, err) { ... }` call apart from one meant for [build]'s own `typeBuilder`.
+     *
+     * [mapper] comes last (after the defaulted [typeBuilder]) so it can be passed as a trailing
+     * lambda — Kotlin's trailing-lambda syntax always binds to a function's last parameter.
      */
     fun <T : ErrorItem> buildCustom(
         status: Status,
         err: Err?,
-        mapper: (Err) -> T,
         typeBuilder: (Status) -> String = ::defaultTypeBuilder,
+        mapper: (Err) -> T,
     ): Problem<T> {
-        val baseUrl = catalog.baseUrlFor(status.origin)
-            ?: throw IllegalArgumentException(
-                "No baseUrl registered for origin '${status.origin}'. Register one via Catalog.register().",
-            )
-        return toProblem(status, err, baseUrl, mapper, typeBuilder, mapping)
+        val baseUrl =
+            catalog.baseUrlFor(status.origin)
+                ?: throw IllegalArgumentException(
+                    "No baseUrl registered for origin '${status.origin}'. Register one via Catalog.register().",
+                )
+        return toProblem(status, err, baseUrl, typeBuilder, mapper)
     }
 
     /** Same as [build], but [baseUrl] is supplied directly instead of looked up from [catalog]. */
@@ -50,33 +59,46 @@ class CodesToProblem(private val catalog: Catalog, private val mapping: CodesToH
         err: Err? = null,
         baseUrl: String,
         typeBuilder: (Status) -> String = ::defaultTypeBuilder,
-    ): Problem<ErrorDetail> = convertCustom(status, err, baseUrl, ::defaultErrorItem, typeBuilder)
+    ): Problem<ErrorDetail> {
+        return convertCustom(status, err, baseUrl, typeBuilder, ::defaultErrorItem)
+    }
 
     /** Generic form of [convert], mapping each [Err.ErrorList] entry through [mapper]. */
     fun <T : ErrorItem> convertCustom(
         status: Status,
         err: Err?,
         baseUrl: String,
-        mapper: (Err) -> T,
         typeBuilder: (Status) -> String = ::defaultTypeBuilder,
-    ): Problem<T> = toProblem(status, err, baseUrl, mapper, typeBuilder, mapping)
-}
+        mapper: (Err) -> T,
+    ): Problem<T> = toProblem(status, err, baseUrl, typeBuilder, mapper)
 
-private fun <T : ErrorItem> toProblem(
-    status: Status,
-    err: Err?,
-    baseUrl: String,
-    mapper: (Err) -> T,
-    typeBuilder: (Status) -> String,
-    mapping: CodesToHttp,
-): Problem<T> {
-    val type = "$baseUrl/${typeBuilder(status)}"
-    val code = mapping.toCode(status)
-    return when (err) {
-        is Err.ErrorList ->
-            Problem(type = type, title = status.message, status = code, detail = err.message, errors = err.errors.map(mapper))
-        else ->
-            Problem(type = type, title = status.message, status = code, detail = err?.message, instance = err?.ref?.toString())
+    private fun <T : ErrorItem> toProblem(
+        status: Status,
+        err: Err?,
+        baseUrl: String,
+        typeBuilder: (Status) -> String,
+        mapper: (Err) -> T,
+    ): Problem<T> {
+        val type = "$baseUrl/${typeBuilder(status)}"
+        val code = mapping.toCode(status)
+        return when (err) {
+            is Err.ErrorList ->
+                Problem(
+                    type = type,
+                    title = status.message,
+                    status = code,
+                    detail = err.message,
+                    errors = err.errors.map(mapper),
+                )
+            else ->
+                Problem(
+                    type = type,
+                    title = status.message,
+                    status = code,
+                    detail = err?.message,
+                    instance = err?.ref?.toString(),
+                )
+        }
     }
 }
 
