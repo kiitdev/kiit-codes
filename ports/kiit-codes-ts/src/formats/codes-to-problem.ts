@@ -107,3 +107,8 @@ export function CodesToProblem(catalog: Catalog, mapping: CodeLookup) {
 
   return { build, buildCustom, convert, convertCustom };
 }
+
+/** One-shot convenience: builds a `Problem<ErrorDetail>` without holding onto a `CodesToProblem`. */
+export function problemFor(catalog: Catalog, mapping: CodeLookup, status: Status, err?: Err): Problem<ErrorDetail> {
+  return CodesToProblem(catalog, mapping).build(status, err);
+}
