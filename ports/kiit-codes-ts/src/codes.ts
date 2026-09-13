@@ -1,5 +1,5 @@
 /**
- * The Code tier of the Status -> Group -> Code taxonomy: the built-in registry of every code
+ * The Code tier of the Status -> Group -> Code taxonomy: the built-in `Codes` set of every code
  * defined in groups.ts, plus protocol mapping (currently HTTP; gRPC and custom composition are
  * deferred).
  *
@@ -105,13 +105,13 @@ const byKey = new Map<string, Status>();
 for (const status of ALL_STATUSES) {
   const key = statusKey(status);
   if (byKey.has(key)) {
-    throw new Error(`Duplicate Status code detected in Codes registry: ${key}`);
+    throw new Error(`Duplicate Status code detected in Codes: ${key}`);
   }
   byKey.set(key, status);
 }
 
 /**
- * Built-in registry of standard `Status` codes covering common operation outcomes.
+ * Built-in set of standard `Status` codes covering common operation outcomes.
  *
  * 1. Using it is optional; these are sensible defaults. Custom codes can be created by calling
  *    any group's own constructor directly (see groups.ts), only the eight groups are fixed.
@@ -237,7 +237,7 @@ export namespace CodesToHttp {
  * `toCode`, under `DEFAULT_OVERRIDES` or a group default. See `toStatus`.
  *
  * `422 Unprocessable Entity` has no dedicated status mapping: the code that previously held it,
- * `INVALID_ENTITY`, was removed from the registry. `toStatus` returns `undefined` for 422, and
+ * `INVALID_ENTITY`, was removed from `Codes`. `toStatus` returns `undefined` for 422, and
  * anything converting `Invalid.INVALID_VALUE` to HTTP falls through to 400.
  */
 const CANONICAL_PREFERENCE: readonly Status[] = [
