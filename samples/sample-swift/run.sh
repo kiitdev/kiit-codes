@@ -14,11 +14,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-FRAMEWORK_DIR="../../kiit-codes/build/bin/iosSimulatorArm64/debugFramework"
+FRAMEWORK_DIR="../../kiit-codes-kotlin/kiit-codes/build/bin/iosSimulatorArm64/debugFramework"
 
 if [[ ! -d "$FRAMEWORK_DIR/KiitCodes.framework" ]]; then
   echo "error: $FRAMEWORK_DIR/KiitCodes.framework not found." >&2
-  echo "Build it first: ./gradlew :kiit-codes:linkDebugFrameworkIosSimulatorArm64" >&2
+  echo "Build it first: (cd ../../kiit-codes-kotlin && ./gradlew :kiit-codes:linkDebugFrameworkIosSimulatorArm64)" >&2
   exit 1
 fi
 

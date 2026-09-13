@@ -9,7 +9,7 @@ set -euo pipefail
 #   npm login          # one-time, if not already authenticated
 #   ./scripts/publish-npm.sh
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../kiit-codes-kotlin"
 
 echo "==> Building the JS production library distribution"
 ./gradlew :kiit-codes:jsBrowserProductionLibraryDistribution

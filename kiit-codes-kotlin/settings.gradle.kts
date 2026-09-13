@@ -19,8 +19,14 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "kiit-codes"
+rootProject.name = "kiit-codes-kotlin"
 
 include(":kiit-codes")
 include(":samples:sample-kotlin")
 include(":samples:sample-java")
+
+// sample-kotlin and sample-java stay in the shared ./samples/ folder alongside sample-swift and
+// sample-ts, one level up from this settings file, rather than living under kiit-codes-kotlin/ —
+// see _prd/260910-kiit-codes-typescript/kiit-codes-structure.md.
+project(":samples:sample-kotlin").projectDir = file("../samples/sample-kotlin")
+project(":samples:sample-java").projectDir = file("../samples/sample-java")

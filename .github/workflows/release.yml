@@ -9,6 +9,9 @@ permissions:
 jobs:
   release:
     runs-on: macos-latest   # required for iOS target build/sign — Kotlin/Native iOS needs Xcode
+    defaults:
+      run:
+        working-directory: kiit-codes-kotlin
     steps:
       - uses: actions/checkout@v4
         with:
