@@ -166,10 +166,10 @@ Gradle itself already passes `--batch --pinentry-mode loopback` automatically wh
 ./gradlew :kiit-codes:assemble
 
 # Run the Kotlin sample app
-./gradlew :samples:sample-kotlin:run
+./gradlew :sample-kotlin:run
 
 # Run the Java sample app
-./gradlew :samples:sample-java:run
+./gradlew :sample-java:run
 ```
 
 ### Run the Swift sample app
