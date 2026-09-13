@@ -256,7 +256,7 @@ See [GitHub Issues](https://github.com/kiitdev/kiit-codes/issues) for current wo
 ## Requirements
 
 - Kotlin Multiplatform
-- JVM, Android, iOS (simulator, iosArm64, x64)
+- JVM, Android, iOS (simulator, iosArm64, x64), JS (Browser, Node.js)
 - No external runtime dependencies
 
 ## Contributing

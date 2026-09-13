@@ -1,6 +1,6 @@
 # kiit-codes — Build & Publish Guide
 
-All Gradle commands below are run from the **repository root**.
+All Gradle commands below are run from `kiit-codes-kotlin/` — the self-contained Gradle project root (not the outer repo root; see `_prd/260910-kiit-codes-typescript/kiit-codes-structure.md` for why the repo is laid out this way).
 
 ---
 
