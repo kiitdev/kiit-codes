@@ -1,6 +1,6 @@
 {
   "name": "@kiit/codes",
-  "version": "0.1.0",
+  "version": "0.9.0",
   "description": "Typed status and error codes for structured success and failure classification",
   "type": "module",
   "main": "./dist/index.js",
