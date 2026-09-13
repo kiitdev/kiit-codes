@@ -1,0 +1,41 @@
+{
+  "name": "@kiit/codes",
+  "version": "1.0.0",
+  "description": "Typed status and error codes for structured success and failure classification",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://kiit.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kiitdev/kiit-codes.git",
+    "directory": "kiit-codes-ts"
+  },
+  "bugs": {
+    "url": "https://github.com/kiitdev/kiit-codes/issues"
+  },
+  "author": "CodeHelix <https://kiit.dev>",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "^5.0.0"
+  }
+}
