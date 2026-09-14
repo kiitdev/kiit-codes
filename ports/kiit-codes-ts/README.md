@@ -49,6 +49,17 @@ function describe(status: Status): string {
 }
 ```
 
+## Publishing
+
+Run from the repo root (or use `../../scripts/publish-npm.sh` if you're already in this directory):
+
+```bash
+npm login          # one-time; verify with `npm whoami`
+./scripts/publish-npm.sh
+```
+
+The script runs typecheck/test/build, previews the package contents (`npm pack --dry-run`), asks for confirmation, then publishes. See [`BUILD.md`](../../BUILD.md#publish--npm-kiitdevcodes) for the CI-driven release path.
+
 ## Learn more
 
 - [Full taxonomy and design docs](https://www.kiit.dev/docs/kiit-codes) (Kotlin-focused, same taxonomy)
