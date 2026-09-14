@@ -132,7 +132,6 @@ fun showOverview(tasks: TaskService) {
     // Passed  = Succeeded  | Pending  | Excluded  | Information
     // Failed  = Restricted | Invalid  | Rejected  | Unserved
 
-    // ::example_start
     // Example 1: Usage of Status Codes
     // Let's start with a small example of using a few ( create one, and use 2 defaults )
     val title = "Get groceries"
