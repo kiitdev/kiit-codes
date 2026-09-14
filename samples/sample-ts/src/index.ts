@@ -1,92 +1,236 @@
 /**
- * Living documentation of kiit-codes from real TypeScript, type-checked (`npm run typecheck`)
- * against the actual generated `.d.ts`, not a hand-written stub. Mirrors the scenarios in
- * kiit-codes/src/jvmTest/java/kiit/codes/JavaInteropTest.java and samples/sample-java (everything
- * nests under a single `kiit` namespace import).
+ * Living documentation of @kiit/codes from real TypeScript, type-checked (`npm run typecheck`)
+ * against the actual native port, not a Kotlin/JS-compiled `.d.ts`. Mirrors the scenarios in
+ * samples/sample-kotlin and samples/sample-java, including the RFC 9457 / kiit-native format
+ * conversion from PR #29.
+ *
+ * Organized into one function per logical area, run in order at the bottom of this file.
  */
-import { kiit, kotlin } from "@kiit/codes"
-
-const { Passed, Failed, Err, Checked, CodesToHttp, RestrictedError, collect, codesAll, codesStatusFor } = kiit.codes
-const { KtList } = kotlin.collections
+import {
+  Succeeded,
+  Pending,
+  Excluded,
+  Information,
+  Restricted,
+  Invalid,
+  Rejected,
+  Unserved,
+  Err,
+  Checked,
+  CodesToHttp,
+  Codes,
+  Groups,
+  assertNever,
+  RestrictedError,
+  collect,
+  Catalog,
+  CodesToProblem,
+  toCodeDetail,
+} from "@kiit/codes";
+import type { Status, Passed, Failed, ErrorItem } from "@kiit/codes";
 
 function check(condition: boolean, label: string): void {
   if (!condition) {
-    throw new Error(`FAILED: ${label}`)
+    throw new Error(`FAILED: ${label}`);
   }
-  console.log(`ok: ${label}`)
+  console.log(`ok: ${label}`);
 }
 
-// Companion constant access: Passed.Succeeded.SUCCESS, Failed.Restricted.DENIED.
-const ok = Passed.Succeeded.SUCCESS
-const denied = Failed.Restricted.DENIED
-check(ok.name === "SUCCESS", "Passed.Succeeded.SUCCESS.name")
-check(denied.name === "DENIED", "Failed.Restricted.DENIED.name")
+const SEPARATOR = "=".repeat(60);
 
-// Err.of: optional trailing `ex` argument omitted.
-const err = Err.of("email is required")
-check(err.message === "email is required", "Err.of(message).message")
+function section(title: string): void {
+  console.log(`\n${SEPARATOR}`);
+  console.log(title);
+  console.log(SEPARATOR);
+}
 
-// CodesToHttp: no-arg constructor.
-const http = new CodesToHttp()
-check(http.toCode(ok) === 200, "CodesToHttp.toCode(SUCCESS) === 200")
-check(http.toCode(denied) === 401, "CodesToHttp.toCode(DENIED) === 401")
+/**
+ * Construction, HTTP mapping, and the built-in registry. No `new` anywhere - every group is a
+ * plain object, matching Kotlin's own `Succeeded(...)`-style construction exactly.
+ */
+function showCoreFunctionality(): void {
+  section("Core functionality");
+  const ok = Succeeded.SUCCESS;
+  const denied = Restricted.DENIED;
+  check(ok.name === "SUCCESS", "Succeeded.SUCCESS.name");
+  check(denied.name === "DENIED", "Restricted.DENIED.name");
 
-// Checked.success / Checked.failure: errors is a KtList<Err>, not a native array, so it needs
-// KtList.fromJsArray(...) to construct.
-const validEmail = Checked.success()
-check(validEmail.isValid, "Checked.success().isValid")
+  const http = CodesToHttp();
+  check(http.toCode(ok) === 200, "CodesToHttp().toCode(SUCCESS) === 200");
+  check(http.toCode(denied) === 401, "CodesToHttp().toCode(DENIED) === 401");
 
-const invalidEmail = Checked.failure(Failed.Invalid.BAD_REQUEST, KtList.fromJsArray([err]))
-check(!invalidEmail.isValid, "Checked.failure(...).isValid === false")
+  // Codes.all / Codes.statusFor: a plain property and a namespaced lookup function, not top-level
+  // proxy functions - TypeScript doesn't have Kotlin/JS's "objects can't export static members"
+  // limitation, so there's no need for the codesAll()/codesStatusFor() workaround.
+  check(Codes.all.length > 0, "Codes.all.length > 0");
+  const found = Codes.statusFor("dev.kiit", "Succeeded", "SUCCESS");
+  check(found !== undefined, "Codes.statusFor('dev.kiit', 'Succeeded', 'SUCCESS') found");
+}
 
-// collect: the vararg-in-Kotlin overload exports as a plain native JS Array parameter, call it
-// with an array.
-const combined = collect([validEmail, invalidEmail])
-check(!combined.isValid, "collect([...]).isValid === false")
-check(combined.errors.asJsReadonlyArrayView().length === 1, "collect([...]).errors.length === 1")
+/**
+ * Real compiler-enforced exhaustiveness at the coarse Passed/Failed split, narrowing on
+ * `.success`. No `assertNever` needed here specifically - `success` is a real boolean, only two
+ * values ever possible.
+ */
+function showExhaustivenessOverPassedAndFailed(): void {
+  section("Exhaustiveness: Passed vs Failed");
+  function describeOutcome(status: Status): string {
+    if (status.success) {
+      return `passed: ${status.name}`; // status: Passed here
+    } else {
+      return `failed: ${status.name}`; // status: Failed here
+    }
+  }
+  check(describeOutcome(Succeeded.SUCCESS) === "passed: SUCCESS", "describeOutcome narrows to Passed");
+  check(describeOutcome(Restricted.DENIED) === "failed: DENIED", "describeOutcome narrows to Failed");
+}
 
-// codesAll / codesStatusFor: top-level proxy functions for the Codes object, since plain Kotlin
-// `object`s can't get clean static member access in Kotlin/JS.
-const all = codesAll().asJsReadonlyArrayView()
-check(all.length > 0, "codesAll().length > 0")
-const found = codesStatusFor("kiit", "SUCCESS")
-check(found != null, "codesStatusFor('kiit', 'SUCCESS') found")
+/**
+ * Real compiler-enforced exhaustiveness over Passed's four groups - the whole reason this port
+ * exists. Drop a case below and `npm run typecheck` fails, not a runtime-only instanceof chain
+ * that only catches gaps if kept in sync by hand.
+ */
+function showExhaustivenessOverPassedGroups(): void {
+  section("Exhaustiveness: Passed groups");
+  function describe(status: Passed): string {
+    switch (status.group) {
+      case Groups.SUCCEEDED:
+        return `Succeeded: ${status.name}`;
+      case Groups.PENDING:
+        return `Pending: ${status.name}`;
+      case Groups.EXCLUDED:
+        return `Excluded: ${status.name}`;
+      case Groups.INFORMATION:
+        return `Information: ${status.name}`;
+      default:
+        return assertNever(status);
+    }
+  }
+  check(describe(Succeeded.SUCCESS) === "Succeeded: SUCCESS", "describe(Succeeded.SUCCESS)");
+  check(describe(Pending.ACCEPTED) === "Pending: ACCEPTED", "describe(Pending.ACCEPTED)");
+  check(describe(Excluded.SKIPPED) === "Excluded: SKIPPED", "describe(Excluded.SKIPPED)");
+  check(describe(Information.NOTICE) === "Information: NOTICE", "describe(Information.NOTICE)");
+}
 
-// RestrictedError: construct/throw/catch, optional trailing errors/cause arguments omitted.
-try {
-  throw new RestrictedError(Failed.Restricted.UNAUTHENTICATED)
-} catch (e) {
-  check(e instanceof RestrictedError, "caught e instanceof RestrictedError")
-  if (e instanceof RestrictedError) {
-    check(e.status.name === "UNAUTHENTICATED", "RestrictedError.status.name")
+/** Same exhaustiveness guarantee over Failed's four groups. */
+function showExhaustivenessOverFailedGroups(): void {
+  section("Exhaustiveness: Failed groups");
+  function describe(status: Failed): string {
+    switch (status.group) {
+      case Groups.RESTRICTED:
+        return `Restricted: ${status.name}`;
+      case Groups.INVALID:
+        return `Invalid: ${status.name}`;
+      case Groups.REJECTED:
+        return `Rejected: ${status.name}`;
+      case Groups.UNSERVED:
+        return `Unserved: ${status.name}`;
+      default:
+        return assertNever(status);
+    }
+  }
+  check(describe(Restricted.DENIED) === "Restricted: DENIED", "describe(Restricted.DENIED)");
+  check(describe(Invalid.BAD_REQUEST) === "Invalid: BAD_REQUEST", "describe(Invalid.BAD_REQUEST)");
+  check(describe(Rejected.CONFLICT) === "Rejected: CONFLICT", "describe(Rejected.CONFLICT)");
+  check(describe(Unserved.TIMEOUT) === "Unserved: TIMEOUT", "describe(Unserved.TIMEOUT)");
+}
+
+/**
+ * Err builders, and the StatusError hierarchy for crossing a call boundary that can only
+ * communicate via exceptions. A real class there, unlike Status/Err/Checked - throw/catch is
+ * inherently instanceof-based.
+ */
+function showErrors(): void {
+  section("Errors");
+  const err = Err.of("email is required");
+  check(err.message === "email is required", "Err.of(message).message");
+
+  const fieldErr = Err.on("phone", "12345", "Too long");
+  check(fieldErr.kind === "ErrorField" && fieldErr.field === "phone", "Err.on(...) builds an ErrorField");
+
+  try {
+    throw new RestrictedError(Restricted.UNAUTHENTICATED);
+  } catch (e) {
+    check(e instanceof RestrictedError, "caught e instanceof RestrictedError");
+    if (e instanceof RestrictedError) {
+      check(e.status.name === "UNAUTHENTICATED", "RestrictedError.status.name");
+    }
   }
 }
 
-// TypeScript has no compiler-enforced exhaustiveness over Kotlin sealed hierarchies, the
-// generated .d.ts emits independent `class` declarations, never a union type. instanceof
-// narrowing plus an assertNever fallback is the best available idiom instead, and it only
-// catches gaps if AnyPassed below is kept in sync by hand.
-//
-// Types below use the fully-qualified `kiit.codes.Passed.Succeeded` path, not the destructured
-// `Passed` value above, since destructuring only survives on the value side, not the type side.
-type AnyPassed =
-  | kiit.codes.Passed.Succeeded
-  | kiit.codes.Passed.Pending
-  | kiit.codes.Passed.Excluded
-  | kiit.codes.Passed.Information
+/** Checked.success / Checked.failure and collect. Errors are native readonly arrays throughout. */
+function showChecked(): void {
+  section("Checked");
+  const validEmail = Checked.success();
+  check(validEmail.isValid, "Checked.success().isValid");
 
-function assertNever(x: never): never {
-  throw new Error("unhandled Passed case: " + JSON.stringify(x))
+  const invalidEmail = Checked.failure(Invalid.BAD_REQUEST, [Err.of("email is required")]);
+  check(!invalidEmail.isValid, "Checked.failure(...).isValid === false");
+
+  // collect: a real rest parameter, called with individual args directly.
+  const combined = collect(validEmail, invalidEmail);
+  check(!combined.isValid, "collect(...).isValid === false");
+  check(combined.errors.length === 1, "collect(...).errors.length === 1");
 }
 
-function describe(p: AnyPassed): string {
-  if (p instanceof Passed.Succeeded) return `Succeeded: ${p.name}`
-  if (p instanceof Passed.Pending) return `Pending: ${p.name}`
-  if (p instanceof Passed.Excluded) return `Excluded: ${p.name}`
-  if (p instanceof Passed.Information) return `Information: ${p.name}`
-  return assertNever(p)
+/**
+ * RFC 9457 / kiit-native format conversion (see PR #29 on the Kotlin side) - a custom, scoped
+ * domain code converted both ways.
+ */
+function showFormats(): void {
+  section("Formats: RFC 9457 problem conversion");
+  const catalog = Catalog.of({ "com.stripe": "https://stripe.com/problems" });
+  const problems = CodesToProblem(catalog, CodesToHttp());
+
+  const duplicateCharge = Restricted(
+    "DUPLICATE_CHARGE",
+    "This charge has already been processed",
+    "com.stripe",
+    "payments.cards",
+  );
+
+  const problem = problems.build(duplicateCharge);
+  check(
+    problem.type === "https://stripe.com/problems/payments.cards/restricted/duplicate-charge",
+    "CodesToProblem.build(...).type",
+  );
+  check(problem.status === 401, "CodesToProblem.build(...).status");
+
+  const detail = toCodeDetail(duplicateCharge);
+  check(detail.path === "com.stripe:payments.cards", "toCodeDetail(...).path");
+  check(detail.status === undefined, "toCodeDetail(...).status is undefined without a mapping");
+
+  // A built-in kiit status needs no Catalog entry, and its `type` resolves to the real taxonomy
+  // page instead of a made-up path, with the code carried as a query param.
+  const builtInProblem = problems.build(Invalid.INVALID_VALUE);
+  check(
+    builtInProblem.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#taxonomy",
+    "CodesToProblem.build(...) for a built-in kiit status",
+  );
+
+  // Supplying a custom error shape instead of the default ErrorDetail.
+  interface DetailedError extends ErrorItem {
+    readonly field?: string;
+    readonly message: string;
+    readonly hint: string;
+  }
+  const fieldErr = Err.on("phone", "12345", "Too long");
+  const richProblem = problems.buildCustom<DetailedError>(duplicateCharge, fieldErr, (e) => ({
+    field: e.kind === "ErrorField" ? e.field : undefined,
+    message: e.message,
+    hint: "check formatting",
+  }));
+  check(richProblem.detail === "Too long", "buildCustom(...) with a custom error shape");
 }
 
-check(describe(ok) === "Succeeded: SUCCESS", "describe(Succeeded.SUCCESS)")
+showCoreFunctionality();
+showExhaustivenessOverPassedAndFailed();
+showExhaustivenessOverPassedGroups();
+showExhaustivenessOverFailedGroups();
+showErrors();
+showChecked();
+showFormats();
 
-console.log("All sample-ts checks passed.")
+console.log(`\n${SEPARATOR}`);
+console.log("All sample-ts checks passed.");
+console.log(SEPARATOR);
