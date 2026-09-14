@@ -10,9 +10,6 @@ import kiit.codes.formats.*
  * Taxonomy, Usage, Conversion. Self-contained on purpose (doesn't touch
  * UserService.kt/SampleApp.kt) so it can be reviewed and reshaped freely before anything
  * replaces the originals.
- *
- * Deliberately non-security domain: `Restricted` shows up as an ownership rule (only a list's
- * owner can complete its tasks), not a login/auth concept.
  */
 
 // ============================================================
@@ -40,6 +37,12 @@ class TaskService {
         }
         existingTitles += title
         return Succeeded.CREATED
+    }
+
+
+    /** The spine: three built-in outcomes plus one custom, domain-specific code. */
+    fun exists(title: String, listId: String = PERSONAL_LIST): Boolean {
+        return existingTitles.contains(title)
     }
 
     /** A second operation on the same domain — reaches Rejected.NOT_EXISTS and a custom Restricted. */
@@ -123,59 +126,45 @@ fun showOverview(tasks: TaskService) {
     // 1. These are Like http codes, but generalized for any layer.
     // 2. Tell you the KIND of success/failure ( e.g. security = Failed.Restricted)
     // 3. Error details are separate from the Status codes ( example shown later )
+    //
+    // Status  = Passed     | Failed
+    // Passed  = Succeeded  | Pending  | Excluded  | Information
+    // Failed  = Restricted | Invalid  | Rejected  | Unserved
 
-    // Example 1: Here is the shape of a Status
-    // Status = { name = "SUCCESS", group = "Succeeded", success = true, message = "... completed successfully.", ... }
-    val created: Status = tasks.create("walk the dog")
-    printDetail("shape: ", created)
-
-    // Example 2: Check if it was successful
-    // You can use .success ( simpler ), or if the Status branches ( Tier 1 )
-    if(created.success) {
-        println("usage: .success -> ${created.name}")
-    }
-    when (created) {
-        is Passed -> println("usage: Passed -> ${created.name}")
-        is Failed -> println("usage: Failed -> ${created.name}: ${created.message}")
+    // Example 1: Usage of Status Codes
+    val title = "Get groceries"
+    val validated: Status = when {
+        title.isEmpty()     -> Invalid(name = "EMPTY_TITLE", message = "Title required", origin = "dev.kiit.samples")
+        tasks.exists(title) -> Rejected.CONFLICT
+        else                -> Succeeded.SUCCESS
     }
 
-    // Example 3: All the groups that exist
-    // Passed  = Succeeded  | Pending | Excluded | Information
-    // Failed  = Restricted | Invalid | Rejected | Unserved
-    when(created) {
-        is Passed -> {
-            when(created) {
-                is Passed.Succeeded   -> println("Operation is succeeful")
-                is Passed.Pending     -> println("Operation is pending")
-                is Passed.Excluded    -> println("Operation is excluded")
-                is Passed.Information -> println("Operation is informational")
-            }
-        }
-        is Failed -> {
-            when(created) {
-                is Failed.Restricted  -> println("Operation is restricted")
-                is Failed.Invalid     -> println("Operation is invalid")
-                is Failed.Rejected    -> println("Operation is rejected")
-                is Failed.Unserved    -> println("Operation is unserved")
-            }
-        }
-    }
-
-    // Example 4: Default codes
-    // defaults — every group has one default code for when more precision isn't needed.
-    println("defaults: Succeeded's own default is ${Succeeded.SUCCESS.name}, createTask's is more specific: ${Succeeded.CREATED.name}")
-
-    // construction — a built-in constant vs. constructing a custom code directly.
-    val builtIn = Succeeded.CREATED
-    val custom = Invalid(name = "EMPTY_TITLE", message = "Title must not be empty", origin = "dev.kiit.samples")
-    println("construction: built-in -> $builtIn")
-    println("construction: custom   -> $custom")
-
-    // shape — the fields every Status carries, whether built-in or custom.
+    // Example 2: Shape of each Status code
+    // These are the fields every Status carries, whether built-in or custom.
+    // origin = where the status code came from
+    // scope  = organizational label by department/product area etc.
+    // {
+    //      name = "SUCCESS",
+    //      group = "Succeeded",
+    //      origin = "dev.kiit",
+    //      scope  = "",
+    //      success = true,
+    //      message = "The operation completed successfully.",
+    // }
     println(
-        "shape: name=${custom.name} group=${custom.group} origin=${custom.origin} " +
-            "scope=${custom.scope} message=${custom.message} success=${custom.success}",
+        "shape: name=${validated.name} group=${validated.group} origin=${validated.origin} " +
+            "scope=${validated.scope} message=${validated.message} success=${validated.success}",
     )
+
+    // Example 3: Checks
+    // You can use .success ( simpler ), or the Status branches ( Tier 1 = Passed | Failed )
+    if(validated.success) {
+        println("usage: .success -> ${validated.name}")
+    }
+    when (validated) {
+        is Passed -> println("usage: Passed -> ${validated.name}")
+        is Failed -> println("usage: Failed -> ${validated.name}: ${validated.message}")
+    }
 }
 
 // ============================================================
@@ -185,33 +174,49 @@ fun showOverview(tasks: TaskService) {
 fun showTaxonomy(tasks: TaskService) {
     section("Part 2: Taxonomy")
 
-    // status/passed/failed — the two-branch split, using createTask/completeTask's own outcomes.
-    val outcomes =
-        listOf(
-            tasks.create(""), // Failed: custom EMPTY_TITLE
-            tasks.create("groceries"), // Failed: built-in Rejected.CONFLICT (already exists)
-            tasks.create("read a book"), // Passed: built-in Succeeded.CREATED
-            tasks.complete("missing item", TaskService.PERSONAL_LIST, "amy"), // Failed: built-in Rejected.NOT_EXISTS
-            tasks.complete("groceries", TaskService.TEAM_LIST, "amy"), // Failed: custom Restricted.NOT_LIST_OWNER
-        )
-    outcomes.forEach { println("status/passed/failed: success=${it.success} -> ${describe(it)}") }
+    // Example 1: There are 8 groups total under the Passed/Failed Branches ( Tier 1 )
+    // Each group is Tier 2, representing tier of information ( Kind
+    // Passed  = Succeeded  | Pending | Excluded | Information
+    // Failed  = Restricted | Invalid | Rejected | Unserved
+    val created: Status = tasks.create("walk the dog")
+    when(created) {
+        // Tier 1: Passed / Failed
+        is Passed -> {
+            // Tier 2: Passed has 4 groups
+            when(created) {
+                is Passed.Succeeded   -> println("Operation is succeeful")
+                is Passed.Pending     -> println("Operation is pending")
+                is Passed.Excluded    -> println("Operation is excluded")
+                is Passed.Information -> println("Operation is informational")
+            }
+        }
+        is Failed -> {
+            // Tier 2: Failed also has 4 groups
+            when(created) {
+                is Failed.Restricted  -> println("Operation is restricted")
+                is Failed.Invalid     -> println("Operation is invalid")
+                is Failed.Rejected    -> println("Operation is rejected")
+                is Failed.Unserved    -> println("Operation is unserved")
+            }
+        }
+    }
 
-    // groups — all 8, not just the 5 the domain reaches on its own. A couple of illustrative
-    // one-offs (not part of the task story — a simple to-do list has no natural reason to
-    // produce Pending/Excluded/Information/Unserved) round out the rest, so describe()'s
-    // exhaustiveness is actually exercised across the full taxonomy.
-    val everyGroup = outcomes + listOf(Pending.ACCEPTED, Excluded.SKIPPED, Information.NOTICE, Unserved.TIMEOUT)
-    everyGroup.forEach { println("groups: ${describe(it)}") }
+    // Example 2: Defaults codes are available for convenience
+    // There all defaults for all 8 groups ( 4 in Passed, 4 in Failed )
+    println(Succeeded.SUCCESS)
+    println(Pending.ACCEPTED)
+    println(Excluded.OMITTED)
+    println(Information.NOTICE)
+    println(Restricted.DENIED)
+    println(Invalid.INVALID_VALUE)
+    println(Rejected.RULE_VIOLATION)
+    println(Unserved.UNEXPECTED)
 
-    // default codes — each group's own "when more precision isn't needed" representative.
-    println(
-        "default codes: ${Succeeded.SUCCESS.name}, ${Restricted.DENIED.name}, " +
-            "${Invalid.INVALID_VALUE.name}, ${Rejected.RULE_VIOLATION.name}, ${Unserved.UNEXPECTED.name}",
-    )
-
-    // custom codes — the taxonomy stays fixed (8 groups), the codes within it stay open.
-    val emptyTitle = Invalid(name = "EMPTY_TITLE", message = "Title must not be empty", origin = "dev.kiit.samples")
-    println("custom codes: ${emptyTitle.group} is fixed, ${emptyTitle.name} is open (origin=${emptyTitle.origin})")
+    // Example 3: Use built in default codes or construct your own
+    val builtIn = Succeeded.CREATED
+    val custom = Invalid(name = "MISSING_DATE", message = "Date not supplied", origin = "dev.kiit.samples")
+    println("construction: built-in -> $builtIn")
+    println("construction: custom   -> $custom")
 }
 
 // ============================================================
@@ -288,6 +293,21 @@ fun showConversion(tasks: TaskService) {
             RichError((err as? Err.ErrorField)?.field, err.message, "ask the list owner to complete it instead")
         }
     println("customization (buildCustom): ${richProblem.errors}")
+}
+
+fun showMisc(tasks: TaskService) {
+    // status/passed/failed — the two-branch split, using createTask/completeTask's own outcomes.
+    val outcomes =
+        listOf(
+            tasks.create(""), // Failed: custom EMPTY_TITLE
+            tasks.create("groceries"), // Failed: built-in Rejected.CONFLICT (already exists)
+            tasks.create("read a book"), // Passed: built-in Succeeded.CREATED
+            tasks.complete("missing item", TaskService.PERSONAL_LIST, "amy"), // Failed: built-in Rejected.NOT_EXISTS
+            tasks.complete("groceries", TaskService.TEAM_LIST, "amy"), // Failed: custom Restricted.NOT_LIST_OWNER
+        )
+    outcomes.forEach { println("status/passed/failed: success=${it.success} -> ${describe(it)}") }
+
+
 }
 
 fun main() {
