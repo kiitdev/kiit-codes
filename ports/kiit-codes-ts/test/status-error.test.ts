@@ -11,8 +11,7 @@ import { Err } from "../src/err.js";
 import { Restricted, Invalid, Rejected, Unserved } from "../src/groups.js";
 
 // Ported from StatusExceptionTest.kt (renamed Exception -> Error, see status-error.ts's top
-// comment) and jsTest/StatusErrorTest.kt, which is now redundant with this file rather than a
-// separate Kotlin/JS-runtime-specific concern.
+// comment).
 
 describe("RestrictedError / InvalidError / RejectedError / UnservedError", () => {
   it("each exposes its own status", () => {
