@@ -132,6 +132,7 @@ fun showOverview(tasks: TaskService) {
     // Failed  = Restricted | Invalid  | Rejected  | Unserved
 
     // Example 1: Usage of Status Codes
+    // Let's start with a small example of using a few ( create one, and use 2 defaults )
     val title = "Get groceries"
     val validated: Status = when {
         title.isEmpty()     -> Invalid(name = "EMPTY_TITLE", message = "Title required", origin = "dev.kiit.samples")
@@ -211,12 +212,27 @@ fun showTaxonomy(tasks: TaskService) {
     println(Invalid.INVALID_VALUE)
     println(Rejected.RULE_VIOLATION)
     println(Unserved.UNEXPECTED)
+    val title = "Get groceries"
+    val checkWithDefaultCodes: Status = when {
+        title.isEmpty()     -> Invalid.INVALID_VALUE
+        tasks.exists(title) -> Rejected.CONFLICT
+        else                -> Succeeded.SUCCESS
+    }
+    printDetail("use defaults", checkWithDefaultCodes)
 
-    // Example 3: Use built in default codes or construct your own
-    val builtIn = Succeeded.CREATED
-    val custom = Invalid(name = "MISSING_DATE", message = "Date not supplied", origin = "dev.kiit.samples")
-    println("construction: built-in -> $builtIn")
-    println("construction: custom   -> $custom")
+
+    // Example 3: Custom codes
+    // Create your own status codes from the 8 groups available ( here is a sample of 3 )
+    // NOTE: This are stateless / constant, they just tell you the Kind of error ( Invalid | Rejected | Succeeded )
+    val itemInvalid = Invalid(name = "MISSING_DATE", message = "Date not supplied", origin = "dev.kiit.samples")
+    val itemExists = Rejected(name = "DUPLICATE", message = "Item already exists", origin = "dev.kiit.samples")
+    val itemValid = Succeeded(name = "TASK_VALID", message = "Item is valid", origin = "dev.kiit.samples")
+    val checkWithCustomCodes: Status = when {
+        title.isEmpty()     -> itemInvalid
+        tasks.exists(title) -> itemExists
+        else                -> itemValid
+    }
+    printDetail("use custom", checkWithCustomCodes)
 }
 
 // ============================================================
