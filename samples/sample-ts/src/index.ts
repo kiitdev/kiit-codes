@@ -1,5 +1,5 @@
 /**
- * Living documentation of @kiit/codes from real TypeScript, type-checked (`npm run typecheck`)
+ * Living documentation of @kiitdev/codes from real TypeScript, type-checked (`npm run typecheck`)
  * against the actual native port, not a Kotlin/JS-compiled `.d.ts`. Mirrors the scenarios in
  * samples/sample-kotlin and samples/sample-java, including the RFC 9457 / kiit-native format
  * conversion from PR #29.
@@ -26,8 +26,8 @@ import {
   Catalog,
   CodesToProblem,
   toCodeDetail,
-} from "@kiit/codes";
-import type { Status, Passed, Failed, ErrorItem } from "@kiit/codes";
+} from "@kiitdev/codes";
+import type { Status, Passed, Failed, ErrorItem } from "@kiitdev/codes";
 
 function check(condition: boolean, label: string): void {
   if (!condition) {

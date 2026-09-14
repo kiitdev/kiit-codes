@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Publishes @kiit/codes to npm from the native TypeScript port (ports/kiit-codes-ts). Run from the
+# Publishes @kiitdev/codes to npm from the native TypeScript port (ports/kiit-codes-ts). Run from the
 # repository root:
 #
 #   npm login          # one-time, if not already authenticated

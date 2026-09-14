@@ -87,7 +87,7 @@ Two workflows live under [`.github/workflows`](.github/workflows):
 |----------|------|---------|---------------|
 | CI | `ci.yml` | Every PR into `main` | `ktlintCheck`, `detekt`, `jvmTest` for the Kotlin library, plus `typecheck`/`test`/`build` for the TypeScript port (`ports/kiit-codes-ts`), on `ubuntu-latest`. iOS tests are not run in CI (no macOS runner). |
 | Release | `release.yml` | Manual (`workflow_dispatch`) | Builds, tests, publishes to Maven Central, tags, and cuts a GitHub release. Runs on `macos-latest` — required to build/sign the iOS targets. |
-| Release npm | `release-npm.yml` | Manual (`workflow_dispatch`) | Builds, tests, publishes `@kiit/codes` to npm, tags, and cuts a GitHub release. Independent version/cadence from the Kotlin release above. |
+| Release npm | `release-npm.yml` | Manual (`workflow_dispatch`) | Builds, tests, publishes `@kiitdev/codes` to npm, tags, and cuts a GitHub release. Independent version/cadence from the Kotlin release above. |
 
 CI runners are ephemeral — there is no persistent GPG keyring. The secret key must be imported at the start of every release run.
 
@@ -112,7 +112,7 @@ gpg --armor --export-secret-keys <your-key-id> | base64 | pbcopy
 
 | Secret name      | Value |
 |------------------|-------|
-| `KIIT_NPM_TOKEN` | An npm [automation token](https://docs.npmjs.com/creating-and-viewing-access-tokens) with publish access to `@kiit/codes` |
+| `KIIT_NPM_TOKEN` | An npm [automation token](https://docs.npmjs.com/creating-and-viewing-access-tokens) with publish access to `@kiitdev/codes` |
 
 ### 2. Cutting a release
 
@@ -257,11 +257,11 @@ Requires `~/.gradle/gradle.properties` populated per the Setup section above.
 
 ---
 
-## Publish — npm (`@kiit/codes`)
+## Publish — npm (`@kiitdev/codes`)
 
-Published artifacts: [npmjs.com/package/@kiit/codes](https://www.npmjs.com/package/@kiit/codes)
+Published artifacts: [npmjs.com/package/@kiitdev/codes](https://www.npmjs.com/package/@kiitdev/codes)
 
-`@kiit/codes` is published from the native TypeScript port (`ports/kiit-codes-ts`), not generated
+`@kiitdev/codes` is published from the native TypeScript port (`ports/kiit-codes-ts`), not generated
 from the Kotlin build — it has its own version, tracked in `ports/kiit-codes-ts/package.json`,
 independent of the Kotlin library's `libraryVersion`.
 

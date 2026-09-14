@@ -1,4 +1,4 @@
-# @kiit/codes
+# @kiitdev/codes
 
 A native TypeScript port of [kiit-codes](https://github.com/kiitdev/kiit-codes). A small, dependency-free taxonomy for classifying success and failure: extensible codes, HTTP mapping, validation, typed errors, and RFC 9457 support.
 
@@ -9,13 +9,13 @@ Pre-1.0: the API may still shift before a stable release.
 ## Install
 
 ```bash
-npm install @kiit/codes
+npm install @kiitdev/codes
 ```
 
 ## Quick example
 
 ```ts
-import { Succeeded, Restricted, CodesToHttp } from "@kiit/codes";
+import { Succeeded, Restricted, CodesToHttp } from "@kiitdev/codes";
 
 function authorize(userId: string, requesterId: string) {
   return userId === requesterId ? Succeeded.SUCCESS : Restricted.UNAUTHORIZED;
@@ -31,8 +31,8 @@ Every group is a plain object, not a class. Construct one without `new` (`Restri
 ## Exhaustive narrowing
 
 ```ts
-import { Groups, assertNever } from "@kiit/codes";
-import type { Status } from "@kiit/codes";
+import { Groups, assertNever } from "@kiitdev/codes";
+import type { Status } from "@kiitdev/codes";
 
 function describe(status: Status): string {
   switch (status.group) {

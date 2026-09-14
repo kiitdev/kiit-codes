@@ -258,7 +258,7 @@ See [GitHub Issues](https://github.com/kiitdev/kiit-codes/issues) for current wo
 - JVM, Android, iOS (simulator, iosArm64, x64)
 - No external runtime dependencies
 
-A native TypeScript port, [`@kiit/codes`](https://www.npmjs.com/package/@kiit/codes), is
+A native TypeScript port, [`@kiitdev/codes`](https://www.npmjs.com/package/@kiitdev/codes), is
 maintained separately in [`ports/kiit-codes-ts`](./ports/kiit-codes-ts) — checked against the
 Kotlin taxonomy, not generated from it. See its [README](./ports/kiit-codes-ts/README.md) for
 installation and usage.
