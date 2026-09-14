@@ -48,7 +48,7 @@ function section(title: string): void {
  * Construction, HTTP mapping, and the built-in registry. No `new` anywhere - every group is a
  * plain object, matching Kotlin's own `Succeeded(...)`-style construction exactly.
  */
-function demonstrateCoreFunctionality(): void {
+function showCoreFunctionality(): void {
   section("Core functionality");
   const ok = Succeeded.SUCCESS;
   const denied = Restricted.DENIED;
@@ -72,7 +72,7 @@ function demonstrateCoreFunctionality(): void {
  * `.success`. No `assertNever` needed here specifically - `success` is a real boolean, only two
  * values ever possible.
  */
-function demonstrateExhaustivenessOverPassedAndFailed(): void {
+function showExhaustivenessOverPassedAndFailed(): void {
   section("Exhaustiveness: Passed vs Failed");
   function describeOutcome(status: Status): string {
     if (status.success) {
@@ -90,7 +90,7 @@ function demonstrateExhaustivenessOverPassedAndFailed(): void {
  * exists. Drop a case below and `npm run typecheck` fails, not a runtime-only instanceof chain
  * that only catches gaps if kept in sync by hand.
  */
-function demonstrateExhaustivenessOverPassedGroups(): void {
+function showExhaustivenessOverPassedGroups(): void {
   section("Exhaustiveness: Passed groups");
   function describe(status: Passed): string {
     switch (status.group) {
@@ -113,7 +113,7 @@ function demonstrateExhaustivenessOverPassedGroups(): void {
 }
 
 /** Same exhaustiveness guarantee over Failed's four groups. */
-function demonstrateExhaustivenessOverFailedGroups(): void {
+function showExhaustivenessOverFailedGroups(): void {
   section("Exhaustiveness: Failed groups");
   function describe(status: Failed): string {
     switch (status.group) {
@@ -140,7 +140,7 @@ function demonstrateExhaustivenessOverFailedGroups(): void {
  * communicate via exceptions. A real class there, unlike Status/Err/Checked - throw/catch is
  * inherently instanceof-based.
  */
-function demonstrateErrors(): void {
+function showErrors(): void {
   section("Errors");
   const err = Err.of("email is required");
   check(err.message === "email is required", "Err.of(message).message");
@@ -159,7 +159,7 @@ function demonstrateErrors(): void {
 }
 
 /** Checked.success / Checked.failure and collect. Errors are native readonly arrays throughout. */
-function demonstrateChecked(): void {
+function showChecked(): void {
   section("Checked");
   const validEmail = Checked.success();
   check(validEmail.isValid, "Checked.success().isValid");
@@ -177,7 +177,7 @@ function demonstrateChecked(): void {
  * RFC 9457 / kiit-native format conversion (see PR #29 on the Kotlin side) - a custom, scoped
  * domain code converted both ways.
  */
-function demonstrateFormats(): void {
+function showFormats(): void {
   section("Formats: RFC 9457 problem conversion");
   const catalog = Catalog.of({ "com.stripe": "https://stripe.com/problems" });
   const problems = CodesToProblem(catalog, CodesToHttp());
@@ -223,13 +223,13 @@ function demonstrateFormats(): void {
   check(richProblem.detail === "Too long", "buildCustom(...) with a custom error shape");
 }
 
-demonstrateCoreFunctionality();
-demonstrateExhaustivenessOverPassedAndFailed();
-demonstrateExhaustivenessOverPassedGroups();
-demonstrateExhaustivenessOverFailedGroups();
-demonstrateErrors();
-demonstrateChecked();
-demonstrateFormats();
+showCoreFunctionality();
+showExhaustivenessOverPassedAndFailed();
+showExhaustivenessOverPassedGroups();
+showExhaustivenessOverFailedGroups();
+showErrors();
+showChecked();
+showFormats();
 
 console.log(`\n${SEPARATOR}`);
 console.log("All sample-ts checks passed.");
