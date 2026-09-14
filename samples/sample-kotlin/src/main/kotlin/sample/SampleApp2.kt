@@ -122,6 +122,7 @@ fun printDetail(label:String, status: Status){
 fun showOverview(tasks: TaskService) {
     section("Part 1: Overview")
 
+    // <example_start>
     // Overview: Status codes
     // 1. These are like http codes, but generalized for any layer.
     // 2. Tell you the KIND of success/failure ( e.g. security = Failed.Restricted)
@@ -131,6 +132,7 @@ fun showOverview(tasks: TaskService) {
     // Passed  = Succeeded  | Pending  | Excluded  | Information
     // Failed  = Restricted | Invalid  | Rejected  | Unserved
 
+    // ::example_start
     // Example 1: Usage of Status Codes
     // Let's start with a small example of using a few ( create one, and use 2 defaults )
     val title = "Get groceries"
@@ -139,7 +141,10 @@ fun showOverview(tasks: TaskService) {
         tasks.exists(title) -> Rejected.CONFLICT
         else                -> Succeeded.SUCCESS
     }
+    // </example_end>
 
+
+    // <example_start>
     // Example 2: Shape of each Status code
     // These are the fields every Status carries, whether built-in or custom.
     // origin = where the status code came from
@@ -156,7 +161,10 @@ fun showOverview(tasks: TaskService) {
         "shape: name=${validated.name} group=${validated.group} origin=${validated.origin} " +
             "scope=${validated.scope} message=${validated.message} success=${validated.success}",
     )
+    // </example_end>
 
+
+    // <example_start>
     // Example 3: Checks
     // You can use .success ( simpler ), or the Status branches ( Tier 1 = Passed | Failed )
     if(validated.success) {
@@ -166,6 +174,8 @@ fun showOverview(tasks: TaskService) {
         is Passed -> println("usage: Passed -> ${validated.name}")
         is Failed -> println("usage: Failed -> ${validated.name}: ${validated.message}")
     }
+    // </example_end>
+
 }
 
 // ============================================================
@@ -175,6 +185,7 @@ fun showOverview(tasks: TaskService) {
 fun showTaxonomy(tasks: TaskService) {
     section("Part 2: Taxonomy")
 
+    // <example_start>
     // Example 1: There are 8 groups total under the Passed/Failed Branches
     // Tier 1  = Passed | Failed
     // Tier 2  = The 8 groups, 4 under Passed, 4 under Failed
@@ -204,7 +215,10 @@ fun showTaxonomy(tasks: TaskService) {
             }
         }
     }
+    // </example_end>
 
+
+    // <example_start>
     // Example 2: Defaults codes are available for convenience
     // There all defaults for all 8 groups ( 4 in Passed, 4 in Failed )
     println(Succeeded.SUCCESS)
@@ -222,8 +236,10 @@ fun showTaxonomy(tasks: TaskService) {
         else                -> Succeeded.SUCCESS
     }
     printDetail("use defaults", checkWithDefaultCodes)
+    // </example_end>
 
 
+    // <example_start>
     // Example 3: Custom codes
     // Create your own status codes from the 8 groups available ( here is a sample of 3 )
     // NOTE: This are stateless / constant, they just tell you the Kind of error ( Invalid | Rejected | Succeeded )
@@ -236,6 +252,7 @@ fun showTaxonomy(tasks: TaskService) {
         else                -> itemValid
     }
     printDetail("use custom", checkWithCustomCodes)
+    // </example_end>
 }
 
 // ============================================================
