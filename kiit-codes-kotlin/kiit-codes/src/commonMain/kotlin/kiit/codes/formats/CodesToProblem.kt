@@ -1,6 +1,4 @@
 /** url: www.kiit.dev */
-@file:OptIn(ExperimentalJsExport::class)
-
 package kiit.codes.formats
 
 import kiit.codes.CodesToHttp
@@ -8,17 +6,12 @@ import kiit.codes.Err
 import kiit.codes.Status
 import kiit.codes.StatusConstants
 import kiit.codes.code
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 
 /**
  * Converts a [Status] into an RFC 9457 [Problem], the way [kiit.codes.CodesToHttp]/
  * [kiit.codes.CodesToGrpc] convert one into a protocol code. [catalog] supplies `baseUrl` per
  * origin (see [Catalog]); [mapping] is reused rather than a fresh [CodesToHttp] per call.
- *
- * Not `@JsExport`ed: every method here takes a `typeBuilder` function, and a function-typed
- * parameter isn't representable in Kotlin/JS's export surface. Use [problemFor] from JS/TS.
  */
 class CodesToProblem(private val catalog: Catalog, private val mapping: CodesToHttp) {
     /** Builds a [Problem]\<[kiit.codes.formats.ErrorDetail]\> for [status], baseUrl from [catalog]. */
@@ -128,8 +121,3 @@ fun defaultTypeBuilder(status: Status): String {
     val segments = listOfNotNull(status.scope.ifEmpty { null }, status.group, status.name)
     return segments.joinToString("/") { it.toUriSegment() }
 }
-
-/** JS/TS-reachable proxy for [CodesToProblem.build], default [ErrorDetail] shape only. */
-@JsExport
-fun problemFor(catalog: Catalog, mapping: CodesToHttp, status: Status, err: Err? = null): Problem<ErrorDetail> =
-    CodesToProblem(catalog, mapping).build(status, err)

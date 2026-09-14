@@ -1,8 +1,6 @@
 package kiit.codes.formats
 
 import kiit.codes.Err
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
 
 /**
  * Minimal contract for one error-list entry, used by both [Problem] and [CodeDetail]. Only
@@ -17,16 +15,12 @@ import kotlin.js.JsExport
  * type when a consumer decides more detail is safe for their own audience. [ErrorDetail] is
  * kiit-codes' own default `T`; supply your own type instead when you need more than this.
  */
-@OptIn(ExperimentalJsExport::class)
-@JsExport
 interface ErrorItem {
     val field: String?
     val message: String
 }
 
 /** Default [ErrorItem]: just `field` + `message`, see [ErrorItem] for why. */
-@OptIn(ExperimentalJsExport::class)
-@JsExport
 data class ErrorDetail(
     override val field: String?,
     override val message: String,

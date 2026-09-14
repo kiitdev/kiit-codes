@@ -86,10 +86,4 @@ class CodesToProblemTest {
             codesToProblem.buildCustom(Invalid.INVALID_VALUE, err) { RichError((it as? Err.ErrorField)?.field, it.message, it.ref) }
         assertEquals("req-42", (problem.errors?.single() as RichError).ref)
     }
-
-    @Test
-    fun problemForMatchesBuildWithDefaultErrorDetail() {
-        val status = Restricted.FORBIDDEN
-        assertEquals(codesToProblem.build(status), problemFor(catalog, CodesToHttp(), status))
-    }
 }

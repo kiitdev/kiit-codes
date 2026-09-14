@@ -1,5 +1,4 @@
 /** url: www.kiit.dev */
-@file:OptIn(ExperimentalJsExport::class)
 @file:JvmName("CodeDetails")
 
 package kiit.codes.formats
@@ -9,8 +8,6 @@ import kiit.codes.Err
 import kiit.codes.Status
 import kiit.codes.code
 import kiit.codes.path
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 
@@ -33,7 +30,6 @@ import kotlin.jvm.JvmOverloads
  * 4. [status] is optional — pass a `mapping` to [toCodeDetail] when this shape is still going out
  *    over HTTP and the status code is worth carrying alongside it.
  */
-@JsExport
 data class CodeDetail<T : ErrorItem>(
     val path: String,
     val code: String,
@@ -49,7 +45,6 @@ data class CodeDetail<T : ErrorItem>(
  * Builds the default [CodeDetail]\<[ErrorDetail]\> for [status] (and optionally [err]). Pass
  * [mapping] to also populate [CodeDetail.status] with the equivalent HTTP status code.
  */
-@JsExport
 @JvmOverloads
 fun toCodeDetail(status: Status, err: Err? = null, mapping: CodesToHttp? = null): CodeDetail<ErrorDetail> {
     return toCodeDetail(status, err, mapping, ::defaultErrorItem)
