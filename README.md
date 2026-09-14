@@ -235,8 +235,7 @@ Current work is focused on the Kotlin release, documentation, examples, and ecos
 | # | Topic | Description |
 |---:|---|---|
 | 1 | **Documentation** | Update documentation and examples as needed. |
-| 2 | **TypeScript** | Add native TypeScript support with an idiomatic implementation of the same Codes taxonomy and semantics. |
-| 3 | **Taxonomy** | Continue taxonomy review based on real-world usage and community feedback. |
+| 2 | **Taxonomy** | Continue taxonomy review based on real-world usage and community feedback. |
 
 See [GitHub Issues](https://github.com/kiitdev/kiit-codes/issues) for current work and discussions.
 
@@ -256,8 +255,13 @@ See [GitHub Issues](https://github.com/kiitdev/kiit-codes/issues) for current wo
 ## Requirements
 
 - Kotlin Multiplatform
-- JVM, Android, iOS (simulator, iosArm64, x64), JS (Browser, Node.js)
+- JVM, Android, iOS (simulator, iosArm64, x64)
 - No external runtime dependencies
+
+A native TypeScript port, [`@kiit/codes`](https://www.npmjs.com/package/@kiit/codes), is
+maintained separately in [`ports/kiit-codes-ts`](./ports/kiit-codes-ts) — checked against the
+Kotlin taxonomy, not generated from it. See its [README](./ports/kiit-codes-ts/README.md) for
+installation and usage.
 
 ## Contributing
 

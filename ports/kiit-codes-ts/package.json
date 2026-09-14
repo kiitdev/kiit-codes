@@ -19,7 +19,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kiitdev/kiit-codes.git",
-    "directory": "kiit-codes-ts"
+    "directory": "ports/kiit-codes-ts"
   },
   "bugs": {
     "url": "https://github.com/kiitdev/kiit-codes/issues"

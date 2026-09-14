@@ -27,5 +27,5 @@ dist/*
 # Android SDK path — machine-specific
 local.properties
 
-# Kotlin/JS — node_modules is regenerated from kotlin-js-store/yarn.lock, which IS committed
+# npm — regenerated via `npm install`/`npm ci` from the committed package-lock.json
 node_modules/
