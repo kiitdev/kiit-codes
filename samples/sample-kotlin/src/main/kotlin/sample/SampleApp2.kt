@@ -245,9 +245,12 @@ fun showTaxonomy(tasks: TaskService) {
 fun showUsage(tasks: TaskService, validator: TaskValidator) {
     section("Part 3: Usage")
 
-    // errors (kind vs detail) — Err's sealed variants (its "kind") vs. the simplified
-    // ErrorDetail shape (formats.ErrorDetail) used later, at conversion time, when the full
-    // Err isn't needed.
+    // Example 1: Error Group ( Kind of error ) vs Error Info ( instance details )
+    // Error Kind and Error Details are separate from each other
+    // 1. Error Kind  : Restricted | Invalid     | Rejected    | Unserved
+    // 2. Error Info  : ErrInfo    | ErrorField  | ErrorList
+    //
+    // Error info captures instance specific details.
     val fieldErr = Err.on("title", "", "must be 1-100 characters")
     val kind =
         when (fieldErr) {
