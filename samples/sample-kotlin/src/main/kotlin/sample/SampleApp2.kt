@@ -40,7 +40,7 @@ class TaskService {
     }
 
 
-    /** The spine: three built-in outcomes plus one custom, domain-specific code. */
+    /** Whether a task with the title exists already in the list supplied. */
     fun exists(title: String, listId: String = PERSONAL_LIST): Boolean {
         return existingTitles.contains(title)
     }
@@ -123,7 +123,7 @@ fun showOverview(tasks: TaskService) {
     section("Part 1: Overview")
 
     // Overview: Status codes
-    // 1. These are Like http codes, but generalized for any layer.
+    // 1. These are like http codes, but generalized for any layer.
     // 2. Tell you the KIND of success/failure ( e.g. security = Failed.Restricted)
     // 3. Error details are separate from the Status codes ( example shown later )
     //
@@ -175,8 +175,11 @@ fun showOverview(tasks: TaskService) {
 fun showTaxonomy(tasks: TaskService) {
     section("Part 2: Taxonomy")
 
-    // Example 1: There are 8 groups total under the Passed/Failed Branches ( Tier 1 )
-    // Each group is Tier 2, representing tier of information ( Kind
+    // Example 1: There are 8 groups total under the Passed/Failed Branches
+    // Tier 1  = Passed | Failed
+    // Tier 2  = The 8 groups, 4 under Passed, 4 under Failed
+    // Tier 3  = The individual codes in the groups ( default or custom )
+    //
     // Passed  = Succeeded  | Pending | Excluded | Information
     // Failed  = Restricted | Invalid | Rejected | Unserved
     val created: Status = tasks.create("walk the dog")
@@ -185,7 +188,7 @@ fun showTaxonomy(tasks: TaskService) {
         is Passed -> {
             // Tier 2: Passed has 4 groups
             when(created) {
-                is Passed.Succeeded   -> println("Operation is succeeful")
+                is Passed.Succeeded   -> println("Operation is successful")
                 is Passed.Pending     -> println("Operation is pending")
                 is Passed.Excluded    -> println("Operation is excluded")
                 is Passed.Information -> println("Operation is informational")
