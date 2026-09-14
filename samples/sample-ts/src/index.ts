@@ -36,11 +36,20 @@ function check(condition: boolean, label: string): void {
   console.log(`ok: ${label}`);
 }
 
+const SEPARATOR = "=".repeat(60);
+
+function section(title: string): void {
+  console.log(`\n${SEPARATOR}`);
+  console.log(title);
+  console.log(SEPARATOR);
+}
+
 /**
  * Construction, HTTP mapping, and the built-in registry. No `new` anywhere - every group is a
  * plain object, matching Kotlin's own `Succeeded(...)`-style construction exactly.
  */
 function demonstrateCoreFunctionality(): void {
+  section("Core functionality");
   const ok = Succeeded.SUCCESS;
   const denied = Restricted.DENIED;
   check(ok.name === "SUCCESS", "Succeeded.SUCCESS.name");
@@ -64,6 +73,7 @@ function demonstrateCoreFunctionality(): void {
  * values ever possible.
  */
 function demonstrateExhaustivenessOverPassedAndFailed(): void {
+  section("Exhaustiveness: Passed vs Failed");
   function describeOutcome(status: Status): string {
     if (status.success) {
       return `passed: ${status.name}`; // status: Passed here
@@ -81,6 +91,7 @@ function demonstrateExhaustivenessOverPassedAndFailed(): void {
  * that only catches gaps if kept in sync by hand.
  */
 function demonstrateExhaustivenessOverPassedGroups(): void {
+  section("Exhaustiveness: Passed groups");
   function describe(status: Passed): string {
     switch (status.group) {
       case Groups.SUCCEEDED:
@@ -103,6 +114,7 @@ function demonstrateExhaustivenessOverPassedGroups(): void {
 
 /** Same exhaustiveness guarantee over Failed's four groups. */
 function demonstrateExhaustivenessOverFailedGroups(): void {
+  section("Exhaustiveness: Failed groups");
   function describe(status: Failed): string {
     switch (status.group) {
       case Groups.RESTRICTED:
@@ -129,6 +141,7 @@ function demonstrateExhaustivenessOverFailedGroups(): void {
  * inherently instanceof-based.
  */
 function demonstrateErrors(): void {
+  section("Errors");
   const err = Err.of("email is required");
   check(err.message === "email is required", "Err.of(message).message");
 
@@ -147,6 +160,7 @@ function demonstrateErrors(): void {
 
 /** Checked.success / Checked.failure and collect. Errors are native readonly arrays throughout. */
 function demonstrateChecked(): void {
+  section("Checked");
   const validEmail = Checked.success();
   check(validEmail.isValid, "Checked.success().isValid");
 
@@ -164,6 +178,7 @@ function demonstrateChecked(): void {
  * domain code converted both ways.
  */
 function demonstrateFormats(): void {
+  section("Formats: RFC 9457 problem conversion");
   const catalog = Catalog.of({ "com.stripe": "https://stripe.com/problems" });
   const problems = CodesToProblem(catalog, CodesToHttp());
 
@@ -216,4 +231,6 @@ demonstrateErrors();
 demonstrateChecked();
 demonstrateFormats();
 
+console.log(`\n${SEPARATOR}`);
 console.log("All sample-ts checks passed.");
+console.log(SEPARATOR);
