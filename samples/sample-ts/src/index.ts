@@ -1,5 +1,5 @@
 /**
- * Living documentation of @kiit/codes from real TypeScript, type-checked (`npm run typecheck`)
+ * Living documentation of @kiitdev/codes from real TypeScript, type-checked (`npm run typecheck`)
  * against the actual native port, not a Kotlin/JS-compiled `.d.ts`. Mirrors the scenarios in
  * samples/sample-kotlin and samples/sample-java, including the RFC 9457 / kiit-native format
  * conversion from PR #29.
@@ -26,8 +26,8 @@ import {
   Catalog,
   CodesToProblem,
   toCodeDetail,
-} from "@kiit/codes";
-import type { Status, Passed, Failed, ErrorItem } from "@kiit/codes";
+} from "@kiitdev/codes";
+import type { Status, Passed, Failed, ErrorItem } from "@kiitdev/codes";
 
 function check(condition: boolean, label: string): void {
   if (!condition) {
@@ -59,9 +59,8 @@ function showCoreFunctionality(): void {
   check(http.toCode(ok) === 200, "CodesToHttp().toCode(SUCCESS) === 200");
   check(http.toCode(denied) === 401, "CodesToHttp().toCode(DENIED) === 401");
 
-  // Codes.all / Codes.statusFor: a plain property and a namespaced lookup function, not top-level
-  // proxy functions - TypeScript doesn't have Kotlin/JS's "objects can't export static members"
-  // limitation, so there's no need for the codesAll()/codesStatusFor() workaround.
+  // Codes.all / Codes.statusFor: a plain property and a namespaced lookup function - real object
+  // statics, reachable directly, no top-level proxy functions needed.
   check(Codes.all.length > 0, "Codes.all.length > 0");
   const found = Codes.statusFor("dev.kiit", "Succeeded", "SUCCESS");
   check(found !== undefined, "Codes.statusFor('dev.kiit', 'Succeeded', 'SUCCESS') found");

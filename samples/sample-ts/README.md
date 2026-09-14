@@ -1,6 +1,6 @@
 # sample-ts
 
-Sample app for [`@kiit/codes`](../../ports/kiit-codes-ts) from real TypeScript, checked against the actual native port.
+Sample app for [`@kiitdev/codes`](../../ports/kiit-codes-ts) from real TypeScript, checked against the actual native port.
 
 ## Run
 

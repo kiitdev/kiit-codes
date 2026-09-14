@@ -1,14 +1,8 @@
 /** url: www.kiit.dev */
 @file:JvmName("Checks")
-@file:OptIn(ExperimentalJsExport::class, ExperimentalJsStatic::class)
 
 package kiit.codes
 
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.ExperimentalJsStatic
-import kotlin.js.JsExport
-import kotlin.js.JsName
-import kotlin.js.JsStatic
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
@@ -25,7 +19,6 @@ import kotlin.jvm.JvmStatic
  * 3. Implements [HasErrors] and [HasStatus]. [status] is typed [Status] rather than narrowed to
  *    [Passed]/[Failed], since one [Checked] instance can represent either outcome.
  */
-@JsExport
 class Checked
     private constructor(
         override val status: Status,
@@ -36,13 +29,11 @@ class Checked
         companion object {
             /** A passing check with no errors. */
             @JvmStatic
-            @JsStatic
             @JvmOverloads
             fun success(status: Passed = Succeeded.SUCCESS): Checked = Checked(status, emptyList())
 
             /** A failing check with one or more [errors]. */
             @JvmStatic
-            @JsStatic
             fun failure(status: Failed, errors: List<Err>): Checked {
                 require(errors.isNotEmpty()) { "failure requires at least one Err" }
                 return Checked(status, errors)
@@ -50,17 +41,14 @@ class Checked
         }
     }
 
-/** [collect] over varargs, the JS/TS-friendlier shape (see the [List] overload below). */
-@JsExport
+/** [collect] over varargs — convenience for calling with individual checks directly. */
 fun collect(vararg checks: Checked): Checked = collect(checks.toList())
 
 /**
  * Collects multiple [checks] into one: passes only if every one of them passed, otherwise fails
  * with [Failed.Invalid.INVALID_VALUE] and every error from every failing entry pooled together,
- * in the order the checks were given. `@JsName` avoids a JS name clash with the vararg overload.
+ * in the order the checks were given.
  */
-@JsExport
-@JsName("collectList")
 fun collect(checks: List<Checked>): Checked {
     val errors = checks.flatMap { it.errors }
     return if (errors.isEmpty()) Checked.success() else Checked.failure(Invalid.INVALID_VALUE, errors)

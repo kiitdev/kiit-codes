@@ -44,8 +44,7 @@ jobs:
 
       - name: Verification checks (lint + tests)
         run: |
-          ./gradlew :kiit-codes:ktlintCheck :kiit-codes:detekt \
-            :kiit-codes:jvmTest :kiit-codes:jsNodeTest
+          ./gradlew :kiit-codes:ktlintCheck :kiit-codes:detekt :kiit-codes:jvmTest
 
       - name: Import GPG key
         run: |

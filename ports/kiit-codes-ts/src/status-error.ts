@@ -6,8 +6,7 @@
  * communicate via exceptions. `StatusError` itself is `abstract` and can't be thrown directly.
  *
  * Named `XxxError`, not `XxxException` — JavaScript's own convention (`Error`, `TypeError`,
- * `RangeError`) and the exact naming `jsMain/StatusError.kt` already uses for this reason. This
- * file supersedes that Kotlin/JS wrapper directly, name for name.
+ * `RangeError`).
  *
  * Real classes here, unlike `Status`/`Err`/`Checked` elsewhere in this port: `throw`/`catch` is
  * inherently `instanceof`-based in JS, there's no plain-object idiom for it, and an exception is

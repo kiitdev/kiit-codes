@@ -41,7 +41,7 @@ import kotlin.jvm.JvmOverloads
  *
  * Prefer the platform-specific equivalents over these base classes directly: `RestrictedError`/
  * `InvalidError`/`RejectedError`/`UnservedError` in `iosMain` for idiomatic Swift naming via
- * `@ObjCName`, or the equivalents in `jsMain` for JS/TS.
+ * `@ObjCName`, or the equivalents in the native TypeScript port (`ports/kiit-codes-ts`) for JS/TS.
  */
 sealed class StatusException(
     val checked: Checked,

@@ -1,11 +1,7 @@
 /** url: www.kiit.dev */
-@file:OptIn(ExperimentalJsExport::class)
-
 package kiit.codes.formats
 
 import kiit.codes.StatusConstants
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
@@ -16,7 +12,6 @@ import kotlin.jvm.JvmStatic
  * [StatusConstants.KIIT] is always present and always resolves to kiit-codes' own taxonomy
  * docs — [of]'s [baseUrls] cannot override it, kiit-origin statuses always point back here.
  */
-@JsExport
 class Catalog private constructor(private val baseUrls: Map<String, String>) {
     /** The registered `baseUrl` for [origin], or null if none was passed to [of]. */
     fun baseUrlFor(origin: String): String? = baseUrls[origin]

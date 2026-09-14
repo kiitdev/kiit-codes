@@ -10,9 +10,9 @@ plugins {
     id("signing")
 }
 
-// Single source of truth for the published version — feeds Maven Central (below), the JS
-// package.json (in the js(IR) block below), and the release workflow's printVersion task, so
-// the git tag, GitHub release, Maven artifact, and npm package version can never drift apart.
+// Single source of truth for the published version — feeds Maven Central (below) and the release
+// workflow's printVersion task, so the git tag, GitHub release, and Maven artifact can never drift
+// apart. The npm package (ports/kiit-codes-ts) is a separate native port with its own version.
 val libraryVersion = "1.1.0"
 
 kotlin {
@@ -30,26 +30,6 @@ kotlin {
         publishLibraryVariants("release")
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
-    }
-
-    js(IR) {
-        browser()
-        nodejs()
-        binaries.library()
-        generateTypeScriptDefinitions()
-
-        // Sets the npm-facing package identity. The raw compiled filenames stay
-        // "kiit-codes-kiit-codes.{js,d.ts}" (rootProject-subproject concatenation) — that's purely
-        // internal; package.json's "main"/"types" fields below already point at them correctly,
-        // and consumers only ever interact via `import { kiit } from '@kiit/codes'`, resolved
-        // through package.json, never by referencing the raw filename directly. (compilerOptions'
-        // `moduleName` was tried for cosmetically renaming the filename too, but confirmed via a
-        // clean build to have no effect on either the filename or the `.d.ts`'s `export as
-        // namespace` identifier — not worth chasing further since it has zero consumer impact.)
-        compilations["main"].packageJson {
-            name = "@kiit/codes"
-            version = libraryVersion
         }
     }
 
@@ -161,7 +141,6 @@ detekt {
     buildUponDefaultConfig = true
     source.setFrom(
         "src/commonMain/kotlin",
-        "src/jsMain/kotlin",
         "src/iosMain/kotlin",
     )
 }

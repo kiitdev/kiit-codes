@@ -1,30 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Publishes @kiit/codes to npm from the Kotlin/JS production library distribution.
-#
-# Local-only — deliberately NOT wired into .github/workflows/release.yml yet. That's a separate,
-# tracked follow-up (see the README roadmap). Run from the repository root:
+# Publishes @kiitdev/codes to npm from the native TypeScript port (ports/kiit-codes-ts). Run from the
+# repository root:
 #
 #   npm login          # one-time, if not already authenticated
 #   ./scripts/publish-npm.sh
 
-cd "$(dirname "$0")/../kiit-codes-kotlin"
+cd "$(dirname "$0")/../ports/kiit-codes-ts"
 
-echo "==> Building the JS production library distribution"
-./gradlew :kiit-codes:jsBrowserProductionLibraryDistribution
+echo "==> Installing dependencies"
+npm ci
 
-DIST_DIR="kiit-codes/build/dist/js/productionLibrary"
-if [[ ! -f "$DIST_DIR/package.json" ]]; then
-  echo "error: $DIST_DIR/package.json not found — did the Gradle task name change?" >&2
-  exit 1
-fi
+echo "==> Running typecheck and tests"
+npm run typecheck
+npm test
 
-PACKAGE_NAME="$(node -p "require('./$DIST_DIR/package.json').name")"
-PACKAGE_VERSION="$(node -p "require('./$DIST_DIR/package.json').version")"
+PACKAGE_NAME="$(node -p "require('./package.json').name")"
+PACKAGE_VERSION="$(node -p "require('./package.json').version")"
 
 echo "==> Contents to be published ($PACKAGE_NAME@$PACKAGE_VERSION):"
-(cd "$DIST_DIR" && npm pack --dry-run)
+npm run build
+npm pack --dry-run
 
 read -rp "Publish $PACKAGE_NAME@$PACKAGE_VERSION to npm? [y/N] " CONFIRM
 if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
@@ -33,5 +30,6 @@ if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
 fi
 
 # --access public is required the first time a new scoped (@kiit/...) package is published —
-# scoped packages default to private on npm otherwise.
-(cd "$DIST_DIR" && npm publish --access public)
+# scoped packages default to private on npm otherwise. npm publish re-runs prepublishOnly
+# (typecheck + test + build) automatically before publishing.
+npm publish --access public

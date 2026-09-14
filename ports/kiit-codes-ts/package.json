@@ -1,7 +1,16 @@
 {
-  "name": "@kiit/codes",
+  "name": "@kiitdev/codes",
   "version": "0.9.0",
   "description": "Typed status and error codes for structured success and failure classification",
+  "keywords": [
+    "status",
+    "error-handling",
+    "taxonomy",
+    "typescript",
+    "http-status",
+    "problem-details",
+    "rfc9457"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -19,7 +28,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kiitdev/kiit-codes.git",
-    "directory": "kiit-codes-ts"
+    "directory": "ports/kiit-codes-ts"
   },
   "bugs": {
     "url": "https://github.com/kiitdev/kiit-codes/issues"

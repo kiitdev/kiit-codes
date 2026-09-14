@@ -1,21 +1,21 @@
-# @kiit/codes
+# @kiitdev/codes
 
 A native TypeScript port of [kiit-codes](https://github.com/kiitdev/kiit-codes). A small, dependency-free taxonomy for classifying success and failure: extensible codes, HTTP mapping, validation, typed errors, and RFC 9457 support.
 
-Kotlin is the canonical implementation. This package is a port checked against it, not an independent implementation that happens to agree today. See [`kiit-codes-structure.md`](https://github.com/kiitdev/kiit-codes/blob/main/_prd/260910-kiit-codes-typescript/kiit-codes-structure.md) for why the two are organized this way.
+Kotlin is the canonical implementation. This package is a port checked against it, not an independent implementation that happens to agree today — see [`kiit-codes-kotlin`](https://github.com/kiitdev/kiit-codes/tree/main/kiit-codes-kotlin).
 
 Pre-1.0: the API may still shift before a stable release.
 
 ## Install
 
 ```bash
-npm install @kiit/codes
+npm install @kiitdev/codes
 ```
 
 ## Quick example
 
 ```ts
-import { Succeeded, Restricted, CodesToHttp } from "@kiit/codes";
+import { Succeeded, Restricted, CodesToHttp } from "@kiitdev/codes";
 
 function authorize(userId: string, requesterId: string) {
   return userId === requesterId ? Succeeded.SUCCESS : Restricted.UNAUTHORIZED;
@@ -31,8 +31,8 @@ Every group is a plain object, not a class. Construct one without `new` (`Restri
 ## Exhaustive narrowing
 
 ```ts
-import { Groups, assertNever } from "@kiit/codes";
-import type { Status } from "@kiit/codes";
+import { Groups, assertNever } from "@kiitdev/codes";
+import type { Status } from "@kiitdev/codes";
 
 function describe(status: Status): string {
   switch (status.group) {
@@ -48,6 +48,17 @@ function describe(status: Status): string {
   }
 }
 ```
+
+## Publishing
+
+Run from the repo root (or use `../../scripts/publish-npm.sh` if you're already in this directory):
+
+```bash
+npm login          # one-time; verify with `npm whoami`
+./scripts/publish-npm.sh
+```
+
+The script runs typecheck/test/build, previews the package contents (`npm pack --dry-run`), asks for confirmation, then publishes. See [`BUILD.md`](../../BUILD.md#publish--npm-kiitdevcodes) for the CI-driven release path.
 
 ## Learn more
 

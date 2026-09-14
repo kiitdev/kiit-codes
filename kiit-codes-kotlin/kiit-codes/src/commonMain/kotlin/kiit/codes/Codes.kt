@@ -1,10 +1,6 @@
 /** url: www.kiit.dev */
-@file:OptIn(ExperimentalJsExport::class)
-
 package kiit.codes
 
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
@@ -22,8 +18,6 @@ import kotlin.jvm.JvmStatic
  * 3. Uniqueness of every built-in [Status]'s [StatusKey] (origin+scope+group+name) is enforced
  *    at object init time. A collision fails loudly right away, instead of surfacing later as a
  *    silent wrong lookup, see [statusFor].
- * 4. [codesAll] and [codesStatusFor] are thin proxy functions for JS/TS callers, since plain
- *    Kotlin `object`s like this one don't export usable static members to JS.
  */
 object Codes {
     /** All built-in codes. Used for reverse lookups, see [CodesToHttp], [CompositeLookup]. */
@@ -64,14 +58,6 @@ object Codes {
         byKey[StatusKey(origin = origin, scope = "", group = group, name = name)]
 }
 
-/** JS/TS-reachable proxy for [Codes.all], see [Codes]'s KDoc for why this exists. */
-@JsExport
-fun codesAll(): List<Status> = Codes.all
-
-/** JS/TS-reachable proxy for [Codes.statusFor], see [Codes]'s KDoc for why this exists. */
-@JsExport
-fun codesStatusFor(origin: String, group: String, name: String): Status? = Codes.statusFor(origin, group, name)
-
 /**
  * Bidirectional conversion between a [Status] and a target protocol's status code (e.g. HTTP).
  *
@@ -81,7 +67,6 @@ fun codesStatusFor(origin: String, group: String, name: String): Status? = Codes
  * 2. Individual codes within a group don't need an exhaustive mapping. They can be handled
  *    via a small overrides table layered on top of the group default, see [CodesToHttp].
  */
-@JsExport
 interface CodeLookup {
     /** Converts a [Status] to the target protocol's code. */
     fun toCode(status: Status): Int
@@ -107,7 +92,6 @@ interface CodeLookup {
  * 2. Clients needing additional or custom codes should compose with [CompositeLookup] rather
  *    than subclassing this type directly, see [CompositeLookup] for why.
  */
-@JsExport
 open class CodesToHttp
     @JvmOverloads
     constructor(
@@ -198,7 +182,6 @@ open class CodesToHttp
  *
  * gRPC's `ABORTED` (10) maps to [Unserved.ABORTED], previously an honest `null` gap, now closed.
  */
-@JsExport
 open class CodesToGrpc
     @JvmOverloads
     constructor(
@@ -291,7 +274,6 @@ open class CodesToGrpc
  * val lookup = CompositeLookup(CodesToHttp(), mapOf(MY_DOMAIN_CODE to 402))
  * ```
  */
-@JsExport
 class CompositeLookup(
     private val base: CodeLookup,
     private val extensions: Map<Status, Int>,

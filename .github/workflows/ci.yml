@@ -34,5 +34,26 @@ jobs:
       - name: JVM tests (commonTest)
         run: ./gradlew :kiit-codes:jvmTest
 
-      - name: JS tests (commonTest, Node)
-        run: ./gradlew :kiit-codes:jsNodeTest
+  ts-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ports/kiit-codes-ts
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

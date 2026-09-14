@@ -14,9 +14,9 @@ func check(_ condition: Bool, _ label: String) {
     print("ok: \(label)")
 }
 
-// Companion constant access: unlike @JvmField (Java) and @JsStatic (JS/TS), plain Kotlin/Native
-// interop has no flattening mechanism. Companion members always go through `.companion`, with no
-// equivalent annotation to make them directly static. Every leaf type exposes
+// Companion constant access: unlike @JvmField (Java), plain Kotlin/Native interop has no
+// flattening mechanism. Companion members always go through `.companion`, with no equivalent
+// annotation to make them directly static. Every leaf type exposes
 // `class var companion: XxxCompanion { get }`, not the members directly.
 let ok = Passed.Succeeded.companion.SUCCESS
 let denied = Failed.Restricted.companion.DENIED
