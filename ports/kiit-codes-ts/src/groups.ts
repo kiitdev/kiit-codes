@@ -3,7 +3,7 @@
  * be, each a plain function merged with a namespace of its built-in Code constants
  * (`Succeeded.SUCCESS`), mirroring Kotlin's constructor-call-plus-companion-object naming without
  * needing `new`. See status.ts for how these compose into `Passed`/`Failed`/`Status` and for the
- * generic operations (`groupDescription`, `statusPath`, `statusCode`, `ofStatus`) that work over
+ * generic operations (`groupDescription`, `statusPath`, `statusCode`) that work over
  * any of them.
  */
 

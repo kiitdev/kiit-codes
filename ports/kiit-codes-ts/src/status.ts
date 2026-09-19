@@ -98,17 +98,3 @@ export function statusPath(status: Status): string {
 export function statusCode(status: Status): string {
   return `${status.success ? "Passed" : "Failed"}:${status.group}:${status.name}`;
 }
-
-/**
- * Resolves a status from an optional `message` override and an optional `rawStatus` override,
- * falling back to `status` when neither is supplied. `rawStatus`, if present, is used as the base
- * instead of `status`; `message`, if present, is then applied on top of that base.
- */
-export function ofStatus<T extends Status>(
-  message: string | undefined,
-  rawStatus: T | undefined,
-  status: T,
-): T {
-  const base = rawStatus ?? status;
-  return message === undefined ? base : { ...base, message };
-}

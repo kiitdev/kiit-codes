@@ -4,12 +4,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
-import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 // =================================================================================================
-// StatusTest: Passed/Failed subtypes, ofStatus companion function
+// StatusTest: Passed/Failed subtypes
 // =================================================================================================
 
 class StatusTest {
@@ -201,39 +200,6 @@ class StatusTest {
         val customDenied = Failed.Restricted("DENIED", "Custom denied", origin = "com.acme")
         assertEquals(kiitDenied.code, customDenied.code)
         assertNotEquals(kiitDenied.statusKey, customDenied.statusKey)
-    }
-
-    // -------------------------------------------------------------------------
-    // ofStatus: selects correct instance based on message / rawStatus nullability
-    // -------------------------------------------------------------------------
-
-    @Test
-    fun ofStatusReturnStatusWhenBothNull() {
-        val status = Succeeded.SUCCESS
-        assertSame(status, Status.ofStatus(null, null, status))
-    }
-
-    @Test
-    fun ofStatusReturnsRawStatusWhenMessageIsNull() {
-        val raw = Succeeded.CREATED
-        val result = Status.ofStatus(null, raw, Succeeded.SUCCESS)
-        assertSame(raw, result)
-    }
-
-    @Test
-    fun ofStatusReturnsStatusWithUpdatedMessageWhenRawIsNull() {
-        val result = Status.ofStatus("Custom", null, Succeeded.SUCCESS)
-        assertEquals("Custom", result.message)
-        assertEquals(Succeeded.SUCCESS.origin, result.origin)
-    }
-
-    @Test
-    fun ofStatusReturnsRawWithUpdatedMessageWhenBothProvided() {
-        val raw = Succeeded.CREATED
-        val result = Status.ofStatus("Custom", raw, Succeeded.SUCCESS)
-        assertEquals("Custom", result.message)
-        assertEquals(raw.origin, result.origin)
-        assertNotSame(raw, result)
     }
 
     // -------------------------------------------------------------------------

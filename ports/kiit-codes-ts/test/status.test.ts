@@ -11,7 +11,7 @@ import {
   Rejected,
   Unserved,
 } from "../src/groups.js";
-import { groupDescription, statusPath, statusCode, ofStatus } from "../src/status.js";
+import { groupDescription, statusPath, statusCode } from "../src/status.js";
 
 // Ported from StatusTest.kt. Two Kotlin test groups are intentionally not ported:
 // - statusKey checks: StatusKey is `internal` in Kotlin (module-private, inaccessible to real
@@ -131,31 +131,5 @@ describe("statusCode", () => {
     const kiitDenied = Restricted("DENIED", "Denied", StatusConstants.KIIT);
     const customDenied = Restricted("DENIED", "Custom denied", "com.acme");
     expect(statusCode(kiitDenied)).toBe(statusCode(customDenied));
-  });
-});
-
-describe("ofStatus", () => {
-  it("returns status unchanged when both message and rawStatus are undefined", () => {
-    const status = Succeeded.SUCCESS;
-    expect(ofStatus(undefined, undefined, status)).toBe(status);
-  });
-
-  it("returns rawStatus unchanged when message is undefined", () => {
-    const raw = Succeeded.CREATED;
-    expect(ofStatus(undefined, raw, Succeeded.SUCCESS)).toBe(raw);
-  });
-
-  it("returns status with the message overridden when rawStatus is undefined", () => {
-    const result = ofStatus("Custom", undefined, Succeeded.SUCCESS);
-    expect(result.message).toBe("Custom");
-    expect(result.origin).toBe(Succeeded.SUCCESS.origin);
-  });
-
-  it("returns rawStatus with the message overridden when both are provided", () => {
-    const raw = Succeeded.CREATED;
-    const result = ofStatus("Custom", raw, Succeeded.SUCCESS);
-    expect(result.message).toBe("Custom");
-    expect(result.origin).toBe(raw.origin);
-    expect(result).not.toBe(raw);
   });
 });

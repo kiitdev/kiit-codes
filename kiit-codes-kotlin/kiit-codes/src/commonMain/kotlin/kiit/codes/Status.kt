@@ -2,7 +2,6 @@
 package kiit.codes
 
 import kotlin.jvm.JvmField
-import kotlin.jvm.JvmStatic
 
 /** Well-known [Status.origin] values. */
 object StatusConstants {
@@ -82,40 +81,12 @@ sealed interface Status {
     /** The group discriminant, e.g. "Restricted", "Rejected". See the hierarchy above. */
     val group: String
 
+    /**
+     * True if this is its group's built-in default (e.g. [Failed.Invalid.INVALID_VALUE] for
+     * `Invalid`), the same instance as that group's `DEFAULT`. Compared by value, so a `copy()`
+     * that changes any field, `message` included, is not the default.
+     */
     val isDefault: Boolean
-
-    companion object {
-        /**
-         * Resolves a status from an optional [message] override and an optional [rawStatus]
-         * override, falling back to [status] when neither is supplied. [rawStatus], if present,
-         * is used as the base instead of [status]; [message], if present, is then applied on top
-         * of that base.
-         */
-        @JvmStatic
-        @Suppress("UNCHECKED_CAST")
-        fun <T : Status> ofStatus(message: String?, rawStatus: T?, status: T): T {
-            val base = rawStatus ?: status
-            return if (message == null) base else withMessage(base, message) as T
-        }
-
-        /**
-         * Internal-only, narrower stand-in for the copy capability [Status] used to expose
-         * publicly. That was removed since an immutable [Status] shouldn't offer a general way
-         * to mutate itself. Only [ofStatus] needs this, and only ever to override [message],
-         * never [origin].
-         */
-        private fun withMessage(status: Status, message: String): Status =
-            when (status) {
-                is Passed.Succeeded -> status.copy(message = message)
-                is Passed.Pending -> status.copy(message = message)
-                is Passed.Excluded -> status.copy(message = message)
-                is Passed.Information -> status.copy(message = message)
-                is Failed.Restricted -> status.copy(message = message)
-                is Failed.Invalid -> status.copy(message = message)
-                is Failed.Rejected -> status.copy(message = message)
-                is Failed.Unserved -> status.copy(message = message)
-            }
-    }
 }
 
 /**
@@ -527,7 +498,7 @@ sealed class Failed : Status {
         get() =
             when (this) {
                 is Restricted -> this == Restricted.DEFAULT
-                is Invalid  -> this == Invalid.DEFAULT
+                is Invalid -> this == Invalid.DEFAULT
                 is Rejected -> this == Rejected.DEFAULT
                 is Unserved -> this == Unserved.DEFAULT
             }
