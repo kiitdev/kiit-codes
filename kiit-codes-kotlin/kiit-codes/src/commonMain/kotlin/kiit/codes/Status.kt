@@ -224,6 +224,10 @@ sealed class Passed : Status {
                     origin = StatusConstants.KIIT,
                 )
 
+            /** This group's default. Same instance as [SUCCESS], not a new entry. */
+            @JvmField
+            val DEFAULT = SUCCESS
+
             @JvmField
             val CREATED =
                 Succeeded(
@@ -306,6 +310,10 @@ sealed class Passed : Status {
                     origin = StatusConstants.KIIT,
                 )
 
+            /** This group's default. Same instance as [ACCEPTED], not a new entry. */
+            @JvmField
+            val DEFAULT = ACCEPTED
+
             @JvmField
             val QUEUED =
                 Pending(
@@ -366,6 +374,10 @@ sealed class Passed : Status {
                     origin = StatusConstants.KIIT,
                 )
 
+            /** This group's default. Same instance as [OMITTED], not a new entry. */
+            @JvmField
+            val DEFAULT = OMITTED
+
             @JvmField
             val SKIPPED =
                 Excluded(
@@ -423,6 +435,10 @@ sealed class Passed : Status {
                     "An informational notice.",
                     origin = StatusConstants.KIIT,
                 )
+
+            /** This group's default. Same instance as [NOTICE], not a new entry. */
+            @JvmField
+            val DEFAULT = NOTICE
 
             @JvmField
             val ADVISORY =
@@ -512,6 +528,10 @@ sealed class Failed : Status {
                     origin = StatusConstants.KIIT,
                 )
 
+            /** This group's default. Same instance as [DENIED], not a new entry. */
+            @JvmField
+            val DEFAULT = DENIED
+
             @JvmField
             val UNAUTHENTICATED =
                 Restricted(
@@ -570,6 +590,10 @@ sealed class Failed : Status {
                     origin = StatusConstants.KIIT,
                 )
 
+            /** This group's default. Same instance as [INVALID_VALUE], not a new entry. */
+            @JvmField
+            val DEFAULT = INVALID_VALUE
+
             @JvmField
             val BAD_REQUEST =
                 Invalid(
@@ -627,6 +651,10 @@ sealed class Failed : Status {
                     "A business rule rejected the request.",
                     origin = StatusConstants.KIIT,
                 )
+
+            /** This group's default. Same instance as [RULE_VIOLATION], not a new entry. */
+            @JvmField
+            val DEFAULT = RULE_VIOLATION
 
             @JvmField
             val CONFLICT =
@@ -691,6 +719,10 @@ sealed class Failed : Status {
                     "An unexpected, unclassified error occurred.",
                     origin = StatusConstants.KIIT,
                 )
+
+            /** This group's default. Same instance as [UNEXPECTED], not a new entry. */
+            @JvmField
+            val DEFAULT = UNEXPECTED
 
             @JvmField
             val UNSUPPORTED =
