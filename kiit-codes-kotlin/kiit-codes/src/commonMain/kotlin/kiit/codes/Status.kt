@@ -6,12 +6,16 @@ import kotlin.jvm.JvmField
 /** Well-known [Status.origin] values. */
 object StatusConstants {
     /**
-     * Origin for every built-in [Codes] entry. Reverse-DNS, matching kiit-codes' own naming
-     * guideline for [Status.origin] (mirrors Gradle's `groupId`, `dev.kiit`).
+     * Origin for every built-in [Codes] entry. Reverse-DNS like Gradle's `groupId`, and not used as a
+     * host: [kiit.codes.formats.ProblemConverter] points it at kiit-codes' own docs.
      */
     const val KIIT = "dev.kiit"
 
-    /** Default origin for consumer/custom statuses that don't specify one explicitly. */
+    /**
+     * Default origin for consumer/custom statuses that don't specify one explicitly. With no `baseUrls`
+     * entry, [kiit.codes.formats.ProblemConverter] would build `https://custom/problems/...` for it, so
+     * custom statuses that reach RFC 9457 output should set their own origin.
+     */
     const val CUSTOM = "custom"
 }
 
@@ -48,6 +52,12 @@ sealed interface Status {
      * Origin of this status, e.g. [StatusConstants.KIIT] for every built-in [Codes] entry.
      * Consumer/custom subtypes default to [StatusConstants.CUSTOM] rather than silently inheriting
      * [StatusConstants.KIIT], so a status can never accidentally misrepresent where it came from.
+     *
+     * 1. It is either a real domain (`"stripe.com"`) or any other id (`"myapp1"`).
+     * 2. [kiit.codes.formats.ProblemConverter] lowercases it. With no `baseUrls` entry it builds the RFC 9457
+     *    `type` as `https://{origin}/problems/...`. The origin is not validated.
+     * 3. Nothing stops two consumers from choosing the same non-domain id, and kiit-codes can't detect it.
+     *    Pick a specific name when there is no domain. A real domain is unique through DNS.
      */
     val origin: String
 

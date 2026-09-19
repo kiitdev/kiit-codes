@@ -11,9 +11,8 @@ import kotlin.jvm.JvmOverloads
 private const val KIIT_BASE_URL = "https://www.kiit.dev/docs/kiit-codes"
 
 /**
- * Converts a [Status] into an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html) [Problem], the way
- * [kiit.codes.CodesToHttp]/[kiit.codes.CodesToGrpc] convert one into a protocol code. [baseUrls] is an
- * optional mapping of [Status.origin] to a `baseUrl`; [mapping] is reused rather than a fresh [CodesToHttp] per call.
+ * Converts a [Status] and an optional [Err] into an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html)
+ * [Problem]. Like [CodesToHttp] and [kiit.codes.CodesToGrpc], it turns a status into another representation.
  *
  *
  * TERMS
@@ -36,10 +35,11 @@ private const val KIIT_BASE_URL = "https://www.kiit.dev/docs/kiit-codes"
  * 2. origin `"myapp1"` -> baseUrl `"https://docs.example.com/myapp1/errors"`
  *
  * ```kotlin
- * val problems = ProblemConverter(baseUrls = mapOf("stripe.com" to "https://stripe.com/errors"))
+ * val converter = ProblemConverter(baseUrls = mapOf("stripe.com" to "https://stripe.com/errors"))
+ * val problem = converter.convert(status, err)
  * ```
  *
- * With the first entry, a `Rejected` status named `DUPLICATE_CHARGE` with scope `payments.cards` builds this:
+ * With the first entry, a `Rejected` status named `DUPLICATE_CHARGE` with scope `payments.cards` converts to:
  * ```json
  * {
  *     "type": "https://stripe.com/errors/payments.cards/rejected/duplicate-charge",
@@ -48,7 +48,7 @@ private const val KIIT_BASE_URL = "https://www.kiit.dev/docs/kiit-codes"
  * }
  * ```
  *
- * With no entry, the same status with origin `"stripe.com"` builds the `type`
+ * With no entry, the same status with origin `"stripe.com"` gets the `type`
  * `https://stripe.com/problems/payments.cards/rejected/duplicate-charge`.
  *
  *
@@ -56,7 +56,11 @@ private const val KIIT_BASE_URL = "https://www.kiit.dev/docs/kiit-codes"
  * 1. Keys of [baseUrls] are lowercased and a trailing `/` on a value is trimmed.
  * 2. [StatusConstants.KIIT] is always present and resolves to kiit-codes' own taxonomy docs.
  * 3. [StatusConstants.KIIT] can't be overridden. Its suffix is `?code=...#taxonomy`, joined with no `/`.
- * 4. See [defaultTypeBuilder] for the suffix, and [Problem] for the RFC 9457 shape.
+ * 4. Every `convert*` function ends in [convertCustomWithUrl], which is the only place a [Problem] is assembled.
+ * 5. See [defaultTypeBuilder] for the suffix, and [Problem] for the RFC 9457 shape.
+ *
+ * @param baseUrls optional map of origin to baseUrl. Keys are lowercased, a trailing `/` on a value is trimmed.
+ * @param mapping supplies the `status` code of each [Problem], defaults to [CodesToHttp]'s standard mapping.
  */
 class ProblemConverter
     @JvmOverloads
@@ -68,7 +72,14 @@ class ProblemConverter
             baseUrls.entries.associate { (origin, baseUrl) -> origin.lowercase() to baseUrl.trimEnd('/') } +
                 (StatusConstants.KIIT to KIIT_BASE_URL)
 
-        /** Builds a [Problem]\<[ErrorDetail]\> for [status], baseUrl from [baseUrls] or the origin. */
+        /**
+         * Converts [status] and [err] into a [Problem]\<[ErrorDetail]\>. The baseUrl comes from [baseUrls], or from
+         * the origin when there is no entry.
+         *
+         * @param status the status to convert.
+         * @param err optional error, an [Err.ErrorList] fills `errors`, any other fills `instance`. Both fill `detail`.
+         * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to [defaultTypeBuilder].
+         */
         @Suppress("ktlint:standard:function-signature")
         @JvmOverloads
         fun convert(
@@ -80,13 +91,17 @@ class ProblemConverter
         }
 
         /**
-         * Builds a [Problem]\<[T]\>, mapping each [Err.ErrorList] entry through [mapper]. Use this for
-         * anything richer than field + message, see [ErrorItem]. Named differently from [convert]
-         * (not an overload) since both take a trailing function parameter — Kotlin can't tell a
-         * `convert(status, err) { ... }` call apart from one meant for [convert]'s own `typeBuilder`.
+         * Same as [convert], but each [Err.ErrorList] entry goes through [mapper] into a [Problem]\<[T]\>. Use this
+         * for anything richer than field + message, see [ErrorItem].
          *
-         * [mapper] comes last (after the defaulted [typeBuilder]) so it can be passed as a trailing
-         * lambda — Kotlin's trailing-lambda syntax always binds to a function's last parameter.
+         * It is named differently from [convert], not an overload, because both end in a function parameter and
+         * Kotlin can't tell a `convert(status, err) { ... }` call meant for [typeBuilder] from one meant for [mapper].
+         * [mapper] comes last so it can be passed as a trailing lambda.
+         *
+         * @param status the status to convert.
+         * @param err optional error, see [convert].
+         * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to [defaultTypeBuilder].
+         * @param mapper turns each [Err.ErrorList] entry into a [T].
          */
         fun <T : ErrorItem> convertCustom(
             status: Status,
@@ -97,7 +112,14 @@ class ProblemConverter
             return convertCustomWithUrl(status, err, baseUrlFor(status), typeBuilder, mapper)
         }
 
-        /** Same as [convert], but [baseUrl] is supplied directly instead of looked up from [baseUrls]. */
+        /**
+         * Same as [convert], but with an explicit [baseUrl]. [baseUrls] and the origin are not used.
+         *
+         * @param status the status to convert.
+         * @param err optional error, see [convert].
+         * @param baseUrl text before the suffix, path prefix included. A trailing `/` is trimmed.
+         * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to [defaultTypeBuilder].
+         */
         @JvmOverloads
         fun convertWithUrl(
             status: Status,
@@ -109,8 +131,14 @@ class ProblemConverter
         }
 
         /**
-         * Generic form of [convertWithUrl], mapping each [Err.ErrorList] entry through [mapper]. This is the one
-         * function that assembles the [Problem], every other `convert*` function calls it.
+         * Same as [convertWithUrl], but each [Err.ErrorList] entry goes through [mapper] into a [Problem]\<[T]\>.
+         * This is the one function that assembles the [Problem], every other `convert*` function ends here.
+         *
+         * @param status the status to convert.
+         * @param err optional error, see [convert].
+         * @param baseUrl text before the suffix, path prefix included. A trailing `/` is trimmed.
+         * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to [defaultTypeBuilder].
+         * @param mapper turns each [Err.ErrorList] entry into a [T].
          */
         fun <T : ErrorItem> convertCustomWithUrl(
             status: Status,
@@ -171,6 +199,9 @@ class ProblemConverter
  * just the taxonomy page as a whole, so every kiit-origin [Status] instead gets `status.code` as
  * a query param on that same page, e.g. `?code=Failed:Invalid:INVALID_VALUE#taxonomy`. A `code`
  * is a colon-delimited identifier (letters, digits, underscores), safe unencoded in a URI query.
+ *
+ * @param status the status to build the suffix for.
+ * @return the suffix, to be appended to a baseUrl. It is not a full URL.
  */
 fun defaultTypeBuilder(status: Status): String {
     if (status.origin == StatusConstants.KIIT) return "?code=${status.code}#taxonomy"
