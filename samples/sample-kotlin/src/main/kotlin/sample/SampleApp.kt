@@ -23,7 +23,7 @@ import kiit.codes.path
 import kotlin.random.Random
 
 private val http = CodesToHttp()
-private val problems = ProblemConverter(mapOf("com.stripe" to "https://stripe.com/problems"), http)
+private val problems = ProblemConverter(mapOf("stripe.com" to "https://stripe.com/errors"), http)
 
 fun main() {
     test0()
@@ -129,16 +129,16 @@ fun test4() {
         Rejected(
             name = "DUPLICATE_CHARGE",
             message = "This charge has already been processed",
-            origin = "com.stripe",
+            origin = "stripe.com",
             scope = "payments.cards",
         )
-    println("path: ${duplicateCharge.path}") // com.stripe:payments.cards
+    println("path: ${duplicateCharge.path}") // stripe.com:payments.cards
     println("code: ${duplicateCharge.code}") // Failed:Rejected:DUPLICATE_CHARGE
 
     // Two independent converters off the same Status, pick whichever fits the boundary:
 
     // ProblemConverter.convert: the RFC 9457 shape, for an HTTP API response. baseUrl comes from
-    // baseUrls, registered above for "com.stripe" (an origin with no entry gets
+    // baseUrls, registered above for "stripe.com" (an origin with no entry gets
     // https://{origin}/problems, and a built-in Status defaults to kiit-codes' own taxonomy docs).
     val stripeProblem = problems.convert(duplicateCharge)
     println("[rfc]  type: ${stripeProblem.type}")

@@ -54,9 +54,9 @@ class ProblemConverterTest {
 
     @Test
     fun convertUsesRegisteredBaseUrlAndFullTypePath() {
-        val problems = ProblemConverter(mapOf("com.stripe" to "https://stripe.com/problems"))
-        val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "com.stripe", scope = "payments.cards")
-        assertEquals("https://stripe.com/problems/payments.cards/restricted/payment-requires-3ds", problems.convert(status).type)
+        val problems = ProblemConverter(mapOf("stripe.com" to "https://stripe.com/errors"))
+        val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "stripe.com", scope = "payments.cards")
+        assertEquals("https://stripe.com/errors/payments.cards/restricted/payment-requires-3ds", problems.convert(status).type)
     }
 
     @Test
@@ -97,7 +97,7 @@ class ProblemConverterTest {
 
     @Test
     fun convertWithUrlTrimsATrailingSlash() {
-        val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "com.stripe")
+        val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "stripe.com")
         val problem = converter.convertWithUrl(status, baseUrl = "https://example.com/probs/")
         assertEquals("https://example.com/probs/restricted/payment-requires-3ds", problem.type)
     }

@@ -17,7 +17,7 @@ import kotlin.jvm.JvmOverloads
  *
  * ```json
  * {
- *     "path": "com.stripe:payments.cards",
+ *     "path": "stripe.com:payments.cards",
  *     "code": "Failed:Rejected:DUPLICATE_CHARGE",
  *     "success": false,
  *     "message": "This charge has already been processed"

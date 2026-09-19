@@ -30,7 +30,7 @@ class TaskService {
     /** The spine: three built-in outcomes plus one custom, domain-specific code. */
     fun create(title: String, listId: String = PERSONAL_LIST): Status {
         if (title.isBlank()) {
-            return Invalid(name = "EMPTY_TITLE", message = "Title must not be empty", origin = "dev.kiit.samples")
+            return Invalid(name = "EMPTY_TITLE", message = "Title must not be empty", origin = "samples.kiit.dev")
         }
         if (title in existingTitles) {
             return Rejected.CONFLICT
@@ -51,7 +51,7 @@ class TaskService {
             return Rejected.NOT_EXISTS
         }
         if (listOwners[listId] != requesterId) {
-            return Restricted(name = "NOT_LIST_OWNER", message = "Only the list owner can complete this task", origin = "dev.kiit.samples")
+            return Restricted(name = "NOT_LIST_OWNER", message = "Only the list owner can complete this task", origin = "samples.kiit.dev")
         }
         return Succeeded.SUCCESS
     }
@@ -136,7 +136,7 @@ fun showOverview(tasks: TaskService) {
     // Let's start with a small example of using a few ( create one, and use 2 defaults )
     val title = "Get groceries"
     val validated: Status = when {
-        title.isEmpty()     -> Invalid(name = "EMPTY_TITLE", message = "Title required", origin = "dev.kiit.samples")
+        title.isEmpty()     -> Invalid(name = "EMPTY_TITLE", message = "Title required", origin = "samples.kiit.dev")
         tasks.exists(title) -> Rejected.CONFLICT
         else                -> Succeeded.SUCCESS
     }
@@ -242,9 +242,9 @@ fun showTaxonomy(tasks: TaskService) {
     // Example 3: Custom codes
     // Create your own status codes from the 8 groups available ( here is a sample of 3 )
     // NOTE: This are stateless / constant, they just tell you the Kind of error ( Invalid | Rejected | Succeeded )
-    val itemInvalid = Invalid(name = "MISSING_DATE", message = "Date not supplied", origin = "dev.kiit.samples")
-    val itemExists = Rejected(name = "DUPLICATE", message = "Item already exists", origin = "dev.kiit.samples")
-    val itemValid = Succeeded(name = "TASK_VALID", message = "Item is valid", origin = "dev.kiit.samples")
+    val itemInvalid = Invalid(name = "MISSING_DATE", message = "Date not supplied", origin = "samples.kiit.dev")
+    val itemExists = Rejected(name = "DUPLICATE", message = "Item already exists", origin = "samples.kiit.dev")
+    val itemValid = Succeeded(name = "TASK_VALID", message = "Item is valid", origin = "samples.kiit.dev")
     val checkWithCustomCodes: Status = when {
         title.isEmpty()     -> itemInvalid
         tasks.exists(title) -> itemExists
@@ -313,7 +313,7 @@ fun showConversion(tasks: TaskService) {
     println("protocols: grpc=${grpc.toCode(status)}")
 
     // problem detail (rfc 9457) — completeTask's HTTP API error response.
-    val problems = ProblemConverter(mapOf("dev.kiit.samples" to "https://example.com/problems"), http)
+    val problems = ProblemConverter(mapOf("samples.kiit.dev" to "https://example.com/problems"), http)
     val problem = problems.convert(status)
     println("problem detail: type=${problem.type}, status=${problem.status}")
 

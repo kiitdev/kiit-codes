@@ -71,13 +71,13 @@ public class SampleApp {
                 new Failed.Rejected(
                         "DUPLICATE_CHARGE",
                         "This charge has already been processed",
-                        "com.stripe",
+                        "stripe.com",
                         "payments.cards");
         System.out.println("http code: " + http.toCode(duplicateCharge));
 
         // baseUrls supplies baseUrl per origin; an origin with no entry gets https://{origin}/problems,
         // and a built-in Status defaults to kiit-codes' own taxonomy docs.
-        ProblemConverter problems = new ProblemConverter(Map.of("com.stripe", "https://stripe.com/problems"), http);
+        ProblemConverter problems = new ProblemConverter(Map.of("stripe.com", "https://stripe.com/errors"), http);
 
         // Two independent converters off the same Status, pick whichever fits the boundary:
 
