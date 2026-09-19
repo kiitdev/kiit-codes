@@ -81,6 +81,8 @@ export namespace Succeeded {
     "The operation completed successfully.",
     StatusConstants.KIIT,
   );
+  /** This group's default. Same value as `SUCCESS`, not a new entry. */
+  export const DEFAULT: Succeeded = SUCCESS;
   export const CREATED: Succeeded = Succeeded(
     "CREATED",
     "A new resource was created.",
@@ -142,6 +144,8 @@ export namespace Pending {
     "The request was accepted.",
     StatusConstants.KIIT,
   );
+  /** This group's default. Same value as `ACCEPTED`, not a new entry. */
+  export const DEFAULT: Pending = ACCEPTED;
   export const QUEUED: Pending = Pending(
     "QUEUED",
     "The request is waiting to be processed.",
@@ -188,6 +192,8 @@ export namespace Excluded {
     "The item was excluded from the result.",
     StatusConstants.KIIT,
   );
+  /** This group's default. Same value as `OMITTED`, not a new entry. */
+  export const DEFAULT: Excluded = OMITTED;
   export const SKIPPED: Excluded = Excluded(
     "SKIPPED",
     "The item was not processed.",
@@ -234,6 +240,8 @@ export namespace Information {
     "An informational notice.",
     StatusConstants.KIIT,
   );
+  /** This group's default. Same value as `NOTICE`, not a new entry. */
+  export const DEFAULT: Information = NOTICE;
   export const ADVISORY: Information = Information(
     "ADVISORY",
     "A notice that may need attention.",
@@ -280,6 +288,8 @@ export namespace Restricted {
     "The request was denied.",
     StatusConstants.KIIT,
   );
+  /** This group's default. Same value as `DENIED`, not a new entry. */
+  export const DEFAULT: Restricted = DENIED;
   export const UNAUTHENTICATED: Restricted = Restricted(
     "UNAUTHENTICATED",
     "Authentication is required.",
@@ -326,6 +336,8 @@ export namespace Invalid {
     "The request had an invalid value.",
     StatusConstants.KIIT,
   );
+  /** This group's default. Same value as `INVALID_VALUE`, not a new entry. */
+  export const DEFAULT: Invalid = INVALID_VALUE;
   export const BAD_REQUEST: Invalid = Invalid(
     "BAD_REQUEST",
     "The request was malformed.",
@@ -372,6 +384,8 @@ export namespace Rejected {
     "A business rule rejected the request.",
     StatusConstants.KIIT,
   );
+  /** This group's default. Same value as `RULE_VIOLATION`, not a new entry. */
+  export const DEFAULT: Rejected = RULE_VIOLATION;
   export const CONFLICT: Rejected = Rejected(
     "CONFLICT",
     "The request conflicts with the current state.",
@@ -422,6 +436,8 @@ export namespace Unserved {
     "An unexpected, unclassified error occurred.",
     StatusConstants.KIIT,
   );
+  /** This group's default. Same value as `UNEXPECTED`, not a new entry. */
+  export const DEFAULT: Unserved = UNEXPECTED;
   export const UNSUPPORTED: Unserved = Unserved(
     "UNSUPPORTED",
     "This capability is not currently available.",

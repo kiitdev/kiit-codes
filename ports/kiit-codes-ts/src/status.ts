@@ -98,3 +98,42 @@ export function statusPath(status: Status): string {
 export function statusCode(status: Status): string {
   return `${status.success ? "Passed" : "Failed"}:${status.group}:${status.name}`;
 }
+
+/**
+ * True if `status` equals its group's built-in default (e.g. `Invalid.INVALID_VALUE` for
+ * `Invalid`). Compared by value on every field, so a copy that changes any field, `message`
+ * included, is not the default. Works on a `Status` parsed from JSON, like the other functions
+ * here. Exhaustive over every group.
+ */
+export function isDefault(status: Status): boolean {
+  switch (status.group) {
+    case Groups.SUCCEEDED:
+      return sameStatus(status, Succeeded.DEFAULT);
+    case Groups.PENDING:
+      return sameStatus(status, Pending.DEFAULT);
+    case Groups.EXCLUDED:
+      return sameStatus(status, Excluded.DEFAULT);
+    case Groups.INFORMATION:
+      return sameStatus(status, Information.DEFAULT);
+    case Groups.RESTRICTED:
+      return sameStatus(status, Restricted.DEFAULT);
+    case Groups.INVALID:
+      return sameStatus(status, Invalid.DEFAULT);
+    case Groups.REJECTED:
+      return sameStatus(status, Rejected.DEFAULT);
+    case Groups.UNSERVED:
+      return sameStatus(status, Unserved.DEFAULT);
+    default:
+      return assertNever(status);
+  }
+}
+
+function sameStatus(a: Status, b: Status): boolean {
+  return (
+    a.group === b.group &&
+    a.name === b.name &&
+    a.message === b.message &&
+    a.origin === b.origin &&
+    a.scope === b.scope
+  );
+}

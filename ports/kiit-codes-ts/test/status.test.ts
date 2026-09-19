@@ -11,7 +11,7 @@ import {
   Rejected,
   Unserved,
 } from "../src/groups.js";
-import { groupDescription, statusPath, statusCode } from "../src/status.js";
+import { groupDescription, statusPath, statusCode, isDefault } from "../src/status.js";
 
 // Ported from StatusTest.kt. Two Kotlin test groups are intentionally not ported:
 // - statusKey checks: StatusKey is `internal` in Kotlin (module-private, inaccessible to real
@@ -131,5 +131,73 @@ describe("statusCode", () => {
     const kiitDenied = Restricted("DENIED", "Denied", StatusConstants.KIIT);
     const customDenied = Restricted("DENIED", "Custom denied", "com.acme");
     expect(statusCode(kiitDenied)).toBe(statusCode(customDenied));
+  });
+});
+
+describe("isDefault", () => {
+  const defaults = [
+    Succeeded.DEFAULT,
+    Pending.DEFAULT,
+    Excluded.DEFAULT,
+    Information.DEFAULT,
+    Restricted.DEFAULT,
+    Invalid.DEFAULT,
+    Rejected.DEFAULT,
+    Unserved.DEFAULT,
+  ];
+
+  const nonDefaults = [
+    Succeeded.CREATED,
+    Pending.QUEUED,
+    Excluded.SKIPPED,
+    Information.ADVISORY,
+    Restricted.UNAUTHENTICATED,
+    Invalid.BAD_REQUEST,
+    Rejected.CONFLICT,
+    Unserved.UNSUPPORTED,
+  ];
+
+  it("DEFAULT is the same value as its built-in", () => {
+    expect(Succeeded.DEFAULT).toBe(Succeeded.SUCCESS);
+    expect(Pending.DEFAULT).toBe(Pending.ACCEPTED);
+    expect(Excluded.DEFAULT).toBe(Excluded.OMITTED);
+    expect(Information.DEFAULT).toBe(Information.NOTICE);
+    expect(Restricted.DEFAULT).toBe(Restricted.DENIED);
+    expect(Invalid.DEFAULT).toBe(Invalid.INVALID_VALUE);
+    expect(Rejected.DEFAULT).toBe(Rejected.RULE_VIOLATION);
+    expect(Unserved.DEFAULT).toBe(Unserved.UNEXPECTED);
+  });
+
+  it("is true for every group's default", () => {
+    expect(defaults).toHaveLength(8);
+    for (const d of defaults) expect(isDefault(d)).toBe(true);
+  });
+
+  it("is false for a non-default built-in in every group", () => {
+    expect(new Set(nonDefaults.map((s) => s.group)).size).toBe(8);
+    for (const s of nonDefaults) expect(isDefault(s)).toBe(false);
+  });
+
+  it("is false for a custom status with the same name under the default origin", () => {
+    expect(isDefault(Invalid("INVALID_VALUE", Invalid.DEFAULT.message))).toBe(false);
+  });
+
+  it("is false when a different group's status shares the default's name and message", () => {
+    const other = Rejected("INVALID_VALUE", Invalid.DEFAULT.message, StatusConstants.KIIT);
+    expect(isDefault(other)).toBe(false);
+  });
+
+  it("is false when any field of a default is changed", () => {
+    for (const d of defaults) {
+      expect(isDefault({ ...d, message: "m" })).toBe(false);
+      expect(isDefault({ ...d, scope: "s" })).toBe(false);
+      expect(isDefault({ ...d, origin: "o" })).toBe(false);
+      expect(isDefault({ ...d, name: "n" })).toBe(false);
+    }
+  });
+
+  it("is true for an unchanged copy, including one parsed from JSON", () => {
+    expect(isDefault({ ...Invalid.DEFAULT })).toBe(true);
+    expect(isDefault(JSON.parse(JSON.stringify(Restricted.DEFAULT)))).toBe(true);
   });
 });
