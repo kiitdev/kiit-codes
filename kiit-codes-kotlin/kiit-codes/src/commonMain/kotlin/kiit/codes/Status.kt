@@ -82,6 +82,8 @@ sealed interface Status {
     /** The group discriminant, e.g. "Restricted", "Rejected". See the hierarchy above. */
     val group: String
 
+    val isDefault: Boolean
+
     companion object {
         /**
          * Resolves a status from an optional [message] override and an optional [rawStatus]
@@ -206,6 +208,15 @@ sealed class Passed : Status {
                 is Pending -> "The operation was accepted but has not yet fully resolved."
                 is Excluded -> "The item was intentionally excluded from the operation."
                 is Information -> "The response provides information; no operation was performed."
+            }
+
+    final override val isDefault: Boolean
+        get() =
+            when (this) {
+                is Succeeded -> this == Succeeded.DEFAULT
+                is Pending -> this == Pending.DEFAULT
+                is Excluded -> this == Excluded.DEFAULT
+                is Information -> this == Information.DEFAULT
             }
 
     /** See [Passed.groupDescription] for this group's definition. */
@@ -510,6 +521,15 @@ sealed class Failed : Status {
                 is Invalid -> "The request itself is wrong."
                 is Rejected -> "The caller was allowed, but the business refuses it."
                 is Unserved -> "The system can't serve it right now, though nothing was wrong with the request."
+            }
+
+    final override val isDefault: Boolean
+        get() =
+            when (this) {
+                is Restricted -> this == Restricted.DEFAULT
+                is Invalid  -> this == Invalid.DEFAULT
+                is Rejected -> this == Rejected.DEFAULT
+                is Unserved -> this == Unserved.DEFAULT
             }
 
     /** See [Failed.groupDescription] for this group's definition. */
