@@ -37,8 +37,9 @@ All notable changes to kiit-codes are documented here. Format follows
 ### Removed
 - **Breaking**: `Catalog`. Pass the map to `ProblemConverter(baseUrls = ...)` instead. Keys are lowercased and
   `kiit.dev` is always fixed to kiit-codes' own docs, as before.
-- **Breaking**: the TypeScript port's `Catalog` and `CodesToProblem`, replaced by `ProblemConverter`. The one-shot
-  `problemFor(catalog, mapping, status, err)` is now `problemFor(status, err?, baseUrls?, mapping?)`.
+- **Breaking**: the TypeScript port's `Catalog` and `CodesToProblem`, replaced by `ProblemConverter`.
+- **Breaking**: the TypeScript port's one-shot `problemFor(catalog, mapping, status, err)`. Use
+  `ProblemConverter().convert(status, err)`. Kotlin never had an equivalent.
 - **Breaking**: `Status.ofStatus(message, rawStatus, status)`. Overriding `message` produced a status with the same
   origin/scope/group/name as a built-in but not equal to it. Use the status directly, or `copy()` it if you need
   a different message. The TypeScript port's `ofStatus` is removed for the same reason. `Err.ofStatus(status)` is

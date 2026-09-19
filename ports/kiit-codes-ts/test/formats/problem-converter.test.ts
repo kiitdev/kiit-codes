@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ProblemConverter, problemFor } from "../../src/formats/problem-converter.js";
+import { ProblemConverter } from "../../src/formats/problem-converter.js";
 import { ErrorDetail } from "../../src/formats/error-item.js";
 import type { ErrorItem } from "../../src/formats/error-item.js";
 import { CodesToHttp } from "../../src/codes.js";
@@ -136,10 +136,5 @@ describe("ProblemConverter", () => {
       ref: e.ref,
     }));
     expect(problem.errors?.[0]?.ref).toBe("req-42");
-  });
-
-  it("problemFor matches convert with the default ErrorDetail", () => {
-    const status = Restricted.FORBIDDEN;
-    expect(problemFor(status)).toEqual(converter.convert(status));
   });
 });

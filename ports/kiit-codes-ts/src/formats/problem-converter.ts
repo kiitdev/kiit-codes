@@ -196,13 +196,3 @@ export function ProblemConverter(
 
   return { convert, convertCustom, convertWithUrl, convertCustomWithUrl };
 }
-
-/** One-shot convenience: converts to a `Problem<ErrorDetail>` without holding onto a `ProblemConverter`. */
-export function problemFor(
-  status: Status,
-  err?: Err,
-  baseUrls: Readonly<Record<string, string>> = {},
-  mapping: CodeLookup = CodesToHttp(),
-): Problem<ErrorDetail> {
-  return ProblemConverter(baseUrls, mapping).convert(status, err);
-}
