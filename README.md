@@ -153,10 +153,10 @@ val http = CodesToHttp()
 
 http.toCode(Succeeded.CREATED) // 201
 http.toCode(Invalid.INVALID_VALUE) // 400
-http.toStatus(404)?.name // "NOT_FOUND"
+http.toCode(Invalid.NOT_FOUND) // 404
 ```
 
-Reverse conversion is deterministic but can be lossy because multiple application codes may map to the same HTTP status.
+There is no reverse conversion from an HTTP code to a status. Many statuses share one code, so a code can't identify a single status.
 
 ### gRPC
 
@@ -168,7 +168,7 @@ import kiit.codes.*
 val grpc = CodesToGrpc()
 
 grpc.toCode(Restricted.DENIED)   // 7, PERMISSION_DENIED
-grpc.toStatus(6)?.name           // "CONFLICT", ALREADY_EXISTS reversed
+grpc.toCode(Rejected.CONFLICT)   // 6, ALREADY_EXISTS
 ```
 
 ### RFC 9457 (Problem Details)

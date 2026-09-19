@@ -3,10 +3,6 @@ package kiit.codes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 // =================================================================================================
@@ -276,121 +272,6 @@ class CodesToHttpTest {
     }
 
     // -------------------------------------------------------------------------
-    // toStatus: reverse lookup, derived from toCode
-    // -------------------------------------------------------------------------
-
-    @Test
-    fun toStatusFindsRegisteredStatusForUniqueHttpCode() {
-        val status = http.toStatus(201)
-        assertNotNull(status)
-        assertEquals(Succeeded.CREATED.name, status.name)
-    }
-
-    @Test
-    fun toStatusReturnsNullForUnrecognizedHttpCode() {
-        // No guessed range fallback, an unrecognized code is honestly null, caller decides the default.
-        assertNull(http.toStatus(999))
-    }
-
-    @Test
-    fun toStatusRoundTripsForOverriddenCode() {
-        val status = http.toStatus(404)
-        assertNotNull(status)
-        assertEquals(Invalid.NOT_FOUND.name, status.name)
-    }
-
-    // -------------------------------------------------------------------------
-    // toStatus: deterministic canonical choice for codes shared by multiple statuses
-    // -------------------------------------------------------------------------
-
-    /**
-     * Spells out the lossy round trip directly: converting UPDATED forward and back doesn't
-     * return UPDATED. toStatus(toCode(x)) == x does not generally hold, see toStatus's doc.
-     */
-    @Test
-    fun httpRoundTripDoesNotPreserveTheOriginalStatus() {
-        val original = Succeeded.UPDATED
-        val code = http.toCode(original)
-        val restored = http.toStatus(code)
-
-        assertEquals(200, code)
-        assertSame(Succeeded.SUCCESS, restored)
-        assertNotEquals<Status?>(original, restored)
-    }
-
-    /**
-     * Many built-in statuses resolve to 200. Pins the canonical winner so this can't silently
-     * change if [Codes.all]'s declaration order ever shifts.
-     */
-    @Test
-    fun toStatus200ResolvesToSuccessNotOtherSharedStatuses() {
-        assertSame(Succeeded.SUCCESS, http.toStatus(200))
-    }
-
-    /** NOT_FOUND and NOT_EXISTS both resolve to 404; NOT_FOUND wins. */
-    @Test
-    fun toStatus404ResolvesToNotFoundNotNotExists() {
-        assertSame(Invalid.NOT_FOUND, http.toStatus(404))
-    }
-
-    /** EXPIRED and GONE both resolve to 410; GONE wins, its name and message are the literal HTTP 410 concept. */
-    @Test
-    fun toStatus410ResolvesToGoneNotExpired() {
-        assertSame(Rejected.GONE, http.toStatus(410))
-    }
-
-    /** Only UNEXPECTED resolves to 500 now that Rejected's default moved to 409, no tie to break. */
-    @Test
-    fun toStatus500ResolvesToUnexpected() {
-        assertSame(Unserved.UNEXPECTED, http.toStatus(500))
-    }
-
-    /** RULE_VIOLATION, CONFLICT, and PRECONDITION_FAILED all resolve to 409; CONFLICT wins. */
-    @Test
-    fun toStatus409ResolvesToConflictNotRuleViolationOrPreconditionFailed() {
-        assertSame(Rejected.CONFLICT, http.toStatus(409))
-    }
-
-    /** Only UNSUPPORTED resolves to 501 now that UNIMPLEMENTED was removed, no tie to break. */
-    @Test
-    fun toStatus501ResolvesToUnsupported() {
-        assertSame(Unserved.UNSUPPORTED, http.toStatus(501))
-    }
-
-    /**
-     * `INVALID_ENTITY` was removed from the registry, so `422` has no dedicated [Status] mapping
-     * again. This is a known, accepted regression, not a bug. Anything converting
-     * [Invalid.INVALID_VALUE] to HTTP falls through to its group default, 400, same as before.
-     */
-    @Test
-    fun toStatus422ReturnsNullSinceInvalidEntityWasRemoved() {
-        assertNull(http.toStatus(422))
-    }
-
-    /** DENIED, UNAUTHENTICATED, and UNAUTHORIZED all resolve to 401; UNAUTHENTICATED wins. */
-    @Test
-    fun toStatus401ResolvesToUnauthenticatedNotDeniedOrUnauthorized() {
-        assertSame(Restricted.UNAUTHENTICATED, http.toStatus(401))
-    }
-
-    /** FORBIDDEN and SUSPENDED both resolve to 403; FORBIDDEN wins. */
-    @Test
-    fun toStatus403ResolvesToForbiddenNotSuspended() {
-        assertSame(Restricted.FORBIDDEN, http.toStatus(403))
-    }
-
-    /**
-     * The canonical tie-breaking is still derived from this instance's own [CodesToHttp.toCode],
-     * not a fixed table, a custom [overrides] map changes both directions together.
-     */
-    @Test
-    fun toStatusStaysInSyncWithCustomOverridesNotJustDefaults() {
-        val custom = CodesToHttp(overrides = mapOf(Unserved.TIMEOUT.key to 599))
-        assertSame(Unserved.TIMEOUT, custom.toStatus(599))
-        assertNull(custom.toStatus(504)) // TIMEOUT no longer resolves to 504 for this instance
-    }
-
-    // -------------------------------------------------------------------------
     // toCode: scope is just a field on the same concrete type (no wrapper). StatusKey includes
     // it, so a scoped copy is a distinct override-map identity from the bare status. A scoped
     // variant only inherits a built-in's own override if that exact scope is also registered,
@@ -547,79 +428,6 @@ class CodesToGrpcTest {
         assertEquals(9, grpc.toCode(collidesWithCancelled))
     }
 
-    // -------------------------------------------------------------------------
-    // toStatus: deterministic canonical choice for gRPC codes shared by multiple statuses
-    // -------------------------------------------------------------------------
-
-    /** Every non-overridden Passed status resolves to 0 (OK); SUCCESS wins. */
-    @Test
-    fun toStatus0ResolvesToSuccess() {
-        assertSame(Succeeded.SUCCESS, grpc.toStatus(0))
-    }
-
-    /** BAD_REQUEST, INVALID_VALUE, and MISSING_FIELD all resolve to 3; INVALID_VALUE wins. */
-    @Test
-    fun toStatus3ResolvesToInvalidValue() {
-        assertSame(Invalid.INVALID_VALUE, grpc.toStatus(3))
-    }
-
-    /** ALREADY_EXISTS: only CONFLICT resolves to 6, no tie to break. */
-    @Test
-    fun toStatus6ResolvesToConflict() {
-        assertSame(Rejected.CONFLICT, grpc.toStatus(6))
-    }
-
-    /** DENIED, UNAUTHORIZED, and FORBIDDEN all resolve to 7; DENIED wins. */
-    @Test
-    fun toStatus7ResolvesToDenied() {
-        assertSame(Restricted.DENIED, grpc.toStatus(7))
-    }
-
-    /** RATE_LIMITED, PAYLOAD_TOO_LARGE, and RESOURCE_LIMITED all resolve to 8; RATE_LIMITED wins. */
-    @Test
-    fun toStatus8ResolvesToRateLimitedNotPayloadTooLargeOrResourceLimited() {
-        assertSame(Unserved.RATE_LIMITED, grpc.toStatus(8))
-    }
-
-    /** RULE_VIOLATION, NOT_EXISTS, PRECONDITION_FAILED, EXPIRED, and GONE all resolve to 9; PRECONDITION_FAILED wins. */
-    @Test
-    fun toStatus9ResolvesToPreconditionFailed() {
-        assertSame(Rejected.PRECONDITION_FAILED, grpc.toStatus(9))
-    }
-
-    /** UNDER_MAINTENANCE and INTERNAL both resolve to 13; INTERNAL wins. */
-    @Test
-    fun toStatus13ResolvesToInternal() {
-        assertSame(Unserved.INTERNAL, grpc.toStatus(13))
-    }
-
-    /**
-     * Only UNSUPPORTED resolves to 12, it took over gRPC's UNIMPLEMENTED slot now that the two
-     * built-in concepts merged into one Status code. No tie to break.
-     */
-    @Test
-    fun toStatus12ResolvesToUnsupported() {
-        assertSame(Unserved.UNSUPPORTED, grpc.toStatus(12))
-    }
-
-    /** ABORTED now maps directly to gRPC 10, closing what used to be an honest null gap. */
-    @Test
-    fun toStatus10ResolvesToAborted() {
-        assertSame(Unserved.ABORTED, grpc.toStatus(10))
-    }
-
-    @Test
-    fun toStatusReturnsNullForUnrecognizedGrpcCode() {
-        assertNull(grpc.toStatus(999))
-    }
-
-    @Test
-    fun toStatusStaysInSyncWithCustomOverridesNotJustDefaults() {
-        val custom = CodesToGrpc(overrides = mapOf(Unserved.TIMEOUT.key to 99))
-        assertSame(Unserved.TIMEOUT, custom.toStatus(99))
-        assertNull(custom.toStatus(4)) // TIMEOUT no longer resolves to 4 for this instance
-    }
-
     @Test
     fun toCodeFallsBackToGroupDefaultWhenAScopedCopyHasNoOwnOverride() {
         // UNAUTHENTICATED's 16 override is registered for the bare (unscoped) status only;
@@ -639,21 +447,9 @@ class CompositeLookupTest {
     }
 
     @Test
-    fun extensionSupportsReverseLookup() {
-        val status = lookup.toStatus(402)
-        assertNotNull(status)
-        assertSame(customCode, status)
-    }
-
-    @Test
     fun fallsBackToBaseForRegisteredCodes() {
         assertEquals(401, lookup.toCode(Restricted.DENIED))
-        assertSame(Succeeded.CREATED, lookup.toStatus(201))
-    }
-
-    @Test
-    fun fallsBackToBaseNullWhenNeitherKnows() {
-        assertNull(lookup.toStatus(999))
+        assertEquals(201, lookup.toCode(Succeeded.CREATED))
     }
 
     /**
