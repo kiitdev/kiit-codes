@@ -12,14 +12,13 @@ import kotlin.jvm.JvmStatic
  *
  * TERMS
  * 1. origin: [kiit.codes.Status.origin], the key of each entry, e.g. `"stripe.com"` or `"myapp1"`.
- * 2. baseUrl: everything before the per-code path, with no trailing slash, e.g. `"https://stripe.com/errors"`.
- * 3. suffix: the per-code path, `{scope}/{group}/{name}`, lowercase with `_` turned into `-`. An
- *    empty scope is left out, e.g. `"payments.cards/rejected/duplicate-charge"`.
+ * 2. baseUrl: everything before the suffix, path prefix included, no trailing slash, e.g. `"https://stripe.com/errors"`.
+ * 3. suffix: `{scope}/{group}/{name}` in lowercase-dash, empty scope skipped, e.g. `"payments.cards/rejected/duplicate-charge"`.
  * 4. type: the RFC 9457 `type` field, `{baseUrl}/{suffix}`.
  *
  *
  * OPTIONAL
- * 1. Registration is optional. Without an entry, [CodesToProblem] uses `https://{origin}/problems`
+ * 1. Registration is optional. Without an entry, [CodesToProblem] uses `https://{origin}/problems` as the baseUrl.
  * 2. Register an origin when its problem docs live somewhere else, or when the origin isn't a domain.
  * 3. An entry here wins over the origin-derived baseUrl.
  *
@@ -39,9 +38,9 @@ import kotlin.jvm.JvmStatic
  *
  *
  * NOTES
- * 1. Read an entry with [baseUrlFor]. See [CodesToProblem] for how `type` is built and [Problem] for RFC 9457
- * 2. [StatusConstants.KIIT] is always present and resolves to kiit-codes' own taxonomy docs. [of]
- * 3. [StatusConstants.KIIT] can't be overwritten. Its suffix is `?code=...#taxonomy`, joined with no `/`.
+ * 1. Read an entry with [baseUrlFor]. See [CodesToProblem] for how `type` is built and [Problem] for RFC 9457.
+ * 2. [StatusConstants.KIIT] is always present and resolves to kiit-codes' own taxonomy docs.
+ * 3. [of] can't override it. Its suffix is `?code=...#taxonomy`, joined with no `/`.
  */
 class Catalog private constructor(private val baseUrls: Map<String, String>) {
     /** The registered `baseUrl` for [origin], or null if none was passed to [of]. */
