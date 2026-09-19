@@ -6,12 +6,16 @@ import kotlin.jvm.JvmField
 /** Well-known [Status.origin] values. */
 object StatusConstants {
     /**
-     * Origin for every built-in [Codes] entry. Reverse-DNS, matching kiit-codes' own naming
-     * guideline for [Status.origin] (mirrors Gradle's `groupId`, `dev.kiit`).
+     * Origin for every built-in [Codes] entry. It is kiit's own domain, but [kiit.codes.formats.ProblemConverter]
+     * doesn't build `https://kiit.dev/problems/...` for it, it points at kiit-codes' own docs instead.
      */
-    const val KIIT = "dev.kiit"
+    const val KIIT = "kiit.dev"
 
-    /** Default origin for consumer/custom statuses that don't specify one explicitly. */
+    /**
+     * Default origin for consumer/custom statuses that don't specify one explicitly. With no `baseUrls`
+     * entry, [kiit.codes.formats.ProblemConverter] would build `https://custom/problems/...` for it, so
+     * custom statuses that reach RFC 9457 output should set their own origin.
+     */
     const val CUSTOM = "custom"
 }
 
@@ -23,7 +27,7 @@ object StatusConstants {
  * {
  *      "name"    : "DENIED",
  *      "group"   : "Restricted",
- *      "origin"  : "dev.kiit",
+ *      "origin"  : "kiit.dev",
  *      "scope"   : "",
  *      "message" : "The request was denied.",
  *      "success" : false
@@ -48,6 +52,12 @@ sealed interface Status {
      * Origin of this status, e.g. [StatusConstants.KIIT] for every built-in [Codes] entry.
      * Consumer/custom subtypes default to [StatusConstants.CUSTOM] rather than silently inheriting
      * [StatusConstants.KIIT], so a status can never accidentally misrepresent where it came from.
+     *
+     * 1. It is either a real domain (`"stripe.com"`) or any other id (`"myapp1"`).
+     * 2. [kiit.codes.formats.ProblemConverter] lowercases it. With no `baseUrls` entry it builds the RFC 9457
+     *    `type` as `https://{origin}/problems/...`. The origin is not validated.
+     * 3. Nothing stops two consumers from choosing the same non-domain id, and kiit-codes can't detect it.
+     *    Pick a specific name when there is no domain. A real domain is unique through DNS.
      */
     val origin: String
 

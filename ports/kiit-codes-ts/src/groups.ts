@@ -9,8 +9,11 @@
 
 /** Well-known Status.origin values. */
 export const StatusConstants = {
-  /** Origin for every built-in code. Reverse-DNS, mirrors Gradle's groupId, dev.kiit. */
-  KIIT: "dev.kiit",
+  /**
+   * Origin for every built-in code. It is kiit's own domain, but `ProblemConverter` doesn't build
+   * `https://kiit.dev/problems/...` for it, it points at kiit-codes' own docs instead.
+   */
+  KIIT: "kiit.dev",
   /** Default origin for consumer/custom statuses that don't specify one explicitly. */
   CUSTOM: "custom",
 } as const;

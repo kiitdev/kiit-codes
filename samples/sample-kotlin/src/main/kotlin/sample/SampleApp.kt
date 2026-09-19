@@ -16,16 +16,14 @@ import kiit.codes.StatusException
 import kiit.codes.Succeeded
 import kiit.codes.Unserved
 import kiit.codes.code
-import kiit.codes.formats.Catalog
-import kiit.codes.formats.CodesToProblem
+import kiit.codes.formats.ProblemConverter
 import kiit.codes.formats.ErrorItem
 import kiit.codes.formats.toCodeDetail
 import kiit.codes.path
 import kotlin.random.Random
 
 private val http = CodesToHttp()
-private val catalog = Catalog.of(mapOf("com.stripe" to "https://stripe.com/problems"))
-private val problems = CodesToProblem(catalog, http)
+private val problems = ProblemConverter(mapOf("stripe.com" to "https://stripe.com/errors"), http)
 
 fun main() {
     test0()
@@ -131,18 +129,18 @@ fun test4() {
         Rejected(
             name = "DUPLICATE_CHARGE",
             message = "This charge has already been processed",
-            origin = "com.stripe",
+            origin = "stripe.com",
             scope = "payments.cards",
         )
-    println("path: ${duplicateCharge.path}") // com.stripe:payments.cards
+    println("path: ${duplicateCharge.path}") // stripe.com:payments.cards
     println("code: ${duplicateCharge.code}") // Failed:Rejected:DUPLICATE_CHARGE
 
     // Two independent converters off the same Status, pick whichever fits the boundary:
 
-    // CodesToProblem.build: the RFC 9457 shape, for an HTTP API response. baseUrl comes from
-    // catalog, registered above for "com.stripe" (a built-in Status needs no registration, it
-    // defaults to kiit-codes' own taxonomy docs).
-    val stripeProblem = problems.build(duplicateCharge)
+    // ProblemConverter.convert: the RFC 9457 shape, for an HTTP API response. baseUrl comes from
+    // baseUrls, registered above for "stripe.com" (an origin with no entry gets
+    // https://{origin}/problems, and a built-in Status defaults to kiit-codes' own taxonomy docs).
+    val stripeProblem = problems.convert(duplicateCharge)
     println("[rfc]  type: ${stripeProblem.type}")
     println("[rfc]  title: ${stripeProblem.title}")
     println("[rfc]  status: ${stripeProblem.status}")
@@ -168,7 +166,7 @@ fun test4() {
             errors = listOf(Err.on("phone", "1234567890123", "Too long")),
             message = "Validation failed",
         )
-    val validationProblem = problems.build(Invalid.INVALID_VALUE, validationErr)
+    val validationProblem = problems.convert(Invalid.INVALID_VALUE, validationErr)
     val validationCode = toCodeDetail(Invalid.INVALID_VALUE, validationErr)
     println("[rfc]  validation type: ${validationProblem.type}")
     println("[kiit] validation code: ${validationCode.code}")

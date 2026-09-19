@@ -197,7 +197,7 @@ class StatusTest {
     @Test
     fun codeIsNotUniqueAcrossDifferentOriginsOrScopes() {
         val kiitDenied = Failed.Restricted("DENIED", "Denied", origin = StatusConstants.KIIT)
-        val customDenied = Failed.Restricted("DENIED", "Custom denied", origin = "com.acme")
+        val customDenied = Failed.Restricted("DENIED", "Custom denied", origin = "acme.com")
         assertEquals(kiitDenied.code, customDenied.code)
         assertNotEquals(kiitDenied.statusKey, customDenied.statusKey)
     }

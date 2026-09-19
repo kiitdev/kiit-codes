@@ -257,7 +257,7 @@ class CodesToHttpTest {
 
     /**
      * A custom status can share a built-in override's origin+name while belonging to a
-     * completely different group, e.g. this shares [Succeeded.CREATED]'s origin ("dev.kiit") and
+     * completely different group, e.g. this shares [Succeeded.CREATED]'s origin ("kiit.dev") and
      * name ("CREATED") even though it's a [Failed.Invalid]. Since `StatusKey` includes group,
      * the two don't actually share a key, so this must still resolve to Invalid's own group
      * default, not CREATED's 201.
@@ -529,7 +529,7 @@ class CodesToGrpcTest {
 
     /**
      * A custom status can share a built-in override's origin+name while belonging to a different
-     * group, e.g. this shares [Invalid.NOT_FOUND]'s origin ("dev.kiit") and name ("NOT_FOUND")
+     * group, e.g. this shares [Invalid.NOT_FOUND]'s origin ("kiit.dev") and name ("NOT_FOUND")
      * (overridden to 5) even though it's a [Passed.Succeeded]. Since `StatusKey` includes group,
      * the two don't actually share a key, so this must still resolve to Passed's own group
      * default (0), not NOT_FOUND's 5.

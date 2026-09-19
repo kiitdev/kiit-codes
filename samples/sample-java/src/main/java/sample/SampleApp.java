@@ -9,10 +9,9 @@ import kiit.codes.Passed;
 import kiit.codes.Status;
 import kiit.codes.StatusException;
 import kiit.codes.StatusExceptions;
-import kiit.codes.formats.Catalog;
 import kiit.codes.formats.CodeDetail;
 import kiit.codes.formats.CodeDetails;
-import kiit.codes.formats.CodesToProblem;
+import kiit.codes.formats.ProblemConverter;
 import kiit.codes.formats.ErrorDetail;
 import kiit.codes.formats.ErrorItem;
 import kiit.codes.formats.Problem;
@@ -72,19 +71,18 @@ public class SampleApp {
                 new Failed.Rejected(
                         "DUPLICATE_CHARGE",
                         "This charge has already been processed",
-                        "com.stripe",
+                        "stripe.com",
                         "payments.cards");
         System.out.println("http code: " + http.toCode(duplicateCharge));
 
-        // Catalog supplies baseUrl per origin; a built-in Status needs no registration, it
-        // defaults to kiit-codes' own taxonomy docs.
-        Catalog catalog = Catalog.of(Map.of("com.stripe", "https://stripe.com/problems"));
-        CodesToProblem problems = new CodesToProblem(catalog, http);
+        // baseUrls supplies baseUrl per origin; an origin with no entry gets https://{origin}/problems,
+        // and a built-in Status defaults to kiit-codes' own taxonomy docs.
+        ProblemConverter problems = new ProblemConverter(Map.of("stripe.com", "https://stripe.com/errors"), http);
 
         // Two independent converters off the same Status, pick whichever fits the boundary:
 
-        // CodesToProblem.build (@JvmOverloads): the RFC 9457 shape, for an HTTP API response.
-        Problem<ErrorDetail> stripeProblem = problems.build(duplicateCharge);
+        // ProblemConverter.convert (@JvmOverloads): the RFC 9457 shape, for an HTTP API response.
+        Problem<ErrorDetail> stripeProblem = problems.convert(duplicateCharge);
         System.out.println("[rfc]  type: " + stripeProblem.getType());
         System.out.println("[rfc]  title: " + stripeProblem.getTitle());
         System.out.println("[rfc]  status: " + stripeProblem.getStatus());
@@ -103,7 +101,7 @@ public class SampleApp {
         CodeDetail<ErrorDetail> stripeCodeWithStatus = CodeDetails.toCodeDetail(duplicateCharge, null, http);
         System.out.println("[kiit] status (with mapping): " + stripeCodeWithStatus.getStatus());
 
-        Problem<ErrorDetail> kiitProblem = problems.build(Failed.Invalid.NOT_FOUND);
+        Problem<ErrorDetail> kiitProblem = problems.convert(Failed.Invalid.NOT_FOUND);
         System.out.println("kiit problem type: " + kiitProblem.getType());
 
         // Custom error shape: supply your own ErrorItem when field + message isn't enough.
