@@ -23,8 +23,7 @@ import {
   assertNever,
   RestrictedError,
   collect,
-  Catalog,
-  CodesToProblem,
+  ProblemConverter,
   toCodeDetail,
 } from "@kiitdev/codes";
 import type { Status, Passed, Failed, ErrorItem } from "@kiitdev/codes";
@@ -62,8 +61,8 @@ function showCoreFunctionality(): void {
   // Codes.all / Codes.statusFor: a plain property and a namespaced lookup function - real object
   // statics, reachable directly, no top-level proxy functions needed.
   check(Codes.all.length > 0, "Codes.all.length > 0");
-  const found = Codes.statusFor("dev.kiit", "Succeeded", "SUCCESS");
-  check(found !== undefined, "Codes.statusFor('dev.kiit', 'Succeeded', 'SUCCESS') found");
+  const found = Codes.statusFor("kiit.dev", "Succeeded", "SUCCESS");
+  check(found !== undefined, "Codes.statusFor('kiit.dev', 'Succeeded', 'SUCCESS') found");
 }
 
 /**
@@ -178,33 +177,32 @@ function showChecked(): void {
  */
 function showFormats(): void {
   section("Formats: RFC 9457 problem conversion");
-  const catalog = Catalog.of({ "com.stripe": "https://stripe.com/problems" });
-  const problems = CodesToProblem(catalog, CodesToHttp());
+  const problems = ProblemConverter({ "stripe.com": "https://stripe.com/errors" }, CodesToHttp());
 
   const duplicateCharge = Restricted(
     "DUPLICATE_CHARGE",
     "This charge has already been processed",
-    "com.stripe",
+    "stripe.com",
     "payments.cards",
   );
 
-  const problem = problems.build(duplicateCharge);
+  const problem = problems.convert(duplicateCharge);
   check(
-    problem.type === "https://stripe.com/problems/payments.cards/restricted/duplicate-charge",
-    "CodesToProblem.build(...).type",
+    problem.type === "https://stripe.com/errors/payments.cards/restricted/duplicate-charge",
+    "ProblemConverter.convert(...).type",
   );
-  check(problem.status === 401, "CodesToProblem.build(...).status");
+  check(problem.status === 401, "ProblemConverter.convert(...).status");
 
   const detail = toCodeDetail(duplicateCharge);
-  check(detail.path === "com.stripe:payments.cards", "toCodeDetail(...).path");
+  check(detail.path === "stripe.com:payments.cards", "toCodeDetail(...).path");
   check(detail.status === undefined, "toCodeDetail(...).status is undefined without a mapping");
 
-  // A built-in kiit status needs no Catalog entry, and its `type` resolves to the real taxonomy
+  // A built-in kiit status needs no baseUrls entry, and its `type` resolves to the real taxonomy
   // page instead of a made-up path, with the code carried as a query param.
-  const builtInProblem = problems.build(Invalid.INVALID_VALUE);
+  const builtInProblem = problems.convert(Invalid.INVALID_VALUE);
   check(
     builtInProblem.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#taxonomy",
-    "CodesToProblem.build(...) for a built-in kiit status",
+    "ProblemConverter.convert(...) for a built-in kiit status",
   );
 
   // Supplying a custom error shape instead of the default ErrorDetail.
@@ -214,12 +212,12 @@ function showFormats(): void {
     readonly hint: string;
   }
   const fieldErr = Err.on("phone", "12345", "Too long");
-  const richProblem = problems.buildCustom<DetailedError>(duplicateCharge, fieldErr, (e) => ({
+  const richProblem = problems.convertCustom<DetailedError>(duplicateCharge, fieldErr, (e) => ({
     field: e.kind === "ErrorField" ? e.field : undefined,
     message: e.message,
     hint: "check formatting",
   }));
-  check(richProblem.detail === "Too long", "buildCustom(...) with a custom error shape");
+  check(richProblem.detail === "Too long", "convertCustom(...) with a custom error shape");
 }
 
 showCoreFunctionality();

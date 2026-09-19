@@ -129,7 +129,7 @@ describe("statusCode", () => {
 
   it("is not unique across different origins", () => {
     const kiitDenied = Restricted("DENIED", "Denied", StatusConstants.KIIT);
-    const customDenied = Restricted("DENIED", "Custom denied", "com.acme");
+    const customDenied = Restricted("DENIED", "Custom denied", "acme.com");
     expect(statusCode(kiitDenied)).toBe(statusCode(customDenied));
   });
 });

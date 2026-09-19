@@ -16,6 +16,9 @@ All notable changes to kiit-codes are documented here. Format follows
   `https://{origin}/problems/{scope}/{group}/{name}`. The origin is lowercased and not validated, so a plain id
   such as `"myapp1"` gives `https://myapp1/problems/...`. Register a base URL to change that.
 - `ProblemConverter()` needs no arguments. Both `baseUrls` and `mapping` have defaults.
+- TypeScript port: the same `ProblemConverter` changes. `ProblemConverter(baseUrls = {}, mapping = CodesToHttp())` is a
+  factory function with the same `convert`, `convertCustom`, `convertWithUrl` and `convertCustomWithUrl` members.
+  `mapper` comes before the defaulted `typeBuilder` in the two `*Custom*` members, as TypeScript requires.
 
 ### Changed
 - **Breaking**: the built-in origin value changed from `"dev.kiit"` to `"kiit.dev"`. Anything comparing against or
@@ -34,6 +37,8 @@ All notable changes to kiit-codes are documented here. Format follows
 ### Removed
 - **Breaking**: `Catalog`. Pass the map to `ProblemConverter(baseUrls = ...)` instead. Keys are lowercased and
   `kiit.dev` is always fixed to kiit-codes' own docs, as before.
+- **Breaking**: the TypeScript port's `Catalog` and `CodesToProblem`, replaced by `ProblemConverter`. The one-shot
+  `problemFor(catalog, mapping, status, err)` is now `problemFor(status, err?, baseUrls?, mapping?)`.
 - **Breaking**: `Status.ofStatus(message, rawStatus, status)`. Overriding `message` produced a status with the same
   origin/scope/group/name as a built-in but not equal to it. Use the status directly, or `copy()` it if you need
   a different message. The TypeScript port's `ofStatus` is removed for the same reason. `Err.ofStatus(status)` is
