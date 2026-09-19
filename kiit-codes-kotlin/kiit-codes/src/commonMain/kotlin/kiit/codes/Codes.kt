@@ -20,7 +20,7 @@ import kotlin.jvm.JvmStatic
  *    silent wrong lookup, see [statusFor].
  */
 object Codes {
-    /** All built-in codes. Used for reverse lookups, see [CodesToHttp], [CompositeLookup]. */
+    /** All built-in codes. */
     @JvmField
     val all: List<Status> =
         listOf(
@@ -59,25 +59,19 @@ object Codes {
 }
 
 /**
- * Bidirectional conversion between a [Status] and a target protocol's status code (e.g. HTTP).
+ * Conversion from a [Status] to a target protocol's status code (e.g. HTTP).
  *
  * 1. Implementations should be exhaustive over [Status]'s groups ([Passed]/[Failed]
  *    subtypes), typically via a `when` with no `else` branch, so a newly added group is
  *    caught at compile time.
  * 2. Individual codes within a group don't need an exhaustive mapping. They can be handled
  *    via a small overrides table layered on top of the group default, see [CodesToHttp].
+ * 3. There is no reverse lookup. Many statuses share one protocol code, so a code can't identify
+ *    a single [Status].
  */
 interface CodeLookup {
     /** Converts a [Status] to the target protocol's code. */
     fun toCode(status: Status): Int
-
-    /**
-     * Converts a target protocol [code] to a matching [Status], or null if there is no match.
-     * The forward direction is typically many-to-one, so this is inherently lossy. It returns
-     * *a* status that resolves to [code], not necessarily the specific one a caller originally
-     * had in hand.
-     */
-    fun toStatus(code: Int): Status?
 }
 
 /**
@@ -88,7 +82,7 @@ interface CodeLookup {
  *   Restricted -> 401  Invalid -> 400   Rejected -> 409        Unserved -> 503
  *
  * 1. Individual codes can differ from their group's default via [overrides] (e.g. CREATED ->
- *    201, NOT_FOUND -> 404). [toStatus] is derived from [toCode] and is lossy, see its own doc.
+ *    201, NOT_FOUND -> 404).
  * 2. Clients needing additional or custom codes should compose with [CompositeLookup] rather
  *    than subclassing this type directly, see [CompositeLookup] for why.
  */
@@ -110,19 +104,6 @@ open class CodesToHttp
                 is Failed.Unserved -> 503
             }
         }
-
-        /**
-         * Reverse lookup, derived from [toCode] so it can't get out of sync with a custom
-         * [overrides] map.
-         *
-         * 1. Lossy by nature since many statuses can share one code.
-         * 2. Ties break deterministically via [CANONICAL_PREFERENCE] rather than [Codes.all]'s
-         *    plain declaration order.
-         * 3. Only finds statuses registered in [Codes], see [CompositeLookup] for custom ones.
-         */
-        override fun toStatus(code: Int): Status? =
-            CANONICAL_PREFERENCE.firstOrNull { toCode(it) == code }
-                ?: Codes.all.firstOrNull { toCode(it) == code }
 
         companion object {
             @JvmField
@@ -153,24 +134,6 @@ open class CodesToHttp
                     Unserved.UNEXPECTED.key to 500,
                     Unserved.LEGAL_BLOCK.key to 451,
                 )
-
-            /**
-             * 1. One canonical winner per HTTP code that more than one built-in [Status] can resolve to
-             *    via [toCode], under [DEFAULT_OVERRIDES] or a group default. See [toStatus].
-             * 2. `422 Unprocessable Entity` has no dedicated [Status] mapping. The code that previously held
-             *    it, `INVALID_ENTITY`, was removed from the registry. [toStatus] returns null for 422, and
-             *    anything converting [Invalid.INVALID_VALUE] to HTTP falls through to 400.
-             */
-            private val CANONICAL_PREFERENCE: List<Status> =
-                listOf(
-                    Succeeded.SUCCESS, Succeeded.CREATED, Succeeded.HANDLED, Pending.PROCESSING,
-                    Restricted.UNAUTHENTICATED, Restricted.FORBIDDEN,
-                    Invalid.INVALID_VALUE, Invalid.NOT_FOUND, Rejected.GONE,
-                    // RULE_VIOLATION and PRECONDITION_FAILED also fall through to 409, Rejected's own
-                    // group default. CONFLICT wins since it's the most literal match for the concept.
-                    Rejected.CONFLICT, Unserved.TIMEOUT, Unserved.RATE_LIMITED,
-                    Unserved.UNDER_MAINTENANCE,
-                )
         }
     }
 
@@ -200,15 +163,6 @@ open class CodesToGrpc
                 is Failed.Unserved -> 13
             }
         }
-
-        /**
-         * Reverse lookup, derived from [toCode] so it can't get out of sync with a custom
-         * [overrides] map. Ties break deterministically via [CANONICAL_PREFERENCE], same approach
-         * as [CodesToHttp.toStatus].
-         */
-        override fun toStatus(code: Int): Status? =
-            CANONICAL_PREFERENCE.firstOrNull { toCode(it) == code }
-                ?: Codes.all.firstOrNull { toCode(it) == code }
 
         companion object {
             @JvmField
@@ -241,33 +195,17 @@ open class CodesToGrpc
                     // DEGRADED and LEGAL_BLOCK have no closer gRPC equivalent, so they fall through
                     // to Unserved's own group default (13, INTERNAL)
                 )
-
-            /** One canonical winner per gRPC code with more than one resolving [Status], see [toStatus]. */
-            private val CANONICAL_PREFERENCE: List<Status> =
-                listOf(
-                    Succeeded.SUCCESS,
-                    Invalid.INVALID_VALUE,
-                    Restricted.DENIED,
-                    Unserved.RATE_LIMITED,
-                    Rejected.PRECONDITION_FAILED,
-                    Unserved.INTERNAL,
-                )
         }
     }
 
 /**
  * Composes a [base] [CodeLookup] with client-supplied [extensions], without modifying or
- * subclassing the base implementation. [extensions] take precedence over [base] in both
- * directions.
+ * subclassing the base implementation. [extensions] take precedence over [base].
  *
- * A couple of details worth knowing:
- * 1. [extensions] is keyed by the actual [Status] instance, so [toStatus] can hand back the
- *    specific custom instance for statuses outside the [Codes.all] registry. There's no other
- *    place to recover it from.
- * 2. [toCode]'s forward lookup matches on [Status.origin]/[Status.name] directly rather than
- *    [Map]'s built-in `equals`/`hashCode`-based `[]` access, since [Status] is a data class that
- *    compares every field. A status with the same origin/name but a different [Status.message]
- *    would otherwise miss the override.
+ * [toCode] matches [extensions] on [Status.origin]/[Status.name] directly rather than [Map]'s
+ * built-in `equals`/`hashCode`-based `[]` access, since [Status] is a data class that compares
+ * every field. A status with the same origin/name but a different [Status.message] would
+ * otherwise miss the override.
  *
  * ```kotlin
  * val MY_DOMAIN_CODE = Failed.Rejected("PAYMENT_DECLINED", "Payment declined")
@@ -281,9 +219,4 @@ class CompositeLookup(
     override fun toCode(status: Status): Int =
         extensions.entries.firstOrNull { it.key.origin == status.origin && it.key.name == status.name }?.value
             ?: base.toCode(status)
-
-    override fun toStatus(code: Int): Status? {
-        val extended = extensions.entries.firstOrNull { it.value == code }?.key
-        return extended ?: base.toStatus(code)
-    }
 }

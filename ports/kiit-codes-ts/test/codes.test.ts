@@ -150,54 +150,6 @@ describe("CodesToHttp: per-code overrides", () => {
   });
 });
 
-describe("CodesToHttp.toStatus: reverse lookup", () => {
-  const http = CodesToHttp();
-
-  it("finds the registered status for a unique code", () => {
-    expect(http.toStatus(201)?.name).toBe(Succeeded.CREATED.name);
-  });
-
-  it("returns undefined for an unrecognized code, no guessed fallback", () => {
-    expect(http.toStatus(999)).toBeUndefined();
-  });
-
-  it("round-trips for an overridden code", () => {
-    expect(http.toStatus(404)?.name).toBe(Invalid.NOT_FOUND.name);
-  });
-
-  it("a forward+back round trip does not generally preserve the original status", () => {
-    const original = Succeeded.UPDATED;
-    const code = http.toCode(original);
-    const restored = http.toStatus(code);
-    expect(code).toBe(200);
-    expect(restored).toBe(Succeeded.SUCCESS);
-    expect(restored).not.toBe(original);
-  });
-
-  it("resolves deterministically via CANONICAL_PREFERENCE when multiple statuses share a code", () => {
-    expect(http.toStatus(200)).toBe(Succeeded.SUCCESS);
-    expect(http.toStatus(404)).toBe(Invalid.NOT_FOUND);
-    expect(http.toStatus(410)).toBe(Rejected.GONE);
-    expect(http.toStatus(500)).toBe(Unserved.UNEXPECTED);
-    expect(http.toStatus(409)).toBe(Rejected.CONFLICT);
-    expect(http.toStatus(501)).toBe(Unserved.UNSUPPORTED);
-    expect(http.toStatus(401)).toBe(Restricted.UNAUTHENTICATED);
-    expect(http.toStatus(403)).toBe(Restricted.FORBIDDEN);
-  });
-
-  it("422 has no dedicated mapping since INVALID_ENTITY was removed from Codes", () => {
-    expect(http.toStatus(422)).toBeUndefined();
-  });
-
-  it("stays in sync with a custom overrides map, not just the defaults", () => {
-    const key = `${Unserved.TIMEOUT.origin}:${Unserved.TIMEOUT.scope}:${Unserved.TIMEOUT.group}:${Unserved.TIMEOUT.name}`;
-    const custom = CodesToHttp({ [key]: 599 });
-    expect(custom.toStatus(599)).toBe(Unserved.TIMEOUT);
-    // TIMEOUT no longer resolves to 504 for this instance.
-    expect(custom.toStatus(504)).toBeUndefined();
-  });
-});
-
 describe("CodesToHttp: scope and overrides", () => {
   const http = CodesToHttp();
 

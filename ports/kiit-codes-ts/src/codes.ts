@@ -10,8 +10,8 @@
  *    thing a class would uniquely add, subclass-and-override-one-method, is explicitly not the
  *    intended way to customize this: the Kotlin source's own docs say to compose instead (see the
  *    deferred `CompositeLookup`).
- * 2. `CodesToHttp`'s internal `toCode`/`toStatus` are local functions closed over, not object
- *    methods using `this`. A method that reads `this.something` breaks the moment it's destructured
+ * 2. `CodesToHttp`'s internal `toCode` is a local function closed over, not an object
+ *    method using `this`. A method that reads `this.something` breaks the moment it's destructured
  *    or passed as a callback; a closure over a local variable doesn't have that failure mode.
  */
 
@@ -120,7 +120,7 @@ for (const status of ALL_STATUSES) {
  *    silent wrong lookup.
  */
 export const Codes = {
-  /** All built-in codes, in declaration order. Used for reverse lookups, see `CodesToHttp`. */
+  /** All built-in codes, in declaration order. */
   all: ALL_STATUSES,
 
   /** Looks up a built-in status by its origin/group/name, or `undefined` if none matches. */
@@ -130,7 +130,8 @@ export const Codes = {
 };
 
 /**
- * Bidirectional conversion between a `Status` and a target protocol's status code (e.g. HTTP).
+ * Conversion from a `Status` to a target protocol's status code (e.g. HTTP). There is no reverse
+ * lookup: many statuses share one protocol code, so a code can't identify a single status.
  *
  * Implementations should be exhaustive over `Status`'s eight groups, typically via a `switch`
  * with `assertNever` in the `default` branch, so a newly added group is caught at compile time.
@@ -140,13 +141,6 @@ export const Codes = {
 export interface CodeLookup {
   /** Converts a status to the target protocol's code. */
   toCode(status: Status): number;
-
-  /**
-   * Converts a target protocol code to a matching status, or `undefined` if there's no match.
-   * The forward direction is typically many-to-one, so this is inherently lossy: it returns *a*
-   * status that resolves to `code`, not necessarily the specific one a caller originally had.
-   */
-  toStatus(code: number): Status | undefined;
 }
 
 /**
@@ -188,19 +182,7 @@ export function CodesToHttp(
     }
   }
 
-  /**
-   * Reverse lookup, derived from `toCode` so it can't get out of sync with a custom `overrides`
-   * map. Lossy by nature, since many statuses can share one code. Ties break deterministically
-   * via `CANONICAL_PREFERENCE` rather than `Codes.all`'s plain declaration order.
-   */
-  function toStatus(code: number): Status | undefined {
-    return (
-      CANONICAL_PREFERENCE.find((status) => toCode(status) === code) ??
-      Codes.all.find((status) => toCode(status) === code)
-    );
-  }
-
-  return { toCode, toStatus };
+  return { toCode };
 }
 
 export namespace CodesToHttp {
@@ -231,29 +213,3 @@ export namespace CodesToHttp {
     [statusKey(Unserved.LEGAL_BLOCK)]: 451,
   };
 }
-
-/**
- * One canonical winner per HTTP code that more than one built-in status can resolve to via
- * `toCode`, under `DEFAULT_OVERRIDES` or a group default. See `toStatus`.
- *
- * `422 Unprocessable Entity` has no dedicated status mapping: the code that previously held it,
- * `INVALID_ENTITY`, was removed from `Codes`. `toStatus` returns `undefined` for 422, and
- * anything converting `Invalid.INVALID_VALUE` to HTTP falls through to 400.
- */
-const CANONICAL_PREFERENCE: readonly Status[] = [
-  Succeeded.SUCCESS,
-  Succeeded.CREATED,
-  Succeeded.HANDLED,
-  Pending.PROCESSING,
-  Restricted.UNAUTHENTICATED,
-  Restricted.FORBIDDEN,
-  Invalid.INVALID_VALUE,
-  Invalid.NOT_FOUND,
-  Rejected.GONE,
-  // RULE_VIOLATION and PRECONDITION_FAILED also fall through to 409, Rejected's own group
-  // default. CONFLICT wins since it's the most literal match for the concept.
-  Rejected.CONFLICT,
-  Unserved.TIMEOUT,
-  Unserved.RATE_LIMITED,
-  Unserved.UNDER_MAINTENANCE,
-];

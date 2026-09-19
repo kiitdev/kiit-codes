@@ -35,6 +35,10 @@ All notable changes to kiit-codes are documented here. Format follows
 - `convertWithUrl` and `convertCustomWithUrl` trim a trailing `/` from `baseUrl`, like `baseUrls` values.
 
 ### Removed
+- **Breaking**: `CodeLookup.toStatus(code)`, and with it `CodesToHttp.toStatus`, `CodesToGrpc.toStatus` and
+  `CompositeLookup.toStatus`. Many statuses share one protocol code, so the reverse lookup was lossy and relied on
+  a hand-kept preference list to pick a winner. `toCode` is unchanged. To carry a status across a boundary, use
+  `CodeDetail.code` or the RFC 9457 `type`. The TypeScript port's `toStatus` is removed too.
 - **Breaking**: `Catalog`. Pass the map to `ProblemConverter(baseUrls = ...)` instead. Keys are lowercased and
   `kiit.dev` is always fixed to kiit-codes' own docs, as before.
 - **Breaking**: the TypeScript port's `Catalog` and `CodesToProblem`, replaced by `ProblemConverter`.
