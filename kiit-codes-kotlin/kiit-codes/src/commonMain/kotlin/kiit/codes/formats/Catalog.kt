@@ -28,8 +28,7 @@ import kotlin.jvm.JvmStatic
  * 1. origin `"stripe.com"` -> baseUrl `"https://stripe.com/errors"`
  * 2. origin `"myapp1"` -> baseUrl `"https://docs.example.com/myapp1/errors"`
  *
- * With the first entry, a `Rejected` status named `DUPLICATE_CHARGE` with scope `payments.cards`
- * builds this:
+ * With the first entry, a `Rejected` status named `DUPLICATE_CHARGE` with scope `payments.cards` builds this:
  * ```json
  * {
  *     "type": "https://stripe.com/errors/payments.cards/rejected/duplicate-charge",
