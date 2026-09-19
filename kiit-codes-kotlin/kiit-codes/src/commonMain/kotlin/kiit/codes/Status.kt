@@ -2,7 +2,6 @@
 package kiit.codes
 
 import kotlin.jvm.JvmField
-import kotlin.jvm.JvmStatic
 
 /** Well-known [Status.origin] values. */
 object StatusConstants {
@@ -82,38 +81,12 @@ sealed interface Status {
     /** The group discriminant, e.g. "Restricted", "Rejected". See the hierarchy above. */
     val group: String
 
-    companion object {
-        /**
-         * Resolves a status from an optional [message] override and an optional [rawStatus]
-         * override, falling back to [status] when neither is supplied. [rawStatus], if present,
-         * is used as the base instead of [status]; [message], if present, is then applied on top
-         * of that base.
-         */
-        @JvmStatic
-        @Suppress("UNCHECKED_CAST")
-        fun <T : Status> ofStatus(message: String?, rawStatus: T?, status: T): T {
-            val base = rawStatus ?: status
-            return if (message == null) base else withMessage(base, message) as T
-        }
-
-        /**
-         * Internal-only, narrower stand-in for the copy capability [Status] used to expose
-         * publicly. That was removed since an immutable [Status] shouldn't offer a general way
-         * to mutate itself. Only [ofStatus] needs this, and only ever to override [message],
-         * never [origin].
-         */
-        private fun withMessage(status: Status, message: String): Status =
-            when (status) {
-                is Passed.Succeeded -> status.copy(message = message)
-                is Passed.Pending -> status.copy(message = message)
-                is Passed.Excluded -> status.copy(message = message)
-                is Passed.Information -> status.copy(message = message)
-                is Failed.Restricted -> status.copy(message = message)
-                is Failed.Invalid -> status.copy(message = message)
-                is Failed.Rejected -> status.copy(message = message)
-                is Failed.Unserved -> status.copy(message = message)
-            }
-    }
+    /**
+     * True if this is its group's built-in default (e.g. [Failed.Invalid.INVALID_VALUE] for
+     * `Invalid`), the same instance as that group's `DEFAULT`. Compared by value, so a `copy()`
+     * that changes any field, `message` included, is not the default.
+     */
+    val isDefault: Boolean
 }
 
 /**
@@ -208,6 +181,15 @@ sealed class Passed : Status {
                 is Information -> "The response provides information; no operation was performed."
             }
 
+    final override val isDefault: Boolean
+        get() =
+            when (this) {
+                is Succeeded -> this == Succeeded.DEFAULT
+                is Pending -> this == Pending.DEFAULT
+                is Excluded -> this == Excluded.DEFAULT
+                is Information -> this == Information.DEFAULT
+            }
+
     /** See [Passed.groupDescription] for this group's definition. */
     data class Succeeded(
         override val name: String,
@@ -223,6 +205,10 @@ sealed class Passed : Status {
                     "The operation completed successfully.",
                     origin = StatusConstants.KIIT,
                 )
+
+            /** This group's default. Same instance as [SUCCESS], not a new entry. */
+            @JvmField
+            val DEFAULT = SUCCESS
 
             @JvmField
             val CREATED =
@@ -306,6 +292,10 @@ sealed class Passed : Status {
                     origin = StatusConstants.KIIT,
                 )
 
+            /** This group's default. Same instance as [ACCEPTED], not a new entry. */
+            @JvmField
+            val DEFAULT = ACCEPTED
+
             @JvmField
             val QUEUED =
                 Pending(
@@ -366,6 +356,10 @@ sealed class Passed : Status {
                     origin = StatusConstants.KIIT,
                 )
 
+            /** This group's default. Same instance as [OMITTED], not a new entry. */
+            @JvmField
+            val DEFAULT = OMITTED
+
             @JvmField
             val SKIPPED =
                 Excluded(
@@ -423,6 +417,10 @@ sealed class Passed : Status {
                     "An informational notice.",
                     origin = StatusConstants.KIIT,
                 )
+
+            /** This group's default. Same instance as [NOTICE], not a new entry. */
+            @JvmField
+            val DEFAULT = NOTICE
 
             @JvmField
             val ADVISORY =
@@ -496,6 +494,15 @@ sealed class Failed : Status {
                 is Unserved -> "The system can't serve it right now, though nothing was wrong with the request."
             }
 
+    final override val isDefault: Boolean
+        get() =
+            when (this) {
+                is Restricted -> this == Restricted.DEFAULT
+                is Invalid -> this == Invalid.DEFAULT
+                is Rejected -> this == Rejected.DEFAULT
+                is Unserved -> this == Unserved.DEFAULT
+            }
+
     /** See [Failed.groupDescription] for this group's definition. */
     data class Restricted(
         override val name: String,
@@ -511,6 +518,10 @@ sealed class Failed : Status {
                     "The request was denied.",
                     origin = StatusConstants.KIIT,
                 )
+
+            /** This group's default. Same instance as [DENIED], not a new entry. */
+            @JvmField
+            val DEFAULT = DENIED
 
             @JvmField
             val UNAUTHENTICATED =
@@ -570,6 +581,10 @@ sealed class Failed : Status {
                     origin = StatusConstants.KIIT,
                 )
 
+            /** This group's default. Same instance as [INVALID_VALUE], not a new entry. */
+            @JvmField
+            val DEFAULT = INVALID_VALUE
+
             @JvmField
             val BAD_REQUEST =
                 Invalid(
@@ -627,6 +642,10 @@ sealed class Failed : Status {
                     "A business rule rejected the request.",
                     origin = StatusConstants.KIIT,
                 )
+
+            /** This group's default. Same instance as [RULE_VIOLATION], not a new entry. */
+            @JvmField
+            val DEFAULT = RULE_VIOLATION
 
             @JvmField
             val CONFLICT =
@@ -691,6 +710,10 @@ sealed class Failed : Status {
                     "An unexpected, unclassified error occurred.",
                     origin = StatusConstants.KIIT,
                 )
+
+            /** This group's default. Same instance as [UNEXPECTED], not a new entry. */
+            @JvmField
+            val DEFAULT = UNEXPECTED
 
             @JvmField
             val UNSUPPORTED =

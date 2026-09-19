@@ -4,6 +4,21 @@ All notable changes to kiit-codes are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- `DEFAULT` on each group's companion (`Invalid.DEFAULT`, `Restricted.DEFAULT`, ...), an alias for that group's
+  default code (`INVALID_VALUE`, `DENIED`, ...). It is the same instance, not a new registry entry.
+- `Status.isDefault`, true when a status equals its group's `DEFAULT`. Compared by value, so a `copy()` that
+  changes any field, `message` included, is not the default.
+- TypeScript port: the same `DEFAULT` constants and a standalone `isDefault(status)` function.
+
+### Removed
+- **Breaking**: `Status.ofStatus(message, rawStatus, status)`. Overriding `message` produced a status with the same
+  origin/scope/group/name as a built-in but not equal to it. Use the status directly, or `copy()` it if you need
+  a different message. The TypeScript port's `ofStatus` is removed for the same reason. `Err.ofStatus(status)` is
+  unaffected.
+
 ## [1.1.0] - 2026-09-09
 
 ### Added
