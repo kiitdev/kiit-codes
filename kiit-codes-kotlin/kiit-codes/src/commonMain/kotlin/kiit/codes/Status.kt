@@ -6,10 +6,10 @@ import kotlin.jvm.JvmField
 /** Well-known [Status.origin] values. */
 object StatusConstants {
     /**
-     * Origin for every built-in [Codes] entry. Reverse-DNS like Gradle's `groupId`, and not used as a
-     * host: [kiit.codes.formats.ProblemConverter] points it at kiit-codes' own docs.
+     * Origin for every built-in [Codes] entry. It is kiit's own domain, but [kiit.codes.formats.ProblemConverter]
+     * doesn't build `https://kiit.dev/problems/...` for it, it points at kiit-codes' own docs instead.
      */
-    const val KIIT = "dev.kiit"
+    const val KIIT = "kiit.dev"
 
     /**
      * Default origin for consumer/custom statuses that don't specify one explicitly. With no `baseUrls`
@@ -27,7 +27,7 @@ object StatusConstants {
  * {
  *      "name"    : "DENIED",
  *      "group"   : "Restricted",
- *      "origin"  : "dev.kiit",
+ *      "origin"  : "kiit.dev",
  *      "scope"   : "",
  *      "message" : "The request was denied.",
  *      "success" : false

@@ -151,7 +151,7 @@ fun showOverview(tasks: TaskService) {
     // {
     //      name = "SUCCESS",
     //      group = "Succeeded",
-    //      origin = "dev.kiit",
+    //      origin = "kiit.dev",
     //      scope  = "",
     //      success = true,
     //      message = "The operation completed successfully.",
@@ -313,9 +313,8 @@ fun showConversion(tasks: TaskService) {
     println("protocols: grpc=${grpc.toCode(status)}")
 
     // problem detail (rfc 9457) — completeTask's HTTP API error response.
-    val catalog = Catalog.of(mapOf("dev.kiit.samples" to "https://example.com/problems"))
-    val problems = CodesToProblem(catalog, http)
-    val problem = problems.build(status)
+    val problems = ProblemConverter(mapOf("dev.kiit.samples" to "https://example.com/problems"), http)
+    val problem = problems.convert(status)
     println("problem detail: type=${problem.type}, status=${problem.status}")
 
     // customization — kiit's own native shape for a non-HTTP boundary (e.g. a background job)...
@@ -327,10 +326,10 @@ fun showConversion(tasks: TaskService) {
 
     val fieldErr = Err.on("listId", TaskService.TEAM_LIST, "not owned by this requester")
     val richProblem =
-        problems.buildCustom<RichError>(status, fieldErr) { err ->
+        problems.convertCustom<RichError>(status, fieldErr) { err ->
             RichError((err as? Err.ErrorField)?.field, err.message, "ask the list owner to complete it instead")
         }
-    println("customization (buildCustom): ${richProblem.errors}")
+    println("customization (convertCustom): ${richProblem.errors}")
 }
 
 fun showMisc(tasks: TaskService) {
