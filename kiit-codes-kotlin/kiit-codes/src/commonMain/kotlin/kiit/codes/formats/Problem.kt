@@ -13,7 +13,7 @@ package kiit.codes.formats
  * }
  * ```
  *
- * 1. Opt-in output shape, build one via [CodesToProblem].
+ * 1. Opt-in output shape, build one via [ProblemConverter].
  * 2. For internal service-to-service calls or anywhere else an HTTP status/URI doesn't apply,
  *    see [CodeDetail], kiit-codes' own native equivalent.
  * 3. [errors] isn't one of RFC 9457's own members (`type`/`title`/`status`/`detail`/`instance`) —
