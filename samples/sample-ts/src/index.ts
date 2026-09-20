@@ -6,6 +6,14 @@
  *
  * Organized into one function per logical area, run in order at the bottom of this file.
  */
+/*
+<example id="setup-install" tags="setup">
+```bash title="terminal"
+npm install {{module.package}}
+```
+</example>
+*/
+
 import {
   Succeeded,
   Pending,

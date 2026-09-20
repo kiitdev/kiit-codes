@@ -1,0 +1,40 @@
+{
+  "module": {
+    "name": "kiit-codes",
+    "group": "dev.kiit",
+    "artifact": "kiit-codes",
+    "package": "@kiitdev/codes"
+  },
+  "page": "docs/foundations/kiit-codes.md",
+  "sources": {
+    "kotlin": "samples/sample-kotlin/src/main/kotlin/sample/SampleApp2.kt",
+    "java": "samples/sample-java/src/main/java/sample/SampleApp.java",
+    "typescript": "samples/sample-ts/src/index.ts"
+  },
+  "versions": {
+    "kotlin": {
+      "file": "kiit-codes-kotlin/kiit-codes/build.gradle.kts",
+      "regex": "val libraryVersion = \"([^\"]+)\""
+    },
+    "java": {
+      "file": "kiit-codes-kotlin/kiit-codes/build.gradle.kts",
+      "regex": "val libraryVersion = \"([^\"]+)\""
+    },
+    "typescript": {
+      "file": "ports/kiit-codes-ts/package.json",
+      "json": "version"
+    }
+  },
+  "map": [
+    {
+      "section": "setup",
+      "topic": "install",
+      "items": [
+        {
+          "id": "setup-install",
+          "kind": "install"
+        }
+      ]
+    }
+  ]
+}
