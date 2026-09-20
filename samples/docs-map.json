@@ -35,6 +35,15 @@
           "kind": "install"
         }
       ]
+    },
+    {
+      "section": "setup",
+      "topic": "imports",
+      "items": [
+        {
+          "id": "setup-imports"
+        }
+      ]
     }
   ]
 }
