@@ -14,6 +14,15 @@ npm install {{module.package}}
 </example>
 */
 
+/*
+<example id="setup-imports" tags="setup">
+```ts
+import { Succeeded, Restricted } from "{{module.package}}";
+import type { Status } from "{{module.package}}";
+```
+</example>
+*/
+
 import {
   Succeeded,
   Pending,
