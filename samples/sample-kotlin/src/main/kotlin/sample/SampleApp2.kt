@@ -3,8 +3,10 @@ package sample
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+// <example id="setup-imports" tags="setup">
 import kiit.codes.*
 import kiit.codes.formats.*
+// </example>
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
