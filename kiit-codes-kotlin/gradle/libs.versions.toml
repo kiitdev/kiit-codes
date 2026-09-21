@@ -9,9 +9,14 @@ detekt                  = "1.23.7"
 dokka                   = "2.0.0"
 kover                   = "0.9.1"
 skie                    = "0.10.14"
+jackson                 = "2.18.2"
+kotlinxSerialization    = "1.9.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+# Sample apps only, kiit-codes itself has no serialization dependency
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 
 [plugins]
 kotlin-jvm              = { id = "org.jetbrains.kotlin.jvm",         version.ref = "kotlin" }

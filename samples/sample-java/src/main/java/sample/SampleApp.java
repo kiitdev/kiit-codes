@@ -1,5 +1,22 @@
 package sample;
 
+/*
+<example id="setup-install" tags="setup">
+```xml title="pom.xml"
+<dependency>
+    <groupId>{{module.group}}</groupId>
+    <artifactId>{{module.artifact}}</artifactId>
+    <version>{{module.version}}</version>
+</dependency>
+```
+```groovy title="build.gradle"
+dependencies {
+    implementation '{{module.group}}:{{module.artifact}}:{{module.version}}'
+}
+```
+</example>
+*/
+
 import kiit.codes.Checked;
 import kiit.codes.Checks;
 import kiit.codes.CodesToHttp;
