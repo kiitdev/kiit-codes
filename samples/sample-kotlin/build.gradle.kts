@@ -24,3 +24,10 @@ tasks.register<JavaExec>("runSample2") {
     mainClass = "sample.SampleApp2Kt"
     javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
 }
+
+// Prints the docs table "Reference > Protocol mappings" from CodesToHttp and CodesToGrpc, see MappingTable.kt
+tasks.register<JavaExec>("printMappingTable") {
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "sample.MappingTableKt"
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+}
