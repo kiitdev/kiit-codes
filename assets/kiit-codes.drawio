@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="kiit-codes taxonomy" id="0">
-    <mxGraphModel dx="1766" dy="1163" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="706" pageHeight="860" math="0" shadow="0">
+    <mxGraphModel dx="4042" dy="2124" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="706" pageHeight="860" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1106,7 +1106,7 @@
           <mxGeometry height="28" width="150" x="976.25" y="887" as="geometry" />
         </mxCell>
         <mxCell id="s8FvzFKmOU_Yv2eSso95-81" connectable="0" parent="1" style="group" value="" vertex="1">
-          <mxGeometry height="190" width="220" x="2555" y="1756" as="geometry" />
+          <mxGeometry height="190" width="220" x="2326" y="1276" as="geometry" />
         </mxCell>
         <mxCell id="s8FvzFKmOU_Yv2eSso95-69" parent="s8FvzFKmOU_Yv2eSso95-81" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;" value="" vertex="1">
           <mxGeometry height="149.15" width="200" x="10" y="32.299999999999955" as="geometry" />
