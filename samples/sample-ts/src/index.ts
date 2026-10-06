@@ -252,7 +252,7 @@ function showFormats(): void {
 
   console.log(JSON.stringify(codeDetail, null, 2));
   // </example>
-  check(codeDetail.code === "kiit.dev:Failed:Invalid:INVALID_VALUE", "codedetail-json: code");
+  check(codeDetail.code === "kiit.dev::Failed:Invalid:INVALID_VALUE", "codedetail-json: code");
   check(codeDetail.errors?.length === 2, "codedetail-json: errors");
 
   // <example id="rfc9457-domain-origin" tags="rfc9457,origin">
@@ -311,14 +311,14 @@ function showFormats(): void {
 
   console.log(JSON.stringify(asDetail, null, 2));
   // {
-  //   "code": "kiit.dev:Failed:Restricted:FORBIDDEN",
+  //   "code": "kiit.dev::Failed:Restricted:FORBIDDEN",
   //   "success": false,
   //   "message": "Access to this resource is forbidden.",
   //   "status": 403
   // }
   // </example>
   check(asProblem.status === 403 && asDetail.status === 403, "rfc9457-vs-codedetail: same status");
-  check(asDetail.code === "kiit.dev:Failed:Restricted:FORBIDDEN", "rfc9457-vs-codedetail: code");
+  check(asDetail.code === "kiit.dev::Failed:Restricted:FORBIDDEN", "rfc9457-vs-codedetail: code");
 
   // <example id="rfc9457-plain-origin" tags="rfc9457,origin">
   // A plain id is used as is. It looks like a host, so register a base URL or use a domain.

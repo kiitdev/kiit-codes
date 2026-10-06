@@ -5,7 +5,7 @@ import type { ErrorItem } from "../../src/formats/error-item.js";
 import { CodesToHttp } from "../../src/codes.js";
 import { ErrorInfo, ErrorField, ErrorList } from "../../src/err.js";
 import { Succeeded, Restricted, Invalid } from "../../src/groups.js";
-import { statusPath, statusCode } from "../../src/status.js";
+import { statusCode } from "../../src/status.js";
 
 // Ported from formats/CodeDetailTest.kt.
 
@@ -13,7 +13,7 @@ describe("toCodeDetail", () => {
   it("code/success/message come from the status", () => {
     const status = Restricted.DENIED;
     const detail = toCodeDetail(status);
-    expect(detail.code).toBe(`${statusPath(status)}:${statusCode(status)}`);
+    expect(detail.code).toBe(`${status.origin}:${status.scope}:${statusCode(status)}`);
     expect(detail.success).toBe(status.success);
     expect(detail.message).toBe(status.message);
   });
@@ -25,8 +25,10 @@ describe("toCodeDetail", () => {
     expect(detail.code.endsWith(statusCode(status))).toBe(true);
   });
 
-  it("an empty scope is skipped in code", () => {
-    expect(toCodeDetail(Restricted.DENIED).code).toBe("kiit.dev:Failed:Restricted:DENIED");
+  it("an empty scope keeps its slot, so code always has five values", () => {
+    const code = toCodeDetail(Restricted.DENIED).code;
+    expect(code).toBe("kiit.dev::Failed:Restricted:DENIED");
+    expect(code.split(":")).toHaveLength(5);
   });
 
   it("success is true for Passed and false for Failed", () => {

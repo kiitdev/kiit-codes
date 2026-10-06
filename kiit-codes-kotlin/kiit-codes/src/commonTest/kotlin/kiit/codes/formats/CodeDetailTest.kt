@@ -6,7 +6,6 @@ import kiit.codes.Invalid
 import kiit.codes.Restricted
 import kiit.codes.Succeeded
 import kiit.codes.code
-import kiit.codes.path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -18,7 +17,7 @@ class CodeDetailTest {
     fun codeSuccessAndMessageComeFromStatus() {
         val status = Restricted.DENIED
         val detail = toCodeDetail(status)
-        assertEquals("${status.path}:${status.code}", detail.code)
+        assertEquals("${status.origin}:${status.scope}:${status.code}", detail.code)
         assertEquals(status.success, detail.success)
         assertEquals(status.message, detail.message)
     }
@@ -32,8 +31,10 @@ class CodeDetailTest {
     }
 
     @Test
-    fun emptyScopeIsSkippedInCode() {
-        assertEquals("kiit.dev:Failed:Restricted:DENIED", toCodeDetail(Restricted.DENIED).code)
+    fun emptyScopeKeepsItsSlotSoCodeAlwaysHasFiveValues() {
+        val code = toCodeDetail(Restricted.DENIED).code
+        assertEquals("kiit.dev::Failed:Restricted:DENIED", code)
+        assertEquals(5, code.split(":").size)
     }
 
     @Test

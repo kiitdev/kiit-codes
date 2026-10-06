@@ -10,13 +10,14 @@
  *
  * 1. Meant for internal service-to-service calls.
  * 2. Also useful for background jobs and other non-API calls where an HTTP status isn't relevant.
- * 3. Self-contained, no need for a public URI: `code` is `statusPath` followed by `statusCode`, so
- *    it names the origin as well as the status. An empty `scope` is skipped.
+ * 3. Self-contained, no need for a public URI: `code` is `origin`, `scope` and `statusCode`, so it
+ *    names the origin as well as the status. An empty scope leaves an empty value
+ *    (`kiit.dev::Failed:Restricted:FORBIDDEN`), so `code` always has five `:`-separated values.
  * 4. `status` is optional - pass a `mapping` to `toCodeDetail` when this shape is still going out
  *    over HTTP and the status code is worth carrying alongside it.
  */
 
-import { statusPath, statusCode } from "../status.js";
+import { statusCode } from "../status.js";
 import type { Status } from "../status.js";
 import type { Err } from "../err.js";
 import type { CodeLookup } from "../codes.js";
@@ -33,7 +34,7 @@ export interface CodeDetail<T extends ErrorItem = ErrorItem> {
 }
 
 function detailCode(status: Status): string {
-  return `${statusPath(status)}:${statusCode(status)}`;
+  return `${status.origin}:${status.scope}:${statusCode(status)}`;
 }
 
 /**

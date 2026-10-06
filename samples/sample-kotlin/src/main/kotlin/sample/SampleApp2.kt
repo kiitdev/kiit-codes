@@ -540,7 +540,7 @@ fun showProblemDetails(tasks: TaskService) {
 
     println(Json { prettyPrint = true; prettyPrintIndent = "  " }.encodeToString(JsonObject.serializer(), codeJson))
     // </example>
-    verify("codedetail-json: code", codeDetail.code == "kiit.dev:Failed:Invalid:INVALID_VALUE")
+    verify("codedetail-json: code", codeDetail.code == "kiit.dev::Failed:Invalid:INVALID_VALUE")
     verify("codedetail-json: errors", codeJson["errors"]?.jsonArray?.size == 2)
     // The docs page shows this file as the output, so it fails here when the output changes
     val shownCode = Json.parseToJsonElement({}.javaClass.getResource("/docs/codedetail.json")!!.readText())
@@ -641,14 +641,14 @@ fun showProblemDetails(tasks: TaskService) {
 
     println(mapper.writeValueAsString(asDetail))
     // {
-    //   "code" : "kiit.dev:Failed:Restricted:FORBIDDEN",
+    //   "code" : "kiit.dev::Failed:Restricted:FORBIDDEN",
     //   "success" : false,
     //   "message" : "Access to this resource is forbidden.",
     //   "status" : 403
     // }
     // </example>
     verify("rfc9457-vs-codedetail: same status", asProblem.status == asDetail.status && asDetail.status == 403)
-    verify("rfc9457-vs-codedetail: code", asDetail.code == "${forbidden.path}:${forbidden.code}")
+    verify("rfc9457-vs-codedetail: code", asDetail.code == "kiit.dev::${forbidden.code}")
 
     // <example id="rfc9457-plain-origin" tags="rfc9457,origin">
     // A plain id is used as is. It looks like a host, so register a base URL or use a domain.
