@@ -307,16 +307,14 @@ function showFormats(): void {
 
   console.log(JSON.stringify(asDetail, null, 2));
   // {
-  //   "path": "kiit.dev",
-  //   "code": "Failed:Restricted:FORBIDDEN",
+  //   "code": "kiit.dev:Failed:Restricted:FORBIDDEN",
   //   "success": false,
   //   "message": "Access to this resource is forbidden.",
   //   "status": 403
   // }
   // </example>
   check(asProblem.status === 403 && asDetail.status === 403, "rfc9457-vs-codedetail: same status");
-  check(asDetail.code === "Failed:Restricted:FORBIDDEN", "rfc9457-vs-codedetail: code");
-  check(asDetail.path === "kiit.dev", "rfc9457-vs-codedetail: path");
+  check(asDetail.code === "kiit.dev:Failed:Restricted:FORBIDDEN", "rfc9457-vs-codedetail: code");
 
   // <example id="rfc9457-plain-origin" tags="rfc9457,origin">
   // A plain id is used as is. It looks like a host, so register a base URL or use a domain.
@@ -349,7 +347,7 @@ function showFormats(): void {
   check(stripeProblem.status === 401, "ProblemConverter.convert(...).status");
 
   const detail = toCodeDetail(duplicateCharge);
-  check(detail.path === "stripe.com:payments.cards", "toCodeDetail(...).path");
+  check(detail.code === "stripe.com:payments.cards:Failed:Restricted:DUPLICATE_CHARGE", "toCodeDetail(...).code");
   check(detail.status === undefined, "toCodeDetail(...).status is undefined without a mapping");
 
   // A built-in kiit status needs no baseUrls entry, and its `type` resolves to the real taxonomy

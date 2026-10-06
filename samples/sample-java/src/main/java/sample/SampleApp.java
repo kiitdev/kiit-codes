@@ -107,7 +107,6 @@ public class SampleApp {
         // @file:JvmName("CodeDetails") + @JvmOverloads: kiit-codes' own shape, no baseUrl or HTTP
         // status needed. Useful for internal service-to-service calls and background jobs.
         CodeDetail<ErrorDetail> stripeCode = CodeDetails.toCodeDetail(duplicateCharge);
-        System.out.println("[kiit] path: " + stripeCode.getPath());
         System.out.println("[kiit] code: " + stripeCode.getCode());
         System.out.println("[kiit] success: " + stripeCode.getSuccess());
         System.out.println("[kiit] message: " + stripeCode.getMessage());

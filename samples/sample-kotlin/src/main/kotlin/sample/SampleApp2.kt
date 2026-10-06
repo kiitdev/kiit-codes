@@ -612,16 +612,14 @@ fun showProblemDetails(tasks: TaskService) {
 
     println(mapper.writeValueAsString(asDetail))
     // {
-    //   "path" : "kiit.dev",
-    //   "code" : "Failed:Restricted:FORBIDDEN",
+    //   "code" : "kiit.dev:Failed:Restricted:FORBIDDEN",
     //   "success" : false,
     //   "message" : "Access to this resource is forbidden.",
     //   "status" : 403
     // }
     // </example>
     verify("rfc9457-vs-codedetail: same status", asProblem.status == asDetail.status && asDetail.status == 403)
-    verify("rfc9457-vs-codedetail: code", asDetail.code == forbidden.code)
-    verify("rfc9457-vs-codedetail: path", asDetail.path == forbidden.path)
+    verify("rfc9457-vs-codedetail: code", asDetail.code == "${forbidden.path}:${forbidden.code}")
 
     // <example id="rfc9457-plain-origin" tags="rfc9457,origin">
     // A plain id is used as is. It looks like a host, so register a base URL or use a domain.

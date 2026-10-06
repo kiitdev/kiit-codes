@@ -1,17 +1,17 @@
 /**
- * kiit-native counterpart to `Problem`: `path`/`code`/`message` instead of RFC 9457's
+ * kiit-native counterpart to `Problem`: `code`/`message` instead of RFC 9457's
  * `type`/`title`/`status`.
  *
  * {
- *     "path": "stripe.com:payments.cards",
- *     "code": "Failed:Rejected:DUPLICATE_CHARGE",
+ *     "code": "stripe.com:payments.cards:Failed:Rejected:DUPLICATE_CHARGE",
  *     "success": false,
  *     "message": "This charge has already been processed"
  * }
  *
  * 1. Meant for internal service-to-service calls.
  * 2. Also useful for background jobs and other non-API calls where an HTTP status isn't relevant.
- * 3. Self-contained, no need for a public URI: `origin:scope` is enough.
+ * 3. Self-contained, no need for a public URI: `code` is `statusPath` followed by `statusCode`, so
+ *    it names the origin as well as the status. An empty `scope` is skipped.
  * 4. `status` is optional - pass a `mapping` to `toCodeDetail` when this shape is still going out
  *    over HTTP and the status code is worth carrying alongside it.
  */
@@ -23,7 +23,6 @@ import type { CodeLookup } from "../codes.js";
 import { type ErrorItem, type ErrorDetail, defaultErrorItem } from "./error-item.js";
 
 export interface CodeDetail<T extends ErrorItem = ErrorItem> {
-  readonly path: string;
   readonly code: string;
   readonly success: boolean;
   readonly message: string;
@@ -31,6 +30,10 @@ export interface CodeDetail<T extends ErrorItem = ErrorItem> {
   readonly instance?: string;
   readonly errors?: readonly T[];
   readonly status?: number;
+}
+
+function detailCode(status: Status): string {
+  return `${statusPath(status)}:${statusCode(status)}`;
 }
 
 /**
@@ -46,8 +49,7 @@ export function toCodeDetailCustom<T extends ErrorItem>(
   const httpStatus = mapping?.toCode(status);
   if (err?.kind === "ErrorList") {
     return {
-      path: statusPath(status),
-      code: statusCode(status),
+      code: detailCode(status),
       success: status.success,
       message: status.message,
       detail: err.message,
@@ -56,8 +58,7 @@ export function toCodeDetailCustom<T extends ErrorItem>(
     };
   }
   return {
-    path: statusPath(status),
-    code: statusCode(status),
+    code: detailCode(status),
     success: status.success,
     message: status.message,
     detail: err?.message,
