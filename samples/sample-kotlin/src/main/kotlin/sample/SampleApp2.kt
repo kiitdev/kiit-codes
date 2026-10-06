@@ -7,9 +7,11 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kiit.codes.*
 import kiit.codes.formats.*
 // </example>
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 
@@ -437,10 +439,9 @@ private fun Problem<ErrorDetail>.toManualJson(): String {
 fun showProblemDetails(tasks: TaskService) {
     section("Part 5: Problem details (RFC 9457)")
 
-    val problems = ProblemConverter()
-
     // <example id="rfc9457-minimal" tags="rfc9457,conversion">
     // A built-in status as an RFC 9457 problem. Built-in codes point at the kiit taxonomy page.
+    val problems = ProblemConverter()
     val minimal = problems.convert(Rejected.CONFLICT)
     println(minimal.type) // https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy
     println(minimal.title) // The request conflicts with the current state.
@@ -450,17 +451,78 @@ fun showProblemDetails(tasks: TaskService) {
     verify("rfc9457-minimal: title", minimal.title == Rejected.CONFLICT.message)
     verify("rfc9457-minimal: status", minimal.status == 409)
 
-    // The problem below is serialized three ways in the next examples
+    // <example id="rfc9457-errors" tags="rfc9457,usage">
+    // An Err.ErrorList fills detail and errors (errors is a kiit extension member, not part of the RFC)
     val validation =
         Err.ErrorList(
             errors = listOf(Err.on("title", "", "must be 1-100 characters"), Err.on("listId", "x", "unknown list")),
             message = "Validation failed",
         )
-    val problem = problems.convert(TaskCodes.EMPTY_TITLE, validation)
+    val withErrors = problems.convert(Invalid.INVALID_VALUE, validation)
+    println("${withErrors.detail}, ${withErrors.errors?.size} errors") // Validation failed, 2 errors
+    // </example>
+    verify("rfc9457-errors: detail", withErrors.detail == "Validation failed")
+    verify("rfc9457-errors: errors", withErrors.errors?.size == 2)
+
+    // <example id="rfc9457-convert" tags="rfc9457,conversion">
+    // A status and a list of errors become an RFC 9457 problem
+    val failures =
+        Err.ErrorList(
+            errors = listOf(Err.on("title", "", "must be 1-100 characters"), Err.on("listId", "x", "unknown list")),
+            message = "Validation failed",
+        )
+    val problem = ProblemConverter().convert(Invalid.INVALID_VALUE, failures)
+
+    println(problem.status) // 400
+    println(problem.detail) // Validation failed
+    println(problem.errors?.size) // 2
+    // </example>
+    verify("rfc9457-convert: status", problem.status == 400)
+    verify("rfc9457-convert: detail", problem.detail == "Validation failed")
+    verify("rfc9457-convert: errors", problem.errors?.size == 2)
+
+    // <example id="rfc9457-problem" tags="rfc9457,json">
+    // A validation failure as an RFC 9457 problem, written as JSON with kotlinx.serialization.
+    // kiit-codes classes aren't @Serializable, so the JSON is built from the problem's members.
+    val fieldErrors =
+        Err.ErrorList(
+            errors = listOf(Err.on("title", "", "must be 1-100 characters"), Err.on("listId", "x", "unknown list")),
+            message = "Validation failed",
+        )
+    val body = ProblemConverter().convert(Invalid.INVALID_VALUE, fieldErrors)
+
+    val json =
+        buildJsonObject {
+            put("type", body.type)
+            put("title", body.title)
+            put("status", body.status)
+            body.detail?.let { put("detail", it) }
+            putJsonArray("errors") {
+                body.errors?.forEach { e ->
+                    add(
+                        buildJsonObject {
+                            e.field?.let { put("field", it) }
+                            put("message", e.message)
+                        },
+                    )
+                }
+            }
+        }
+
+    println(Json { prettyPrint = true; prettyPrintIndent = "  " }.encodeToString(JsonObject.serializer(), json))
+    // </example>
+    verify("rfc9457-problem: status", body.status == 400)
+    verify("rfc9457-problem: errors", json["errors"]?.jsonArray?.size == 2)
+    // The docs page shows this file as the output, so it fails here when the output changes
+    val shown = Json.parseToJsonElement({}.javaClass.getResource("/docs/rfc9457-problem.json")!!.readText())
+    verify("rfc9457-problem: docs/rfc9457-problem.json is the output", shown == json)
+
+    // The problem below is serialized three ways in the next examples
+    val titleProblem = problems.convert(TaskCodes.EMPTY_TITLE, validation)
 
     // <example id="rfc9457-json-jackson" tags="rfc9457,json">
     // With Jackson (jackson-module-kotlin), the data class serializes directly
-    val jacksonJson = problem.toJson()
+    val jacksonJson = titleProblem.toJson()
     println(jacksonJson)
     // {
     //   "type" : "https://samples.kiit.dev/problems/invalid/empty-title",
@@ -476,19 +538,19 @@ fun showProblemDetails(tasks: TaskService) {
     //   } ]
     // }
     // </example>
-    verify("rfc9457-json-jackson: type", problem.type == "https://samples.kiit.dev/problems/invalid/empty-title")
+    verify("rfc9457-json-jackson: type", titleProblem.type == "https://samples.kiit.dev/problems/invalid/empty-title")
     verify("rfc9457-json-jackson: status", jackson.readTree(jacksonJson)["status"].asInt() == 400)
     verify("rfc9457-json-jackson: errors", jackson.readTree(jacksonJson)["errors"].size() == 2)
 
     // <example id="rfc9457-json-kotlinx" tags="rfc9457,json">
     // With kotlinx.serialization, kiit-codes classes aren't @Serializable so the mapping is written by hand
-    val kotlinxJson = problem.toKotlinxJson().toString()
+    val kotlinxJson = titleProblem.toKotlinxJson().toString()
     // </example>
     verify("rfc9457-json-kotlinx: same JSON as Jackson", jackson.readTree(kotlinxJson) == jackson.readTree(jacksonJson))
 
     // <example id="rfc9457-json-manual" tags="rfc9457,json">
     // With no library, a small helper. A real app uses its framework's serializer.
-    val manualJson = problem.toManualJson()
+    val manualJson = titleProblem.toManualJson()
     // </example>
     verify("rfc9457-json-manual: same JSON as Jackson", jackson.readTree(manualJson) == jackson.readTree(jacksonJson))
 
@@ -516,14 +578,6 @@ fun showProblemDetails(tasks: TaskService) {
     // </example>
     verify("rfc9457-scope: type", scoped.type == "https://samples.kiit.dev/problems/lists.team/rejected/duplicate-task")
 
-    // <example id="rfc9457-errors" tags="rfc9457,usage">
-    // An Err.ErrorList fills detail and errors (errors is a kiit extension member, not part of the RFC)
-    val withErrors = problems.convert(Invalid.INVALID_VALUE, validation)
-    println("${withErrors.detail}, ${withErrors.errors?.size} errors") // Validation failed, 2 errors
-    // </example>
-    verify("rfc9457-errors: detail", withErrors.detail == "Validation failed")
-    verify("rfc9457-errors: errors", withErrors.errors?.size == 2)
-
     // <example id="rfc9457-custom-item" tags="rfc9457">
     // When field + message isn't enough, map each error into your own type
     data class RichError(override val field: String?, override val message: String, val hint: String) : ErrorItem
@@ -539,15 +593,31 @@ fun showProblemDetails(tasks: TaskService) {
 
     // <example id="rfc9457-vs-codedetail" tags="rfc9457,conversion">
     // The same status as an RFC 9457 problem (for an HTTP API) and as kiit's own CodeDetail (service to service)
-    val forbidden = tasks.complete("groceries", TaskService.TEAM_LIST, "amy") // Restricted.FORBIDDEN
-    val asProblem = problems.convert(forbidden)
+    val forbidden = Restricted.FORBIDDEN
+    val asProblem = ProblemConverter().convert(forbidden)
     val asDetail = toCodeDetail(forbidden, mapping = CodesToHttp())
-    println(asProblem.toJson())
-    println(asDetail.toJson())
-    // Problem:    { "type" : "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:FORBIDDEN#taxonomy",
-    //               "title" : "Access to this resource is forbidden.", "status" : 403 }
-    // CodeDetail: { "path" : "kiit.dev", "code" : "Failed:Restricted:FORBIDDEN", "success" : false,
-    //               "message" : "Access to this resource is forbidden.", "status" : 403 }
+
+    // Written as JSON with Jackson (jackson-module-kotlin), leaving out null members
+    val mapper =
+        jacksonObjectMapper()
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .enable(SerializationFeature.INDENT_OUTPUT)
+
+    println(mapper.writeValueAsString(asProblem))
+    // {
+    //   "type" : "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:FORBIDDEN#taxonomy",
+    //   "title" : "Access to this resource is forbidden.",
+    //   "status" : 403
+    // }
+
+    println(mapper.writeValueAsString(asDetail))
+    // {
+    //   "path" : "kiit.dev",
+    //   "code" : "Failed:Restricted:FORBIDDEN",
+    //   "success" : false,
+    //   "message" : "Access to this resource is forbidden.",
+    //   "status" : 403
+    // }
     // </example>
     verify("rfc9457-vs-codedetail: same status", asProblem.status == asDetail.status && asDetail.status == 403)
     verify("rfc9457-vs-codedetail: code", asDetail.code == forbidden.code)

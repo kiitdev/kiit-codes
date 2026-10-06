@@ -44,6 +44,46 @@
           "id": "setup-imports"
         }
       ]
+    },
+    {
+      "section": "explanation",
+      "topic": "formats",
+      "items": [
+        {
+          "id": "rfc9457-problem-json",
+          "name": "json",
+          "file": "samples/sample-kotlin/src/main/resources/docs/rfc9457-problem.json",
+          "lang": "json",
+          "title": "RFC 9457 problem"
+        },
+        {
+          "id": "rfc9457-convert",
+          "name": "code"
+        }
+      ]
+    },
+    {
+      "section": "tutorial",
+      "topic": "error-responses",
+      "items": [
+        {
+          "id": "rfc9457-minimal",
+          "name": "status"
+        },
+        {
+          "id": "rfc9457-errors",
+          "name": "errors"
+        }
+      ]
+    },
+    {
+      "section": "guide",
+      "topic": "problem-details",
+      "items": [
+        {
+          "id": "rfc9457-problem"
+        }
+      ]
     }
   ]
 }
