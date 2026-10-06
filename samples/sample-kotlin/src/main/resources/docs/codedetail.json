@@ -1,5 +1,5 @@
 {
-  "code": "kiit.dev:Failed:Invalid:INVALID_VALUE",
+  "code": "kiit.dev:codes:Failed:Invalid:INVALID_VALUE",
   "success": false,
   "message": "The request had an invalid value.",
   "detail": "Validation failed",

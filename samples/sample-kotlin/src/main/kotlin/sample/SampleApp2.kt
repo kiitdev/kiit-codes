@@ -174,13 +174,13 @@ fun showOverview(tasks: TaskService) {
     val status: Status = Succeeded.SUCCESS
     println("name=${status.name} group=${status.group} origin=${status.origin} scope='${status.scope}'")
     println("success=${status.success} message=${status.message}")
-    // name=SUCCESS group=Succeeded origin=kiit.dev scope=''
+    // name=SUCCESS group=Succeeded origin=kiit.dev scope='codes'
     // success=true message=The operation completed successfully.
     // </example>
     verify("overview-shape: name", status.name == "SUCCESS")
     verify("overview-shape: group", status.group == "Succeeded")
     verify("overview-shape: origin", status.origin == StatusConstants.KIIT && status.origin == "kiit.dev")
-    verify("overview-shape: scope", status.scope == "")
+    verify("overview-shape: scope", status.scope == StatusConstants.CODES)
     verify("overview-shape: success", status.success)
     verify("overview-shape: message", status.message == "The operation completed successfully.")
 
@@ -540,7 +540,7 @@ fun showProblemDetails(tasks: TaskService) {
 
     println(Json { prettyPrint = true; prettyPrintIndent = "  " }.encodeToString(JsonObject.serializer(), codeJson))
     // </example>
-    verify("codedetail-json: code", codeDetail.code == "kiit.dev:Failed:Invalid:INVALID_VALUE")
+    verify("codedetail-json: code", codeDetail.code == "kiit.dev:codes:Failed:Invalid:INVALID_VALUE")
     verify("codedetail-json: errors", codeJson["errors"]?.jsonArray?.size == 2)
     // The docs page shows this file as the output, so it fails here when the output changes
     val shownCode = Json.parseToJsonElement({}.javaClass.getResource("/docs/codedetail.json")!!.readText())
@@ -641,14 +641,14 @@ fun showProblemDetails(tasks: TaskService) {
 
     println(mapper.writeValueAsString(asDetail))
     // {
-    //   "code" : "kiit.dev:Failed:Restricted:FORBIDDEN",
+    //   "code" : "kiit.dev:codes:Failed:Restricted:FORBIDDEN",
     //   "success" : false,
     //   "message" : "Access to this resource is forbidden.",
     //   "status" : 403
     // }
     // </example>
     verify("rfc9457-vs-codedetail: same status", asProblem.status == asDetail.status && asDetail.status == 403)
-    verify("rfc9457-vs-codedetail: code", asDetail.code == "${forbidden.path}:${forbidden.code}")
+    verify("rfc9457-vs-codedetail: code", asDetail.code == "kiit.dev:codes:${forbidden.code}")
 
     // <example id="rfc9457-plain-origin" tags="rfc9457,origin">
     // A plain id is used as is. It looks like a host, so register a base URL or use a domain.

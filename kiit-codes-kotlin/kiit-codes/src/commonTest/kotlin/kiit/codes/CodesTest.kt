@@ -89,7 +89,7 @@ class CodesTest {
 
     @Test
     fun everyBuiltInCodeHasKiitOrigin() {
-        assertTrue(Codes.all.all { it.origin == StatusConstants.KIIT })
+        assertTrue(Codes.all.all { it.origin == StatusConstants.KIIT && it.scope == StatusConstants.CODES })
     }
 
     @Test
@@ -247,7 +247,13 @@ class CodesToHttpTest {
      */
     @Test
     fun overrideMatchesByIdentityNotFullStatusEquality() {
-        val differentMessage = Failed.Invalid("NOT_FOUND", "A completely different message.", origin = StatusConstants.KIIT)
+        val differentMessage =
+            Failed.Invalid(
+                "NOT_FOUND",
+                "A completely different message.",
+                origin = StatusConstants.KIIT,
+                scope = StatusConstants.CODES,
+            )
         assertEquals(404, http.toCode(differentMessage))
     }
 

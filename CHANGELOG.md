@@ -24,10 +24,18 @@ All notable changes to kiit-codes are documented here. Format follows
 - **Breaking**: the built-in origin value changed from `"dev.kiit"` to `"kiit.dev"`. Anything comparing against or
   storing the old value needs updating. The Maven group ID is still `dev.kiit`.
 - **Breaking**: `CodeDetail` has one identifier instead of two. `path` is removed, and `code` is now
-  `"${status.path}:${status.code}"`, for example `stripe.com:payments.cards:Failed:Rejected:DUPLICATE_CHARGE`. An empty
-  scope is skipped, as in `Status.path`. `Status.path` and `Status.code` are unchanged, and `Status.code` is the
-  suffix of `CodeDetail.code`. Read `origin:scope` off the front of `code` where you used `path`. The TypeScript
-  port's `CodeDetail` changes the same way.
+  `"{origin}:{scope}:{Status.code}"`, for example `stripe.com:payments.cards:Failed:Rejected:DUPLICATE_CHARGE`. An
+  empty scope stays as an empty slot (`kiit.dev::Failed:Restricted:FORBIDDEN`), so `code` always has five
+  `:`-separated values, unlike `Status.path`, which skips it. `Status.path` and `Status.code` are unchanged, and
+  `Status.code` is the suffix of `CodeDetail.code`. Read `origin` and `scope` off the front of `code` where you used
+  `path`. The TypeScript port's `CodeDetail` changes the same way.
+- **Breaking**: every built-in status now has the scope `codes` (`StatusConstants.CODES`, `StatusConstants.CODES` in
+  the TypeScript port). `Status.path` of a built-in is `kiit.dev:codes` instead of `kiit.dev`, and
+  `CodeDetail.code` is `kiit.dev:codes:Failed:Restricted:FORBIDDEN`. A built-in is no longer equal to the same
+  status with an empty scope, so a custom status built with `origin = StatusConstants.KIIT` and no scope is no
+  longer a built-in. `CodesToHttp` and `CodesToGrpc` overrides are keyed by `origin:scope:group:name`, so a
+  hand-written key for a built-in needs `codes` in the scope slot. `Codes.statusFor(origin, group, name)` finds
+  built-ins by the same arguments. `Problem.type` of a built-in is unchanged, since it never uses the scope.
 - **Breaking**: `CodesToProblem` is now `ProblemConverter`, and it takes the origin-to-baseUrl map directly:
   `ProblemConverter(baseUrls = mapOf("stripe.com" to "https://stripe.com/errors"))`. This replaces
   `CodesToProblem(Catalog.of(...), mapping)`.

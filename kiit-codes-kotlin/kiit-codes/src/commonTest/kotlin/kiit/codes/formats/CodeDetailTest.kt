@@ -1,24 +1,40 @@
 package kiit.codes.formats
 
+import kiit.codes.Codes
 import kiit.codes.CodesToHttp
 import kiit.codes.Err
+import kiit.codes.Failed
 import kiit.codes.Invalid
+import kiit.codes.Passed
 import kiit.codes.Restricted
+import kiit.codes.Status
+import kiit.codes.StatusConstants
 import kiit.codes.Succeeded
 import kiit.codes.code
-import kiit.codes.path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+private fun Status.withScope(scope: String): Status =
+    when (this) {
+        is Passed.Succeeded -> copy(scope = scope)
+        is Passed.Pending -> copy(scope = scope)
+        is Passed.Excluded -> copy(scope = scope)
+        is Passed.Information -> copy(scope = scope)
+        is Failed.Restricted -> copy(scope = scope)
+        is Failed.Invalid -> copy(scope = scope)
+        is Failed.Rejected -> copy(scope = scope)
+        is Failed.Unserved -> copy(scope = scope)
+    }
+
 class CodeDetailTest {
     @Test
     fun codeSuccessAndMessageComeFromStatus() {
         val status = Restricted.DENIED
         val detail = toCodeDetail(status)
-        assertEquals("${status.path}:${status.code}", detail.code)
+        assertEquals("${status.origin}:${status.scope}:${status.code}", detail.code)
         assertEquals(status.success, detail.success)
         assertEquals(status.message, detail.message)
     }
@@ -32,8 +48,34 @@ class CodeDetailTest {
     }
 
     @Test
-    fun emptyScopeIsSkippedInCode() {
-        assertEquals("kiit.dev:Failed:Restricted:DENIED", toCodeDetail(Restricted.DENIED).code)
+    fun builtInCodeHasTheCodesScope() {
+        assertEquals("kiit.dev:codes:Failed:Restricted:DENIED", toCodeDetail(Restricted.DENIED).code)
+    }
+
+    @Test
+    fun everyBuiltInHasTheCodesScopeAndFiveValues() {
+        Codes.all.forEach {
+            val code = toCodeDetail(it).code
+            assertEquals(StatusConstants.CODES, it.scope, it.name)
+            assertEquals("kiit.dev:codes:${it.code}", code, it.name)
+            assertEquals(5, code.split(":").size, it.name)
+        }
+    }
+
+    @Test
+    fun everyBuiltInWithAnEmptyScopeKeepsItsSlot() {
+        Codes.all.forEach {
+            val code = toCodeDetail(it.withScope("")).code
+            assertEquals("kiit.dev::${it.code}", code, it.name)
+            assertEquals(5, code.split(":").size, it.name)
+        }
+    }
+
+    @Test
+    fun emptyScopeKeepsItsSlotSoCodeAlwaysHasFiveValues() {
+        val code = toCodeDetail(Restricted.DENIED.copy(scope = "")).code
+        assertEquals("kiit.dev::Failed:Restricted:DENIED", code)
+        assertEquals(5, code.split(":").size)
     }
 
     @Test

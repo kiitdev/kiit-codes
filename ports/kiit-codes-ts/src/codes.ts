@@ -18,6 +18,7 @@
 import { assertNever } from "./assert-never.js";
 import {
   Groups,
+  StatusConstants,
   Succeeded,
   Pending,
   Excluded,
@@ -125,7 +126,7 @@ export const Codes = {
 
   /** Looks up a built-in status by its origin/group/name, or `undefined` if none matches. */
   statusFor(origin: string, group: string, name: string): Status | undefined {
-    return byKey.get(statusKey({ origin, scope: "", group, name }));
+    return byKey.get(statusKey({ origin, scope: StatusConstants.CODES, group, name }));
   },
 };
 

@@ -84,7 +84,12 @@ describe("groupDescription", () => {
 describe("Status: scope", () => {
   it("defaults to an empty string", () => {
     expect(Restricted("RESTRICTED", "Restricted").scope).toBe("");
-    expect(Succeeded.SUCCESS.scope).toBe("");
+  });
+
+  it("is codes on every built-in", () => {
+    expect(Succeeded.SUCCESS.scope).toBe(StatusConstants.CODES);
+    expect(Restricted.DENIED.scope).toBe(StatusConstants.CODES);
+    expect(statusPath(Restricted.DENIED)).toBe("kiit.dev:codes");
   });
 
   it("is settable via the constructor", () => {

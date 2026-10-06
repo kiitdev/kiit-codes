@@ -7,7 +7,6 @@ import kiit.codes.CodesToHttp
 import kiit.codes.Err
 import kiit.codes.Status
 import kiit.codes.code
-import kiit.codes.path
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 
@@ -25,8 +24,9 @@ import kotlin.jvm.JvmOverloads
  *
  * 1. Meant for internal service-to-service calls.
  * 2. Also useful for background jobs and other non-API calls where an HTTP status isn't relevant.
- * 3. Self-contained, no need for a public URI: [code] is [Status.path] followed by [Status.code], so
- *    it names the origin as well as the status. An empty [Status.scope] is skipped.
+ * 3. Self-contained, no need for a public URI: [code] is [Status.origin], [Status.scope] and
+ *    [Status.code], so it names the origin as well as the status. An empty scope leaves an empty
+ *    value (`myapp1::Failed:Rejected:OUT_OF_STOCK`), so `code` always has five `:`-separated values.
  * 4. [status] is optional — pass a `mapping` to [toCodeDetail] when this shape is still going out
  *    over HTTP and the status code is worth carrying alongside it.
  */
@@ -40,7 +40,7 @@ data class CodeDetail<T : ErrorItem>(
     val status: Int? = null,
 )
 
-private fun Status.detailCode(): String = "$path:$code"
+private fun Status.detailCode(): String = "$origin:$scope:$code"
 
 /**
  * Builds the default [CodeDetail]\<[ErrorDetail]\> for [status] (and optionally [err]). Pass

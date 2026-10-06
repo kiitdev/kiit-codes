@@ -12,6 +12,13 @@ object StatusConstants {
     const val KIIT = "kiit.dev"
 
     /**
+     * Scope of every built-in [Codes] entry. It names the shared vocabulary, not a repo or module, so
+     * `Status.path` is `kiit.dev:codes` and `CodeDetail.code` starts `kiit.dev:codes:`. Custom statuses
+     * default to an empty scope.
+     */
+    const val CODES = "codes"
+
+    /**
      * Default origin for consumer/custom statuses that don't specify one explicitly. With no `baseUrls`
      * entry, [kiit.codes.formats.ProblemConverter] would build `https://custom/problems/...` for it, so
      * custom statuses that reach RFC 9457 output should set their own origin.
@@ -28,7 +35,7 @@ object StatusConstants {
  *      "name"    : "DENIED",
  *      "group"   : "Restricted",
  *      "origin"  : "kiit.dev",
- *      "scope"   : "",
+ *      "scope"   : "codes",
  *      "message" : "The request was denied.",
  *      "success" : false
  * }
@@ -67,8 +74,8 @@ sealed interface Status {
      * `kiit-codes` never parses or enforces [scope]'s internal shape, only that it doesn't
      * contain `:` (reserved, see [path]).
      *
-     * Empty string means unset. It defaults to `""` on every built-in and on any
-     * [Passed]/[Failed] subtype that doesn't set it explicitly. This is a real, defaulted field
+     * Empty string means unset. Every built-in has [StatusConstants.CODES], and any
+     * [Passed]/[Failed] subtype that doesn't set it explicitly defaults to `""`. This is a real, defaulted field
      * rather than a separate capability interface, since consumers construct concrete
      * [Passed]/[Failed] subtypes directly (or `.copy()` an existing instance) and can't add an
      * interface to one after the fact.
@@ -142,6 +149,8 @@ internal val Status.key: String
  * Feeds into [toProblemDetail]'s RFC 9457 `type` construction by default (see
  * [defaultTypeBuilder]). If you rely on `type` staying stable, [Status.origin]/[Status.scope]
  * inherit that same obligation: they're consumer-defined and only as stable as you keep them.
+ *
+ * Built-ins are `kiit.dev:codes`, a custom status with no scope is just its origin.
  */
 val Status.path: String
     get() = if (scope.isNotEmpty()) "$origin:$scope" else origin
@@ -214,6 +223,7 @@ sealed class Passed : Status {
                     "SUCCESS",
                     "The operation completed successfully.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             /** This group's default. Same instance as [SUCCESS], not a new entry. */
@@ -226,6 +236,7 @@ sealed class Passed : Status {
                     "CREATED",
                     "A new resource was created.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -234,6 +245,7 @@ sealed class Passed : Status {
                     "UPDATED",
                     "The resource was fully updated.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -242,6 +254,7 @@ sealed class Passed : Status {
                     "PATCHED",
                     "The resource was partially updated.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -250,6 +263,7 @@ sealed class Passed : Status {
                     "FETCHED",
                     "The resource was retrieved.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -258,6 +272,7 @@ sealed class Passed : Status {
                     "DELETED",
                     "The resource was deleted.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -266,6 +281,7 @@ sealed class Passed : Status {
                     "HANDLED",
                     "The request was handled; nothing to return.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -274,6 +290,7 @@ sealed class Passed : Status {
                     "REFERRED",
                     "The result is at another location.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -282,6 +299,7 @@ sealed class Passed : Status {
                     "EXITED",
                     "The application exited cleanly.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
         }
     }
@@ -300,6 +318,7 @@ sealed class Passed : Status {
                     "ACCEPTED",
                     "The request was accepted.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             /** This group's default. Same instance as [ACCEPTED], not a new entry. */
@@ -312,6 +331,7 @@ sealed class Passed : Status {
                     "QUEUED",
                     "The request is waiting to be processed.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -320,6 +340,7 @@ sealed class Passed : Status {
                     "PROCESSING",
                     "The request is being processed.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -328,6 +349,7 @@ sealed class Passed : Status {
                     "CONFIRM",
                     "The request is awaiting confirmation.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -336,6 +358,7 @@ sealed class Passed : Status {
                     "REDIRECTED",
                     "This request is being handled elsewhere.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -344,6 +367,7 @@ sealed class Passed : Status {
                     "SCHEDULED",
                     "The operation is scheduled for later.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
         }
     }
@@ -364,6 +388,7 @@ sealed class Passed : Status {
                     "OMITTED",
                     "The item was excluded from the result.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             /** This group's default. Same instance as [OMITTED], not a new entry. */
@@ -376,6 +401,7 @@ sealed class Passed : Status {
                     "SKIPPED",
                     "The item was not processed.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -384,6 +410,7 @@ sealed class Passed : Status {
                     "DISCARDED",
                     "The item was processed, then excluded for unrelated reasons.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -392,6 +419,7 @@ sealed class Passed : Status {
                     "CANCELLED",
                     "The operation was cancelled by the caller before completion.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -400,6 +428,7 @@ sealed class Passed : Status {
                     "DEDUPLICATED",
                     "The duplicate item was not processed.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -408,6 +437,7 @@ sealed class Passed : Status {
                     "DISQUALIFIED",
                     "The item was disqualified.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
         }
     }
@@ -426,6 +456,7 @@ sealed class Passed : Status {
                     "NOTICE",
                     "An informational notice.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             /** This group's default. Same instance as [NOTICE], not a new entry. */
@@ -438,6 +469,7 @@ sealed class Passed : Status {
                     "ADVISORY",
                     "A notice that may need attention.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -446,6 +478,7 @@ sealed class Passed : Status {
                     "METADATA",
                     "Information about the application itself was returned.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -454,6 +487,7 @@ sealed class Passed : Status {
                     "HEALTH",
                     "The service is healthy and operational.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -462,6 +496,7 @@ sealed class Passed : Status {
                     "DIAGNOSTICS",
                     "Diagnostic or operational information was returned.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -470,6 +505,7 @@ sealed class Passed : Status {
                     "MOVED",
                     "The resource has permanently moved to a new location.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
         }
     }
@@ -527,6 +563,7 @@ sealed class Failed : Status {
                     "DENIED",
                     "The request was denied.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             /** This group's default. Same instance as [DENIED], not a new entry. */
@@ -539,6 +576,7 @@ sealed class Failed : Status {
                     "UNAUTHENTICATED",
                     "Authentication is required.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -547,6 +585,7 @@ sealed class Failed : Status {
                     "UNAUTHORIZED",
                     "The caller lacks permission.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -555,6 +594,7 @@ sealed class Failed : Status {
                     "FORBIDDEN",
                     "Access to this resource is forbidden.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -563,6 +603,7 @@ sealed class Failed : Status {
                     "LOCKED",
                     "Access is locked; resolve the condition to restore access.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -571,6 +612,7 @@ sealed class Failed : Status {
                     "SUSPENDED",
                     "Access has been administratively suspended.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
         }
     }
@@ -589,6 +631,7 @@ sealed class Failed : Status {
                     "INVALID_VALUE",
                     "The request had an invalid value.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             /** This group's default. Same instance as [INVALID_VALUE], not a new entry. */
@@ -601,6 +644,7 @@ sealed class Failed : Status {
                     "BAD_REQUEST",
                     "The request was malformed.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -609,6 +653,7 @@ sealed class Failed : Status {
                     "NOT_FOUND",
                     "The requested route or endpoint does not exist.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -617,6 +662,7 @@ sealed class Failed : Status {
                     "OUT_OF_RANGE",
                     "A value was outside the acceptable range.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -625,6 +671,7 @@ sealed class Failed : Status {
                     "PAYLOAD_TOO_LARGE",
                     "The payload is too large.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -633,6 +680,7 @@ sealed class Failed : Status {
                     "MISSING_FIELD",
                     "A required field was not provided.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
         }
     }
@@ -651,6 +699,7 @@ sealed class Failed : Status {
                     "RULE_VIOLATION",
                     "A business rule rejected the request.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             /** This group's default. Same instance as [RULE_VIOLATION], not a new entry. */
@@ -663,6 +712,7 @@ sealed class Failed : Status {
                     "CONFLICT",
                     "The request conflicts with the current state.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -671,6 +721,7 @@ sealed class Failed : Status {
                     "NOT_EXISTS",
                     "The referenced item does not exist.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -679,6 +730,7 @@ sealed class Failed : Status {
                     "PRECONDITION_FAILED",
                     "A required precondition was not met.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -687,6 +739,7 @@ sealed class Failed : Status {
                     "EXPIRED",
                     "The item has expired.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -695,6 +748,7 @@ sealed class Failed : Status {
                     "GONE",
                     "The resource was removed and is no longer available.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
         }
     }
@@ -719,6 +773,7 @@ sealed class Failed : Status {
                     "UNEXPECTED",
                     "An unexpected, unclassified error occurred.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             /** This group's default. Same instance as [UNEXPECTED], not a new entry. */
@@ -731,6 +786,7 @@ sealed class Failed : Status {
                     "UNSUPPORTED",
                     "This capability is not currently available.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -739,6 +795,7 @@ sealed class Failed : Status {
                     "TIMEOUT",
                     "The operation timed out.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -747,6 +804,7 @@ sealed class Failed : Status {
                     "RATE_LIMITED",
                     "Too many requests; try again later.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -755,6 +813,7 @@ sealed class Failed : Status {
                     "RESOURCE_LIMITED",
                     "A resource limit has been reached.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -763,6 +822,7 @@ sealed class Failed : Status {
                     "UNREACHABLE",
                     "A required dependency could not be reached.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -771,6 +831,7 @@ sealed class Failed : Status {
                     "UNDER_MAINTENANCE",
                     "The service is temporarily under maintenance.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -779,6 +840,7 @@ sealed class Failed : Status {
                     "INTERNAL",
                     "An internal invariant was violated.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -787,6 +849,7 @@ sealed class Failed : Status {
                     "DATA_LOSS",
                     "Unrecoverable data loss or corruption occurred.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -795,6 +858,7 @@ sealed class Failed : Status {
                     "DEGRADED",
                     "This dependency is degraded; some calls may be refused.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -803,6 +867,7 @@ sealed class Failed : Status {
                     "LEGAL_BLOCK",
                     "Access is blocked for legal reasons.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
 
             @JvmField
@@ -811,6 +876,7 @@ sealed class Failed : Status {
                     "ABORTED",
                     "The operation was aborted; retrying may help.",
                     origin = StatusConstants.KIIT,
+                    scope = StatusConstants.CODES,
                 )
         }
     }

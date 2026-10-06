@@ -55,7 +55,7 @@ object Codes {
     /** Looks up a built-in [Status] by its [Status.origin]/[Status.group]/[Status.name], or null if none matches. */
     @JvmStatic
     fun statusFor(origin: String, group: String, name: String): Status? =
-        byKey[StatusKey(origin = origin, scope = "", group = group, name = name)]
+        byKey[StatusKey(origin = origin, scope = StatusConstants.CODES, group = group, name = name)]
 }
 
 /**

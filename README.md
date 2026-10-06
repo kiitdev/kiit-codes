@@ -83,6 +83,7 @@ Built-in codes expose stable fields suitable for application logic, logging, API
     "name"    : "CONFLICT",
     "group"   : "Rejected",
     "origin"  : "kiit.dev",
+    "scope"   : "codes",
     "success" : false,
     "message" : "The request conflicts with the current state"
 }
