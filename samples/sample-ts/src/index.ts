@@ -205,31 +205,31 @@ function showFormats(): void {
   console.log(minimal.type); // https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy
   console.log(minimal.title); // The request conflicts with the current state.
   console.log(minimal.status); // 409
+
+  // An Err.ErrorList fills detail and errors (errors is a kiit extension member, not part of the RFC)
+  const validation = ErrorList(
+    [
+      Err.on("title", "", "must be 1-100 characters"),
+      Err.on("listId", "x", "unknown list"),
+    ],
+    "Validation failed",
+  );
+  const withErrors = problems.convert(Invalid.INVALID_VALUE, validation);
+  console.log(`${withErrors.detail}, ${withErrors.errors?.length} errors`); // Validation failed, 2 errors
   // </example>
   check(minimal.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy", "rfc9457-minimal: type");
   check(minimal.title === Rejected.CONFLICT.message, "rfc9457-minimal: title");
   check(minimal.status === 409, "rfc9457-minimal: status");
-
-  // <example id="rfc9457-convert" tags="rfc9457,conversion">
-  // A status and a list of errors become an RFC 9457 problem
-  const failures = ErrorList(
-    [Err.on("title", "", "must be 1-100 characters"), Err.on("listId", "x", "unknown list")],
-    "Validation failed",
-  );
-  const problem = ProblemConverter().convert(Invalid.INVALID_VALUE, failures);
-
-  console.log(problem.status); // 400
-  console.log(problem.detail); // Validation failed
-  console.log(problem.errors?.length); // 2
-  // </example>
-  check(problem.status === 400, "rfc9457-convert: status");
-  check(problem.detail === "Validation failed", "rfc9457-convert: detail");
-  check(problem.errors?.length === 2, "rfc9457-convert: errors");
+  check(withErrors.detail === "Validation failed", "rfc9457-minimal: detail");
+  check(withErrors.errors?.length === 2, "rfc9457-minimal: errors");
 
   // <example id="rfc9457-problem" tags="rfc9457,json">
   // A validation failure as an RFC 9457 problem, written as JSON
   const fieldErrors = ErrorList(
-    [Err.on("title", "", "must be 1-100 characters"), Err.on("listId", "x", "unknown list")],
+    [
+      Err.on("title", "", "must be 1-100 characters"),
+      Err.on("listId", "x", "unknown list"),
+    ],
     "Validation failed",
   );
   const body = ProblemConverter().convert(Invalid.INVALID_VALUE, fieldErrors);
@@ -239,17 +239,21 @@ function showFormats(): void {
   check(body.status === 400, "rfc9457-problem: status");
   check(body.errors?.length === 2, "rfc9457-problem: errors");
 
-  // <example id="rfc9457-errors" tags="rfc9457,usage">
-  // An Err.ErrorList fills detail and errors (errors is a kiit extension member, not part of the RFC)
-  const validation = ErrorList(
-    [Err.on("title", "", "must be 1-100 characters"), Err.on("listId", "x", "unknown list")],
+  // <example id="codedetail-json" tags="codedetail,json">
+  // A validation failure as a CodeDetail, written as JSON
+  const codeFailures = ErrorList(
+    [
+      Err.on("title", "", "must be 1-100 characters"),
+      Err.on("listId", "x", "unknown list"),
+    ],
     "Validation failed",
   );
-  const withErrors = problems.convert(Invalid.INVALID_VALUE, validation);
-  console.log(`${withErrors.detail}, ${withErrors.errors?.length} errors`); // Validation failed, 2 errors
+  const codeDetail = toCodeDetail(Invalid.INVALID_VALUE, codeFailures);
+
+  console.log(JSON.stringify(codeDetail, null, 2));
   // </example>
-  check(withErrors.detail === "Validation failed", "rfc9457-errors: detail");
-  check(withErrors.errors?.length === 2, "rfc9457-errors: errors");
+  check(codeDetail.code === "kiit.dev:Failed:Invalid:INVALID_VALUE", "codedetail-json: code");
+  check(codeDetail.errors?.length === 2, "codedetail-json: errors");
 
   // <example id="rfc9457-domain-origin" tags="rfc9457,origin">
   // A custom code whose origin is a domain needs no registration: https://{origin}/problems/{group}/{name}

@@ -446,47 +446,36 @@ fun showProblemDetails(tasks: TaskService) {
     println(minimal.type) // https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy
     println(minimal.title) // The request conflicts with the current state.
     println(minimal.status) // 409
-    // </example>
-    verify("rfc9457-minimal: type", minimal.type == "https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy")
-    verify("rfc9457-minimal: title", minimal.title == Rejected.CONFLICT.message)
-    verify("rfc9457-minimal: status", minimal.status == 409)
 
-    // <example id="rfc9457-errors" tags="rfc9457,usage">
     // An Err.ErrorList fills detail and errors (errors is a kiit extension member, not part of the RFC)
     val validation =
         Err.ErrorList(
-            errors = listOf(Err.on("title", "", "must be 1-100 characters"), Err.on("listId", "x", "unknown list")),
+            errors =
+                listOf(
+                    Err.on("title", "", "must be 1-100 characters"),
+                    Err.on("listId", "x", "unknown list"),
+                ),
             message = "Validation failed",
         )
     val withErrors = problems.convert(Invalid.INVALID_VALUE, validation)
     println("${withErrors.detail}, ${withErrors.errors?.size} errors") // Validation failed, 2 errors
     // </example>
-    verify("rfc9457-errors: detail", withErrors.detail == "Validation failed")
-    verify("rfc9457-errors: errors", withErrors.errors?.size == 2)
-
-    // <example id="rfc9457-convert" tags="rfc9457,conversion">
-    // A status and a list of errors become an RFC 9457 problem
-    val failures =
-        Err.ErrorList(
-            errors = listOf(Err.on("title", "", "must be 1-100 characters"), Err.on("listId", "x", "unknown list")),
-            message = "Validation failed",
-        )
-    val problem = ProblemConverter().convert(Invalid.INVALID_VALUE, failures)
-
-    println(problem.status) // 400
-    println(problem.detail) // Validation failed
-    println(problem.errors?.size) // 2
-    // </example>
-    verify("rfc9457-convert: status", problem.status == 400)
-    verify("rfc9457-convert: detail", problem.detail == "Validation failed")
-    verify("rfc9457-convert: errors", problem.errors?.size == 2)
+    verify("rfc9457-minimal: type", minimal.type == "https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy")
+    verify("rfc9457-minimal: title", minimal.title == Rejected.CONFLICT.message)
+    verify("rfc9457-minimal: status", minimal.status == 409)
+    verify("rfc9457-minimal: detail", withErrors.detail == "Validation failed")
+    verify("rfc9457-minimal: errors", withErrors.errors?.size == 2)
 
     // <example id="rfc9457-problem" tags="rfc9457,json">
     // A validation failure as an RFC 9457 problem, written as JSON with kotlinx.serialization.
     // kiit-codes classes aren't @Serializable, so the JSON is built from the problem's members.
     val fieldErrors =
         Err.ErrorList(
-            errors = listOf(Err.on("title", "", "must be 1-100 characters"), Err.on("listId", "x", "unknown list")),
+            errors =
+                listOf(
+                    Err.on("title", "", "must be 1-100 characters"),
+                    Err.on("listId", "x", "unknown list"),
+                ),
             message = "Validation failed",
         )
     val body = ProblemConverter().convert(Invalid.INVALID_VALUE, fieldErrors)
@@ -516,6 +505,46 @@ fun showProblemDetails(tasks: TaskService) {
     // The docs page shows this file as the output, so it fails here when the output changes
     val shown = Json.parseToJsonElement({}.javaClass.getResource("/docs/rfc9457-problem.json")!!.readText())
     verify("rfc9457-problem: docs/rfc9457-problem.json is the output", shown == json)
+
+    // <example id="codedetail-json" tags="codedetail,json">
+    // A validation failure as a CodeDetail, written as JSON with kotlinx.serialization.
+    // kiit-codes classes aren't @Serializable, so the JSON is built from the detail's members.
+    val codeFailures =
+        Err.ErrorList(
+            errors =
+                listOf(
+                    Err.on("title", "", "must be 1-100 characters"),
+                    Err.on("listId", "x", "unknown list"),
+                ),
+            message = "Validation failed",
+        )
+    val codeDetail = toCodeDetail(Invalid.INVALID_VALUE, codeFailures)
+
+    val codeJson =
+        buildJsonObject {
+            put("code", codeDetail.code)
+            put("success", codeDetail.success)
+            put("message", codeDetail.message)
+            codeDetail.detail?.let { put("detail", it) }
+            putJsonArray("errors") {
+                codeDetail.errors?.forEach { e ->
+                    add(
+                        buildJsonObject {
+                            e.field?.let { put("field", it) }
+                            put("message", e.message)
+                        },
+                    )
+                }
+            }
+        }
+
+    println(Json { prettyPrint = true; prettyPrintIndent = "  " }.encodeToString(JsonObject.serializer(), codeJson))
+    // </example>
+    verify("codedetail-json: code", codeDetail.code == "kiit.dev:Failed:Invalid:INVALID_VALUE")
+    verify("codedetail-json: errors", codeJson["errors"]?.jsonArray?.size == 2)
+    // The docs page shows this file as the output, so it fails here when the output changes
+    val shownCode = Json.parseToJsonElement({}.javaClass.getResource("/docs/codedetail.json")!!.readText())
+    verify("codedetail-json: docs/codedetail.json is the output", shownCode == codeJson)
 
     // The problem below is serialized three ways in the next examples
     val titleProblem = problems.convert(TaskCodes.EMPTY_TITLE, validation)
