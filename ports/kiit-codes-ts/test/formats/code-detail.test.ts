@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { toCodeDetail, toCodeDetailCustom } from "../../src/formats/code-detail.js";
 import { ErrorDetail } from "../../src/formats/error-item.js";
 import type { ErrorItem } from "../../src/formats/error-item.js";
-import { CodesToHttp } from "../../src/codes.js";
+import { Codes, CodesToHttp } from "../../src/codes.js";
 import { ErrorInfo, ErrorField, ErrorList } from "../../src/err.js";
-import { Succeeded, Restricted, Invalid } from "../../src/groups.js";
+import { Succeeded, Restricted, Invalid, StatusConstants } from "../../src/groups.js";
 import { statusCode } from "../../src/status.js";
 
 // Ported from formats/CodeDetailTest.kt.
@@ -25,8 +25,29 @@ describe("toCodeDetail", () => {
     expect(detail.code.endsWith(statusCode(status))).toBe(true);
   });
 
+  it("a built-in has the codes scope", () => {
+    expect(toCodeDetail(Restricted.DENIED).code).toBe("kiit.dev:codes:Failed:Restricted:DENIED");
+  });
+
+  it("every built-in has the codes scope and five values", () => {
+    for (const status of Codes.all) {
+      const code = toCodeDetail(status).code;
+      expect(status.scope, status.name).toBe(StatusConstants.CODES);
+      expect(code, status.name).toBe(`kiit.dev:codes:${statusCode(status)}`);
+      expect(code.split(":"), status.name).toHaveLength(5);
+    }
+  });
+
+  it("every built-in with an empty scope keeps its slot", () => {
+    for (const status of Codes.all) {
+      const code = toCodeDetail({ ...status, scope: "" }).code;
+      expect(code, status.name).toBe(`kiit.dev::${statusCode(status)}`);
+      expect(code.split(":"), status.name).toHaveLength(5);
+    }
+  });
+
   it("an empty scope keeps its slot, so code always has five values", () => {
-    const code = toCodeDetail(Restricted.DENIED).code;
+    const code = toCodeDetail({ ...Restricted.DENIED, scope: "" }).code;
     expect(code).toBe("kiit.dev::Failed:Restricted:DENIED");
     expect(code.split(":")).toHaveLength(5);
   });

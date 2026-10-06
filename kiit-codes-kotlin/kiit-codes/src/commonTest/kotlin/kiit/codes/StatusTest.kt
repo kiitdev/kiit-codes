@@ -112,9 +112,15 @@ class StatusTest {
     // -------------------------------------------------------------------------
 
     @Test
+    fun builtInsHaveTheCodesScope() {
+        assertEquals(StatusConstants.CODES, Succeeded.SUCCESS.scope)
+        assertEquals(StatusConstants.CODES, Failed.Restricted.DENIED.scope)
+        assertEquals("kiit.dev:codes", Failed.Restricted.DENIED.path)
+    }
+
+    @Test
     fun scopeDefaultsToEmptyString() {
         assertEquals("", Failed.Restricted("RESTRICTED", "Restricted").scope)
-        assertEquals("", Succeeded.SUCCESS.scope)
     }
 
     @Test

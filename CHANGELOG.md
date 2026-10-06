@@ -29,6 +29,13 @@ All notable changes to kiit-codes are documented here. Format follows
   `:`-separated values, unlike `Status.path`, which skips it. `Status.path` and `Status.code` are unchanged, and
   `Status.code` is the suffix of `CodeDetail.code`. Read `origin` and `scope` off the front of `code` where you used
   `path`. The TypeScript port's `CodeDetail` changes the same way.
+- **Breaking**: every built-in status now has the scope `codes` (`StatusConstants.CODES`, `StatusConstants.CODES` in
+  the TypeScript port). `Status.path` of a built-in is `kiit.dev:codes` instead of `kiit.dev`, and
+  `CodeDetail.code` is `kiit.dev:codes:Failed:Restricted:FORBIDDEN`. A built-in is no longer equal to the same
+  status with an empty scope, so a custom status built with `origin = StatusConstants.KIIT` and no scope is no
+  longer a built-in. `CodesToHttp` and `CodesToGrpc` overrides are keyed by `origin:scope:group:name`, so a
+  hand-written key for a built-in needs `codes` in the scope slot. `Codes.statusFor(origin, group, name)` finds
+  built-ins by the same arguments. `Problem.type` of a built-in is unchanged, since it never uses the scope.
 - **Breaking**: `CodesToProblem` is now `ProblemConverter`, and it takes the origin-to-baseUrl map directly:
   `ProblemConverter(baseUrls = mapOf("stripe.com" to "https://stripe.com/errors"))`. This replaces
   `CodesToProblem(Catalog.of(...), mapping)`.

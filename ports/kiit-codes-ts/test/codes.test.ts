@@ -135,7 +135,7 @@ describe("CodesToHttp: per-code overrides", () => {
 
   it("overrides are keyed by origin+scope+group+name, not full structural equality", () => {
     // Same identity as NOT_FOUND, different message - still resolves to its override.
-    const differentMessage = Invalid("NOT_FOUND", "A completely different message.", StatusConstants.KIIT);
+    const differentMessage = Invalid("NOT_FOUND", "A completely different message.", StatusConstants.KIIT, StatusConstants.CODES);
     expect(http.toCode(differentMessage)).toBe(404);
   });
 

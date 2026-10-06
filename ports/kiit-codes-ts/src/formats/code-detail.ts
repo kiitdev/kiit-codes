@@ -12,7 +12,7 @@
  * 2. Also useful for background jobs and other non-API calls where an HTTP status isn't relevant.
  * 3. Self-contained, no need for a public URI: `code` is `origin`, `scope` and `statusCode`, so it
  *    names the origin as well as the status. An empty scope leaves an empty value
- *    (`kiit.dev::Failed:Restricted:FORBIDDEN`), so `code` always has five `:`-separated values.
+ *    (`myapp1::Failed:Rejected:OUT_OF_STOCK`), so `code` always has five `:`-separated values.
  * 4. `status` is optional - pass a `mapping` to `toCodeDetail` when this shape is still going out
  *    over HTTP and the status code is worth carrying alongside it.
  */

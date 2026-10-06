@@ -8,7 +8,7 @@
  *     "name"    : "DENIED",
  *     "group"   : "Restricted",
  *     "origin"  : "kiit.dev",
- *     "scope"   : "",
+ *     "scope"   : "codes",
  *     "message" : "The request was denied.",
  *     "success" : false
  * }
@@ -74,7 +74,7 @@ export function groupDescription(status: Status): string {
  * value that's safe to compare across releases.
  *
  * Examples:
- * 1. `statusPath(Restricted.DENIED)` returns `"kiit.dev"` (no scope set).
+ * 1. `statusPath(Restricted.DENIED)` returns `"kiit.dev:codes"`.
  * 2. `statusPath({ ...Restricted.DENIED, scope: "payments.cards" })` returns
  *    `"kiit.dev:payments.cards"`.
  */
