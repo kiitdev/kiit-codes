@@ -10,13 +10,23 @@ import { statusPath, statusCode } from "../../src/status.js";
 // Ported from formats/CodeDetailTest.kt.
 
 describe("toCodeDetail", () => {
-  it("path/code/success/message come straight from the status", () => {
+  it("code/success/message come from the status", () => {
     const status = Restricted.DENIED;
     const detail = toCodeDetail(status);
-    expect(detail.path).toBe(statusPath(status));
-    expect(detail.code).toBe(statusCode(status));
+    expect(detail.code).toBe(`${statusPath(status)}:${statusCode(status)}`);
     expect(detail.success).toBe(status.success);
     expect(detail.message).toBe(status.message);
+  });
+
+  it("code includes origin and scope and ends with the status code", () => {
+    const status = { ...Restricted.DENIED, origin: "stripe.com", scope: "payments.cards" };
+    const detail = toCodeDetail(status);
+    expect(detail.code).toBe("stripe.com:payments.cards:Failed:Restricted:DENIED");
+    expect(detail.code.endsWith(statusCode(status))).toBe(true);
+  });
+
+  it("an empty scope is skipped in code", () => {
+    expect(toCodeDetail(Restricted.DENIED).code).toBe("kiit.dev:Failed:Restricted:DENIED");
   });
 
   it("success is true for Passed and false for Failed", () => {

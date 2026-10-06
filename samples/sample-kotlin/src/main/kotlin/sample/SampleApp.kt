@@ -145,11 +145,10 @@ fun test4() {
     println("[rfc]  title: ${stripeProblem.title}")
     println("[rfc]  status: ${stripeProblem.status}")
 
-    // toCodeDetail: kiit-codes' own shape, no baseUrl or HTTP status needed, since path/code are
-    // already a complete identity. Useful for internal service-to-service calls, background jobs,
+    // toCodeDetail: kiit-codes' own shape, no baseUrl or HTTP status needed, since code already
+    // holds the origin, scope, group and name. Useful for internal service-to-service calls, background jobs,
     // and anywhere else an HTTP-shaped response doesn't apply.
     val stripeCode = toCodeDetail(duplicateCharge)
-    println("[kiit] path: ${stripeCode.path}")
     println("[kiit] code: ${stripeCode.code}")
     println("[kiit] success: ${stripeCode.success}")
     println("[kiit] message: ${stripeCode.message}")

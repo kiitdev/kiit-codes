@@ -15,13 +15,25 @@ import kotlin.test.assertTrue
 
 class CodeDetailTest {
     @Test
-    fun pathCodeSuccessAndMessageComeStraightFromStatus() {
+    fun codeSuccessAndMessageComeFromStatus() {
         val status = Restricted.DENIED
         val detail = toCodeDetail(status)
-        assertEquals(status.path, detail.path)
-        assertEquals(status.code, detail.code)
+        assertEquals("${status.path}:${status.code}", detail.code)
         assertEquals(status.success, detail.success)
         assertEquals(status.message, detail.message)
+    }
+
+    @Test
+    fun codeIncludesOriginAndScopeAndEndsWithStatusCode() {
+        val status = Restricted.DENIED.copy(origin = "stripe.com", scope = "payments.cards")
+        val detail = toCodeDetail(status)
+        assertEquals("stripe.com:payments.cards:Failed:Restricted:DENIED", detail.code)
+        assertTrue(detail.code.endsWith(status.code))
+    }
+
+    @Test
+    fun emptyScopeIsSkippedInCode() {
+        assertEquals("kiit.dev:Failed:Restricted:DENIED", toCodeDetail(Restricted.DENIED).code)
     }
 
     @Test
