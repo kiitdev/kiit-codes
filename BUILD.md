@@ -1,7 +1,5 @@
 # kiit-codes — Build & Publish Guide
 
-All Gradle commands below are run from `kiit-codes-kotlin/` — the self-contained Gradle project root (not the outer repo root; see `_prd/260910-kiit-codes-typescript/kiit-codes-structure.md` for why the repo is laid out this way).
-
 ---
 
 ## Install
@@ -173,10 +171,10 @@ Gradle itself already passes `--batch --pinentry-mode loopback` automatically wh
 ./gradlew :kiit-codes:assemble
 
 # Run the Kotlin sample app
-./gradlew :sample-kotlin:run
+./gradlew :samples:sample-kotlin:run
 
 # Run the Java sample app
-./gradlew :sample-java:run
+./gradlew :samples:sample-java:run
 ```
 
 ### Run the Swift sample app

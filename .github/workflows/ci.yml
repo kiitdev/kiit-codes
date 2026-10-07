@@ -13,9 +13,6 @@ concurrency:
 jobs:
   checks:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: kiit-codes-kotlin
     steps:
       - uses: actions/checkout@v4
 
