@@ -12,5 +12,6 @@
       "field": "listId",
       "message": "unknown list"
     }
-  ]
+  ],
+  "code": "kiit.dev:codes:Failed:Invalid:INVALID_VALUE"
 }

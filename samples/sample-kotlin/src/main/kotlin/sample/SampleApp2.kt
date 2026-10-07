@@ -172,16 +172,16 @@ fun showOverview(tasks: TaskService) {
     // Every status carries the same fields, built-in or custom
     val status: Status = Succeeded.SUCCESS
     println("name=${status.name} group=${status.group} origin=${status.origin} scope='${status.scope}'")
-    println("success=${status.success} message=${status.title}")
+    println("success=${status.success} title=${status.title}")
     // name=SUCCESS group=Succeeded origin=kiit.dev scope='codes'
-    // success=true message=The operation completed successfully.
+    // success=true title=The operation completed successfully.
     // </example>
     verify("overview-shape: name", status.name == "SUCCESS")
     verify("overview-shape: group", status.group == "Succeeded")
     verify("overview-shape: origin", status.origin == StatusConstants.KIIT && status.origin == "kiit.dev")
     verify("overview-shape: scope", status.scope == StatusConstants.CODES)
     verify("overview-shape: success", status.success)
-    verify("overview-shape: message", status.title == "The operation completed successfully.")
+    verify("overview-shape: title", status.title == "The operation completed successfully.")
 
     // <example id="overview-checks" tags="concepts">
     // Check a status with .success (simplest), or with the two branches (Passed | Failed)
@@ -417,6 +417,7 @@ private fun Problem<ErrorDetail>.toKotlinxJson(): JsonObject =
                 }
             }
         }
+        code?.let { put("code", it) }
     }
 
 /** The same Problem with a small hand-written helper. A real app would use its framework's serializer instead. */
@@ -432,6 +433,7 @@ private fun Problem<ErrorDetail>.toManualJson(): String {
             }
         members += "\"errors\":[$items]"
     }
+    code?.let { members += "\"code\":${it.q()}" }
     return members.joinToString(",", "{", "}")
 }
 
@@ -446,7 +448,7 @@ fun showProblemDetails(tasks: TaskService) {
     println(minimal.title) // The request conflicts with the current state.
     println(minimal.status) // 409
 
-    // An Err.ErrorList fills detail and errors (errors is a kiit extension member, not part of the RFC)
+    // Every error goes into errors, and an Err.ErrorList is expanded (errors is a kiit extension member, not part of the RFC)
     val validation =
         Err.ErrorList(
             errors =
@@ -495,6 +497,7 @@ fun showProblemDetails(tasks: TaskService) {
                     )
                 }
             }
+            body.code?.let { put("code", it) }
         }
 
     println(Json { prettyPrint = true; prettyPrintIndent = "  " }.encodeToString(JsonObject.serializer(), json))
@@ -523,7 +526,7 @@ fun showProblemDetails(tasks: TaskService) {
         buildJsonObject {
             put("code", codeDetail.code)
             put("success", codeDetail.success)
-            put("message", codeDetail.title)
+            put("title", codeDetail.title)
             codeDetail.detail?.let { put("detail", it) }
             putJsonArray("errors") {
                 codeDetail.errors?.forEach { e ->
@@ -553,7 +556,7 @@ fun showProblemDetails(tasks: TaskService) {
     val jacksonJson = titleProblem.toJson()
     println(jacksonJson)
     // {
-    //   "type" : "https://samples.kiit.dev/problems/invalid/empty-title",
+    //   "type" : "https://samples.kiit.dev/docs/codes/failed/invalid/empty-title",
     //   "title" : "Title must not be empty",
     //   "status" : 400,
     //   "detail" : "Validation failed",
@@ -563,10 +566,12 @@ fun showProblemDetails(tasks: TaskService) {
     //   }, {
     //     "field" : "listId",
     //     "message" : "unknown list"
-    //   } ]
+    //   } ],
+    //   "code" : "samples.kiit.dev::Failed:Invalid:EMPTY_TITLE"
     // }
     // </example>
-    verify("rfc9457-json-jackson: type", titleProblem.type == "https://samples.kiit.dev/problems/invalid/empty-title")
+    verify("rfc9457-json-jackson: type", titleProblem.type == "https://samples.kiit.dev/docs/codes/failed/invalid/empty-title")
+    verify("rfc9457-json-jackson: code", titleProblem.code == "samples.kiit.dev::Failed:Invalid:EMPTY_TITLE")
     verify("rfc9457-json-jackson: status", jackson.readTree(jacksonJson)["status"].asInt() == 400)
     verify("rfc9457-json-jackson: errors", jackson.readTree(jacksonJson)["errors"].size() == 2)
 
@@ -583,28 +588,28 @@ fun showProblemDetails(tasks: TaskService) {
     verify("rfc9457-json-manual: same JSON as Jackson", jackson.readTree(manualJson) == jackson.readTree(jacksonJson))
 
     // <example id="rfc9457-domain-origin" tags="rfc9457,origin">
-    // A custom code whose origin is a domain needs no registration: https://{origin}/problems/{group}/{name}
+    // A custom code whose origin is a domain needs no registration: https://{origin}/docs/codes/{status}/{group}/{name}
     val domain = problems.convert(TaskCodes.EMPTY_TITLE)
-    println(domain.type) // https://samples.kiit.dev/problems/invalid/empty-title
+    println(domain.type) // https://samples.kiit.dev/docs/codes/failed/invalid/empty-title
     // </example>
-    verify("rfc9457-domain-origin: type", domain.type == "https://samples.kiit.dev/problems/invalid/empty-title")
+    verify("rfc9457-domain-origin: type", domain.type == "https://samples.kiit.dev/docs/codes/failed/invalid/empty-title")
 
     // <example id="rfc9457-registered" tags="rfc9457,origin">
     // Register a base URL when the docs live somewhere else. An entry wins over the origin.
     val registered = ProblemConverter(baseUrls = mapOf("samples.kiit.dev" to "https://docs.samples.kiit.dev/errors"))
-    println(registered.convert(TaskCodes.EMPTY_TITLE).type) // https://docs.samples.kiit.dev/errors/invalid/empty-title
+    println(registered.convert(TaskCodes.EMPTY_TITLE).type) // https://docs.samples.kiit.dev/errors/failed/invalid/empty-title
     // </example>
     verify(
         "rfc9457-registered: type",
-        registered.convert(TaskCodes.EMPTY_TITLE).type == "https://docs.samples.kiit.dev/errors/invalid/empty-title",
+        registered.convert(TaskCodes.EMPTY_TITLE).type == "https://docs.samples.kiit.dev/errors/failed/invalid/empty-title",
     )
 
     // <example id="rfc9457-scope" tags="rfc9457">
-    // A scope becomes the first path segment
+    // Each dot in a scope starts a new path segment, before the status, group and name
     val scoped = problems.convert(TaskCodes.DUPLICATE_TASK)
-    println(scoped.type) // https://samples.kiit.dev/problems/lists.team/rejected/duplicate-task
+    println(scoped.type) // https://samples.kiit.dev/docs/codes/lists/team/failed/rejected/duplicate-task
     // </example>
-    verify("rfc9457-scope: type", scoped.type == "https://samples.kiit.dev/problems/lists.team/rejected/duplicate-task")
+    verify("rfc9457-scope: type", scoped.type == "https://samples.kiit.dev/docs/codes/lists/team/failed/rejected/duplicate-task")
 
     // <example id="rfc9457-custom-item" tags="rfc9457">
     // When field + message isn't enough, map each error into your own type
@@ -635,14 +640,15 @@ fun showProblemDetails(tasks: TaskService) {
     // {
     //   "type" : "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:FORBIDDEN#taxonomy",
     //   "title" : "Access to this resource is forbidden.",
-    //   "status" : 403
+    //   "status" : 403,
+    //   "code" : "kiit.dev:codes:Failed:Restricted:FORBIDDEN"
     // }
 
     println(mapper.writeValueAsString(asDetail))
     // {
     //   "code" : "kiit.dev:codes:Failed:Restricted:FORBIDDEN",
     //   "success" : false,
-    //   "message" : "Access to this resource is forbidden.",
+    //   "title" : "Access to this resource is forbidden.",
     //   "status" : 403
     // }
     // </example>
@@ -650,16 +656,48 @@ fun showProblemDetails(tasks: TaskService) {
     verify("rfc9457-vs-codedetail: code", asDetail.code == "kiit.dev:codes:${forbidden.code}")
 
     // <example id="rfc9457-plain-origin" tags="rfc9457,origin">
-    // A plain id is used as is. It looks like a host, so register a base URL or use a domain.
+    // A plain id isn't a domain, so the type is a relative path. Register a base URL or use a domain for an absolute URL.
     val plain = Rejected(name = "OUT_OF_STOCK", title = "Out of stock", origin = "myapp1")
-    println(problems.convert(plain).type) // https://myapp1/problems/rejected/out-of-stock
+    println(problems.convert(plain).type) // /docs/codes/failed/rejected/out-of-stock
     val fixed = ProblemConverter(baseUrls = mapOf("myapp1" to "https://docs.example.com/myapp1/errors"))
-    println(fixed.convert(plain).type) // https://docs.example.com/myapp1/errors/rejected/out-of-stock
+    println(fixed.convert(plain).type) // https://docs.example.com/myapp1/errors/failed/rejected/out-of-stock
     // </example>
-    verify("rfc9457-plain-origin: as is", problems.convert(plain).type == "https://myapp1/problems/rejected/out-of-stock")
+    verify("rfc9457-plain-origin: relative", problems.convert(plain).type == "/docs/codes/failed/rejected/out-of-stock")
     verify(
         "rfc9457-plain-origin: registered",
-        fixed.convert(plain).type == "https://docs.example.com/myapp1/errors/rejected/out-of-stock",
+        fixed.convert(plain).type == "https://docs.example.com/myapp1/errors/failed/rejected/out-of-stock",
+    )
+
+    // <example id="rfc9457-custom-type" tags="rfc9457,origin">
+    // For your own type URLs there is no new API. Pick the way that fits how much of the URL you control.
+    // 1. A typeBuilder builds the part after the base URL. Wrap it once so callers don't repeat it.
+    fun taskType(status: Status) = "tasks/${status.name.lowercase().replace('_', '-')}"
+
+    fun toProblem(status: Status) = problems.convert(status, typeBuilder = ::taskType)
+    println(toProblem(TaskCodes.EMPTY_TITLE).type) // https://samples.kiit.dev/docs/codes/tasks/empty-title
+
+    // 2. convertWithUrl with a base and an empty suffix gives exactly that URL
+    val exact =
+        problems.convertWithUrl(
+            TaskCodes.EMPTY_TITLE,
+            baseUrl = "https://example.com/probs/empty-title",
+            typeBuilder = { "" },
+        )
+    println(exact.type) // https://example.com/probs/empty-title
+
+    // 3. Problem is a data class, so copy(type = ...) sets any URL, even on another host
+    val replaced = problems.convert(TaskCodes.EMPTY_TITLE).copy(type = "https://other.example.org/probs/empty-title")
+    println(replaced.type) // https://other.example.org/probs/empty-title
+
+    // code is built from the status, not from type, so it is the same in all three
+    println(replaced.code) // samples.kiit.dev::Failed:Invalid:EMPTY_TITLE
+    // </example>
+    verify("rfc9457-custom-type: typeBuilder", toProblem(TaskCodes.EMPTY_TITLE).type == "https://samples.kiit.dev/docs/codes/tasks/empty-title")
+    verify("rfc9457-custom-type: empty suffix", exact.type == "https://example.com/probs/empty-title")
+    verify("rfc9457-custom-type: copy", replaced.type == "https://other.example.org/probs/empty-title")
+    verify(
+        "rfc9457-custom-type: code unchanged",
+        toProblem(TaskCodes.EMPTY_TITLE).code == exact.code && exact.code == replaced.code,
     )
 }
 
