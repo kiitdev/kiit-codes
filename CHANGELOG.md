@@ -23,7 +23,7 @@ All notable changes to kiit-codes are documented here. Format follows
   suffix, or replace the field with `copy(type = ...)`.
 - `Problem.code`, the exact `{origin}:{scope}:{Status.code}` string, the same value as `CodeDetail.code`. It is a kiit
   extension member, always set by `ProblemConverter`, and `null` by default for a `Problem` built by hand. Read it
-  instead of parsing the lowercase `type`.
+  instead of parsing the lowercase `type`. The TypeScript port builds the same `type` and has the same optional `code`.
 - `ProblemConverter()` needs no arguments. Both `baseUrls` and `mapping` have defaults.
 - TypeScript port: the same `ProblemConverter` changes. `ProblemConverter(baseUrls = {}, mapping = CodesToHttp())` is a
   factory function with the same `convert`, `convertCustom`, `convertWithUrl` and `convertCustomWithUrl` members.
@@ -32,12 +32,14 @@ All notable changes to kiit-codes are documented here. Format follows
 ### Changed
 - **Breaking**: `Status.message` is now `title`, on every status. It is the fixed text of a code, and `Err.message`
   stays the text of one occurrence. Named `message =` arguments in a custom status become `title =`, and Java
-  `getMessage()` becomes `getTitle()`. `Problem.title` and `CodeDetail.title` are filled from it.
-- **Breaking**: `CodeDetail.message` is now `title`, matching `Problem.title`.
+  `getMessage()` becomes `getTitle()`. `Problem.title` and `CodeDetail.title` are filled from it. The TypeScript
+  port's `Status` has `title` too.
+- **Breaking**: `CodeDetail.message` is now `title`, matching `Problem.title`. The TypeScript port's `CodeDetail` too.
 - `toCodeDetail` and `ProblemConverter` put every error in `errors`. A single `Err.ErrorField` is one entry that keeps
   its field, a plain `Err.ErrorInfo` is one entry with no field, and an `Err.ErrorList` is expanded, including lists
   nested in lists. Before, only an `Err.ErrorList` filled `errors`, and a single error left it `null` and lost its
-  field. `detail` is the error's message, or the first non-blank error message when that is blank.
+  field. `detail` is the error's message, or the first non-blank error message when that is blank. The TypeScript
+  port does the same.
 - **Breaking**: the built-in origin value changed from `"dev.kiit"` to `"kiit.dev"`. Anything comparing against or
   storing the old value needs updating. The Maven group ID is still `dev.kiit`.
 - **Breaking**: `CodeDetail` has one identifier instead of two. `path` is removed, and `code` is now

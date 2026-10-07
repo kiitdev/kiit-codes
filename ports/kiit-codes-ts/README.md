@@ -26,7 +26,7 @@ const http = CodesToHttp();
 console.log(http.toCode(status)); // 401
 ```
 
-Every group is a plain object, not a class. Construct one without `new` (`Restricted.UNAUTHORIZED`, or `Restricted("CUSTOM_CODE", "message")` for a domain-specific one), and a value survives `JSON.parse` unchanged, since nothing about it depends on how it was constructed.
+Every group is a plain object, not a class. Construct one without `new` (`Restricted.UNAUTHORIZED`, or `Restricted("CUSTOM_CODE", "Title of the code")` for a domain-specific one), and a value survives `JSON.parse` unchanged, since nothing about it depends on how it was constructed.
 
 ## Exhaustive narrowing
 
@@ -48,6 +48,30 @@ function describe(status: Status): string {
   }
 }
 ```
+
+## Problem details (RFC 9457)
+
+`ProblemConverter` turns a status and an optional `Err` into an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html) problem for an HTTP response. `toCodeDetail` is the kiit-native shape for service-to-service calls.
+
+```ts
+import { ProblemConverter, Rejected, Err } from "@kiitdev/codes";
+
+const status = Rejected("DUPLICATE_CHARGE", "This charge has already been processed", "stripe.com", "payments.cards");
+const problem = ProblemConverter().convert(status, Err.onField("amount", "Too low"));
+// {
+//   type: "https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge",
+//   title: "This charge has already been processed",
+//   status: 409,
+//   detail: "Too low",
+//   errors: [{ field: "amount", message: "Too low" }],
+//   code: "stripe.com:payments.cards:Failed:Rejected:DUPLICATE_CHARGE"
+// }
+```
+
+1. **type:** `{base}/{scope…}/{status}/{group}/{name}`, lowercase with dashes, and each `.` in a scope starts a new segment. A domain origin gives `https://{origin}/docs/codes/...`. Any other origin, such as `"myapp1"`, gives the relative `/docs/codes/...`, so register a base URL to get an absolute one: `ProblemConverter({ myapp1: "https://docs.example.com/myapp1/errors" })`.
+2. **Identity:** `type` is the problem's identity as well as its docs pointer, so pick the base once and keep it. `code` is the exact `{origin}:{scope}:{status code}`, the same string as `CodeDetail.code`. Read it instead of parsing `type`.
+3. **errors:** every error in the `Err` goes into `errors`. A list is expanded, and a single `Err.onField(...)` is one entry that keeps its field.
+4. **Your own type URL:** pass a `typeBuilder` to `convert`, call `convertWithUrl` with a base and an empty suffix, or spread the problem with your own `type`: `{ ...problem, type: "https://..." }`. `code` does not change.
 
 ## Publishing
 

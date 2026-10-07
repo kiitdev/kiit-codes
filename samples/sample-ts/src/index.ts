@@ -206,7 +206,7 @@ function showFormats(): void {
   console.log(minimal.title); // The request conflicts with the current state.
   console.log(minimal.status); // 409
 
-  // An Err.ErrorList fills detail and errors (errors is a kiit extension member, not part of the RFC)
+  // Every error goes into errors, and an ErrorList is expanded (errors is a kiit extension member, not part of the RFC)
   const validation = ErrorList(
     [
       Err.on("title", "", "must be 1-100 characters"),
@@ -218,7 +218,7 @@ function showFormats(): void {
   console.log(`${withErrors.detail}, ${withErrors.errors?.length} errors`); // Validation failed, 2 errors
   // </example>
   check(minimal.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy", "rfc9457-minimal: type");
-  check(minimal.title === Rejected.CONFLICT.message, "rfc9457-minimal: title");
+  check(minimal.title === Rejected.CONFLICT.title, "rfc9457-minimal: title");
   check(minimal.status === 409, "rfc9457-minimal: status");
   check(withErrors.detail === "Validation failed", "rfc9457-minimal: detail");
   check(withErrors.errors?.length === 2, "rfc9457-minimal: errors");
@@ -256,28 +256,28 @@ function showFormats(): void {
   check(codeDetail.errors?.length === 2, "codedetail-json: errors");
 
   // <example id="rfc9457-domain-origin" tags="rfc9457,origin">
-  // A custom code whose origin is a domain needs no registration: https://{origin}/problems/{group}/{name}
+  // A custom code whose origin is a domain needs no registration: https://{origin}/docs/codes/{status}/{group}/{name}
   const domain = problems.convert(EMPTY_TITLE);
-  console.log(domain.type); // https://samples.kiit.dev/problems/invalid/empty-title
+  console.log(domain.type); // https://samples.kiit.dev/docs/codes/failed/invalid/empty-title
   // </example>
-  check(domain.type === "https://samples.kiit.dev/problems/invalid/empty-title", "rfc9457-domain-origin: type");
+  check(domain.type === "https://samples.kiit.dev/docs/codes/failed/invalid/empty-title", "rfc9457-domain-origin: type");
 
   // <example id="rfc9457-registered" tags="rfc9457,origin">
   // Register a base URL when the docs live somewhere else. An entry wins over the origin.
   const registered = ProblemConverter({ "samples.kiit.dev": "https://docs.samples.kiit.dev/errors" });
-  console.log(registered.convert(EMPTY_TITLE).type); // https://docs.samples.kiit.dev/errors/invalid/empty-title
+  console.log(registered.convert(EMPTY_TITLE).type); // https://docs.samples.kiit.dev/errors/failed/invalid/empty-title
   // </example>
   check(
-    registered.convert(EMPTY_TITLE).type === "https://docs.samples.kiit.dev/errors/invalid/empty-title",
+    registered.convert(EMPTY_TITLE).type === "https://docs.samples.kiit.dev/errors/failed/invalid/empty-title",
     "rfc9457-registered: type",
   );
 
   // <example id="rfc9457-scope" tags="rfc9457">
-  // A scope becomes the first path segment
+  // Each dot in a scope starts a new path segment, before the status, group and name
   const scoped = problems.convert(DUPLICATE_TASK);
-  console.log(scoped.type); // https://samples.kiit.dev/problems/lists.team/rejected/duplicate-task
+  console.log(scoped.type); // https://samples.kiit.dev/docs/codes/lists/team/failed/rejected/duplicate-task
   // </example>
-  check(scoped.type === "https://samples.kiit.dev/problems/lists.team/rejected/duplicate-task", "rfc9457-scope: type");
+  check(scoped.type === "https://samples.kiit.dev/docs/codes/lists/team/failed/rejected/duplicate-task", "rfc9457-scope: type");
 
   // <example id="rfc9457-custom-item" tags="rfc9457">
   // When field + message isn't enough, map each error into your own type
@@ -306,14 +306,15 @@ function showFormats(): void {
   // {
   //   "type": "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:FORBIDDEN#taxonomy",
   //   "title": "Access to this resource is forbidden.",
-  //   "status": 403
+  //   "status": 403,
+  //   "code": "kiit.dev:codes:Failed:Restricted:FORBIDDEN"
   // }
 
   console.log(JSON.stringify(asDetail, null, 2));
   // {
   //   "code": "kiit.dev:codes:Failed:Restricted:FORBIDDEN",
   //   "success": false,
-  //   "message": "Access to this resource is forbidden.",
+  //   "title": "Access to this resource is forbidden.",
   //   "status": 403
   // }
   // </example>
@@ -321,16 +322,42 @@ function showFormats(): void {
   check(asDetail.code === "kiit.dev:codes:Failed:Restricted:FORBIDDEN", "rfc9457-vs-codedetail: code");
 
   // <example id="rfc9457-plain-origin" tags="rfc9457,origin">
-  // A plain id is used as is. It looks like a host, so register a base URL or use a domain.
+  // A plain id isn't a domain, so the type is a relative path. Register a base URL or use a domain for an absolute URL.
   const plain = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1");
-  console.log(problems.convert(plain).type); // https://myapp1/problems/rejected/out-of-stock
+  console.log(problems.convert(plain).type); // /docs/codes/failed/rejected/out-of-stock
   const fixed = ProblemConverter({ myapp1: "https://docs.example.com/myapp1/errors" });
-  console.log(fixed.convert(plain).type); // https://docs.example.com/myapp1/errors/rejected/out-of-stock
+  console.log(fixed.convert(plain).type); // https://docs.example.com/myapp1/errors/failed/rejected/out-of-stock
   // </example>
-  check(problems.convert(plain).type === "https://myapp1/problems/rejected/out-of-stock", "rfc9457-plain-origin: as is");
+  check(problems.convert(plain).type === "/docs/codes/failed/rejected/out-of-stock", "rfc9457-plain-origin: relative");
   check(
-    fixed.convert(plain).type === "https://docs.example.com/myapp1/errors/rejected/out-of-stock",
+    fixed.convert(plain).type === "https://docs.example.com/myapp1/errors/failed/rejected/out-of-stock",
     "rfc9457-plain-origin: registered",
+  );
+
+  // <example id="rfc9457-custom-type" tags="rfc9457,origin">
+  // For your own type URLs there is no new API. Pick the way that fits how much of the URL you control.
+  // 1. A typeBuilder builds the part after the base URL. Wrap it once so callers don't repeat it.
+  const taskType = (status: Status): string => `tasks/${status.name.toLowerCase().replace(/_/g, "-")}`;
+  const toProblem = (status: Status) => problems.convert(status, undefined, taskType);
+  console.log(toProblem(EMPTY_TITLE).type); // https://samples.kiit.dev/docs/codes/tasks/empty-title
+
+  // 2. convertWithUrl with a base and an empty suffix gives exactly that URL
+  const exact = problems.convertWithUrl(EMPTY_TITLE, undefined, "https://example.com/probs/empty-title", () => "");
+  console.log(exact.type); // https://example.com/probs/empty-title
+
+  // 3. Problem is a plain object, so a spread sets any URL, even on another host
+  const replaced = { ...problems.convert(EMPTY_TITLE), type: "https://other.example.org/probs/empty-title" };
+  console.log(replaced.type); // https://other.example.org/probs/empty-title
+
+  // code is built from the status, not from type, so it is the same in all three
+  console.log(replaced.code); // samples.kiit.dev::Failed:Invalid:EMPTY_TITLE
+  // </example>
+  check(toProblem(EMPTY_TITLE).type === "https://samples.kiit.dev/docs/codes/tasks/empty-title", "rfc9457-custom-type: typeBuilder");
+  check(exact.type === "https://example.com/probs/empty-title", "rfc9457-custom-type: empty suffix");
+  check(replaced.type === "https://other.example.org/probs/empty-title", "rfc9457-custom-type: spread");
+  check(
+    toProblem(EMPTY_TITLE).code === exact.code && exact.code === replaced.code,
+    "rfc9457-custom-type: code unchanged",
   );
 
   // Not in the docs: a custom, scoped code converted both ways.
@@ -345,7 +372,7 @@ function showFormats(): void {
 
   const stripeProblem = stripe.convert(duplicateCharge);
   check(
-    stripeProblem.type === "https://stripe.com/errors/payments.cards/restricted/duplicate-charge",
+    stripeProblem.type === "https://stripe.com/errors/payments/cards/failed/restricted/duplicate-charge",
     "ProblemConverter.convert(...).type",
   );
   check(stripeProblem.status === 401, "ProblemConverter.convert(...).status");
