@@ -52,7 +52,7 @@ fun toCodeDetail(status: Status, err: Err? = null, mapping: CodesToHttp? = null)
 }
 
 /**
- * Builds a [CodeDetail]\<[T]\> for [status], mapping each entry of an [Err.ErrorList] through
+ * Builds a [CodeDetail]\<[T]\> for [status], mapping every error in [err] through
  * [mapper]. Use this when the default [ErrorDetail] shape (field + message only) isn't enough —
  * `err.ref` is the usual place to stash whatever extra context [mapper] needs. Pass [mapping] to
  * also populate [CodeDetail.status].
@@ -65,24 +65,14 @@ fun <T : ErrorItem> toCodeDetail(
     mapper: (Err) -> T,
 ): CodeDetail<T> {
     val httpStatus = mapping?.toCode(status)
-    return when (err) {
-        is Err.ErrorList ->
-            CodeDetail(
-                code = status.detailCode(),
-                success = status.success,
-                title = status.title,
-                detail = err.message,
-                errors = err.errors.map(mapper),
-                status = httpStatus,
-            )
-        else ->
-            CodeDetail(
-                code = status.detailCode(),
-                success = status.success,
-                title = status.title,
-                detail = err?.message,
-                instance = err?.ref?.toString(),
-                status = httpStatus,
-            )
-    }
+    val parts = err.toParts(mapper)
+    return CodeDetail(
+        code = status.detailCode(),
+        success = status.success,
+        title = status.title,
+        detail = parts.detail,
+        instance = parts.instance,
+        errors = parts.errors,
+        status = httpStatus,
+    )
 }

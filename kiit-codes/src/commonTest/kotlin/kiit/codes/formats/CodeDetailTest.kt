@@ -112,11 +112,82 @@ class CodeDetailTest {
     }
 
     @Test
-    fun errorInfoPopulatesDetailAndInstanceFromRef() {
+    fun errorInfoPopulatesDetailInstanceAndOneErrorEntry() {
         val err = Err.ErrorInfo("Balance too low", ref = "job-456")
         val detail = toCodeDetail(Restricted.DENIED, err)
         assertEquals("Balance too low", detail.detail)
         assertEquals("job-456", detail.instance)
+        assertEquals(listOf(ErrorDetail(null, "Balance too low")), detail.errors)
+    }
+
+    @Test
+    fun singleErrorFieldKeepsItsFieldInErrors() {
+        val detail = toCodeDetail(Invalid.INVALID_VALUE, Err.on("firstname", "Missing"))
+        assertEquals("Missing", detail.detail)
+        assertEquals(listOf(ErrorDetail("firstname", "Missing")), detail.errors)
+    }
+
+    @Test
+    fun nestedErrorListsAreFlattenedIntoErrors() {
+        val err =
+            Err.ErrorList(
+                errors =
+                    listOf(
+                        Err.ErrorField("a", "", "A is bad"),
+                        Err.ErrorList(
+                            errors = listOf(Err.ErrorField("b", "", "B is bad"), Err.ErrorInfo("C is bad")),
+                            message = "Inner",
+                        ),
+                    ),
+                message = "Validation failed",
+            )
+        val detail = toCodeDetail(Invalid.INVALID_VALUE, err)
+        assertEquals("Validation failed", detail.detail)
+        assertEquals(
+            listOf(ErrorDetail("a", "A is bad"), ErrorDetail("b", "B is bad"), ErrorDetail(null, "C is bad")),
+            detail.errors,
+        )
+    }
+
+    @Test
+    fun blankListMessageFallsBackToTheFirstErrorMessage() {
+        val err = Err.ErrorList(errors = listOf(Err.ErrorField("a", "", "A is bad"), Err.ErrorInfo("C is bad")), message = " ")
+        assertEquals("A is bad", toCodeDetail(Invalid.INVALID_VALUE, err).detail)
+    }
+
+    @Test
+    fun emptyErrorListHasNoErrorsAndKeepsItsMessage() {
+        val detail = toCodeDetail(Invalid.INVALID_VALUE, Err.ErrorList(errors = emptyList(), message = "Validation failed"))
+        assertEquals("Validation failed", detail.detail)
+        assertNull(detail.errors)
+        assertNull(detail.instance)
+    }
+
+    @Test
+    fun errorListHasNoInstanceEvenWithARef() {
+        val err = Err.ErrorList(errors = listOf(Err.ErrorInfo("x")), message = "Failed", ref = "req-1")
+        assertNull(toCodeDetail(Invalid.INVALID_VALUE, err).instance)
+    }
+
+    @Test
+    fun noErrLeavesDetailInstanceAndErrorsNull() {
+        val detail = toCodeDetail(Invalid.INVALID_VALUE)
+        assertNull(detail.detail)
+        assertNull(detail.instance)
+        assertNull(detail.errors)
+    }
+
+    @Test
+    fun customMapperSeesEveryLeafAndNeverAList() {
+        val seen = mutableListOf<Err>()
+        val err =
+            Err.ErrorList(
+                errors = listOf(Err.ErrorField("a", "", "A"), Err.ErrorList(errors = listOf(Err.ErrorInfo("B")), message = "Inner")),
+                message = "Outer",
+            )
+        toCodeDetail(Invalid.INVALID_VALUE, err) { seen.add(it).let { _ -> ErrorDetail(null, it.message) } }
+        assertEquals(listOf("A", "B"), seen.map { it.message })
+        assertTrue(seen.none { it is Err.ErrorList })
     }
 
     @Test

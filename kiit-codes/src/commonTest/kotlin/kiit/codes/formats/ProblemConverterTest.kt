@@ -244,6 +244,59 @@ class ProblemConverterTest {
     }
 
     @Test
+    fun singleErrorFieldKeepsItsFieldInErrors() {
+        val problem = converter.convert(Invalid.INVALID_VALUE, Err.on("firstname", "Missing"))
+        assertEquals("Missing", problem.detail)
+        assertEquals(listOf(ErrorDetail("firstname", "Missing")), problem.errors)
+    }
+
+    @Test
+    fun errorInfoGivesOneErrorEntryAndInstanceFromRef() {
+        val problem = converter.convert(Invalid.INVALID_VALUE, Err.ErrorInfo("Balance too low", ref = "job-456"))
+        assertEquals("Balance too low", problem.detail)
+        assertEquals("job-456", problem.instance)
+        assertEquals(listOf(ErrorDetail(null, "Balance too low")), problem.errors)
+    }
+
+    @Test
+    fun nestedErrorListsAreFlattenedAndABlankListMessageFallsBackToTheFirstError() {
+        val err =
+            Err.ErrorList(
+                errors =
+                    listOf(
+                        Err.ErrorField("a", "", "A is bad"),
+                        Err.ErrorList(errors = listOf(Err.ErrorField("b", "", "B is bad")), message = "Inner"),
+                    ),
+                message = "",
+            )
+        val problem = converter.convert(Invalid.INVALID_VALUE, err)
+        assertEquals("A is bad", problem.detail)
+        assertEquals(listOf(ErrorDetail("a", "A is bad"), ErrorDetail("b", "B is bad")), problem.errors)
+    }
+
+    @Test
+    fun emptyErrorListHasNoErrors() {
+        val problem = converter.convert(Invalid.INVALID_VALUE, Err.ErrorList(errors = emptyList(), message = "Validation failed"))
+        assertEquals("Validation failed", problem.detail)
+        assertNull(problem.errors)
+    }
+
+    @Test
+    fun customMapperSeesEveryLeafAndNeverAList() {
+        val seen = mutableListOf<String>()
+        val err =
+            Err.ErrorList(
+                errors = listOf(Err.ErrorField("a", "", "A"), Err.ErrorList(errors = listOf(Err.ErrorInfo("B")), message = "Inner")),
+                message = "Outer",
+            )
+        converter.convertCustom(Invalid.INVALID_VALUE, err) {
+            seen.add(it::class.simpleName.orEmpty())
+            ErrorDetail(null, it.message)
+        }
+        assertEquals(listOf("ErrorField", "ErrorInfo"), seen)
+    }
+
+    @Test
     fun noErrLeavesDetailAndInstanceAndErrorsNull() {
         val problem = converter.convert(Restricted.DENIED)
         assertNull(problem.detail)

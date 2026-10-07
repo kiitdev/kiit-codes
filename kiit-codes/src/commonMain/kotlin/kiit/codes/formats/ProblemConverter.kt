@@ -92,7 +92,9 @@ class ProblemConverter
          * the origin when there is no entry.
          *
          * @param status the status to convert.
-         * @param err optional error, an [Err.ErrorList] fills `errors`, any other fills `instance`. Both fill `detail`.
+         * @param err optional error. Every error in it goes into `errors`: an [Err.ErrorList] is expanded, recursively,
+         *   and any other [Err] is one entry, so an [Err.ErrorField] keeps its field. `detail` is the error's message,
+         *   or the first non-blank error message when that is blank. A single error also fills `instance` from `ref`.
          * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to [defaultTypeBuilder].
          */
         @Suppress("ktlint:standard:function-signature")
@@ -106,7 +108,7 @@ class ProblemConverter
         }
 
         /**
-         * Same as [convert], but each [Err.ErrorList] entry goes through [mapper] into a [Problem]\<[T]\>. Use this
+         * Same as [convert], but each error goes through [mapper] into a [Problem]\<[T]\>. Use this
          * for anything richer than field + message, see [ErrorItem].
          *
          * It is named differently from [convert], not an overload, because both end in a function parameter and
@@ -116,7 +118,7 @@ class ProblemConverter
          * @param status the status to convert.
          * @param err optional error, see [convert].
          * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to [defaultTypeBuilder].
-         * @param mapper turns each [Err.ErrorList] entry into a [T].
+         * @param mapper turns each error into a [T].
          */
         fun <T : ErrorItem> convertCustom(
             status: Status,
@@ -153,7 +155,7 @@ class ProblemConverter
          * @param err optional error, see [convert].
          * @param baseUrl text before the suffix, path prefix included. A trailing `/` is trimmed.
          * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to [defaultTypeBuilder].
-         * @param mapper turns each [Err.ErrorList] entry into a [T].
+         * @param mapper turns each error into a [T].
          */
         fun <T : ErrorItem> convertCustomWithUrl(
             status: Status,
@@ -171,26 +173,16 @@ class ProblemConverter
                     else -> "$base/$path"
                 }
             val code = mapping.toCode(status)
-            return when (err) {
-                is Err.ErrorList ->
-                    Problem(
-                        type = type,
-                        title = status.title,
-                        status = code,
-                        detail = err.message,
-                        errors = err.errors.map(mapper),
-                        code = status.detailCode(),
-                    )
-                else ->
-                    Problem(
-                        type = type,
-                        title = status.title,
-                        status = code,
-                        detail = err?.message,
-                        instance = err?.ref?.toString(),
-                        code = status.detailCode(),
-                    )
-            }
+            val parts = err.toParts(mapper)
+            return Problem(
+                type = type,
+                title = status.title,
+                status = code,
+                detail = parts.detail,
+                instance = parts.instance,
+                errors = parts.errors,
+                code = status.detailCode(),
+            )
         }
 
         private fun baseUrlFor(status: Status): String {

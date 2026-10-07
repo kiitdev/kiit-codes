@@ -1,5 +1,6 @@
 package kiit.codes
 
+import kiit.codes.formats.toCodeDetail
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -10,6 +11,13 @@ import kotlin.test.assertTrue
 // =================================================================================================
 
 class CodesTest {
+    @Test
+    fun usageTest() {
+        val code = Invalid.INVALID_VALUE
+        val detail = toCodeDetail(code, Err.on("firstname", "Missing"))
+        println(detail)
+    }
+
     @Test
     fun successHasCorrectValues() {
         assertEquals("SUCCESS", Succeeded.SUCCESS.name)
