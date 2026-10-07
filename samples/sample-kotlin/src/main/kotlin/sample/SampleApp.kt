@@ -64,7 +64,7 @@ fun test0() {
     val status =
         Failed.Invalid(
             name = "CREATED",
-            message = "failure",
+            title = "failure",
             origin = "kiit"
         )
 
@@ -128,7 +128,7 @@ fun test4() {
     val duplicateCharge =
         Rejected(
             name = "DUPLICATE_CHARGE",
-            message = "This charge has already been processed",
+            title = "This charge has already been processed",
             origin = "stripe.com",
             scope = "payments.cards",
         )
@@ -139,7 +139,8 @@ fun test4() {
 
     // ProblemConverter.convert: the RFC 9457 shape, for an HTTP API response. baseUrl comes from
     // baseUrls, registered above for "stripe.com" (an origin with no entry gets
-    // https://{origin}/problems, and a built-in Status defaults to kiit-codes' own taxonomy docs).
+    // https://{origin}/docs/codes for a domain, or the relative /docs/codes for a plain id, and a built-in Status
+    // defaults to kiit-codes' own taxonomy docs).
     val stripeProblem = problems.convert(duplicateCharge)
     println("[rfc]  type: ${stripeProblem.type}")
     println("[rfc]  title: ${stripeProblem.title}")
@@ -151,7 +152,7 @@ fun test4() {
     val stripeCode = toCodeDetail(duplicateCharge)
     println("[kiit] code: ${stripeCode.code}")
     println("[kiit] success: ${stripeCode.success}")
-    println("[kiit] message: ${stripeCode.message}")
+    println("[kiit] title: ${stripeCode.title}")
     println("[kiit] status: ${stripeCode.status}") // null, no mapping supplied
 
     // Pass a mapping when this shape is still going out over HTTP and the status is worth

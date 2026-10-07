@@ -82,9 +82,9 @@ describe("Codes parity vs. Kotlin's Status.kt", () => {
 
     for (const { group, name, message } of kotlinCodes) {
       const factory = GROUP_FACTORIES[group as keyof typeof GROUP_FACTORIES];
-      const tsStatus = (factory as unknown as Record<string, { message: string } | undefined>)[name];
+      const tsStatus = (factory as unknown as Record<string, { title: string } | undefined>)[name];
       expect(tsStatus, `missing ${group}.${name} in the TS port`).toBeDefined();
-      expect(tsStatus?.message, `${group}.${name} message mismatch`).toBe(message);
+      expect(tsStatus?.title, `${group}.${name} message mismatch`).toBe(message);
     }
   });
 

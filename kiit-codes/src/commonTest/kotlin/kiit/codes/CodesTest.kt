@@ -1,5 +1,6 @@
 package kiit.codes
 
+import kiit.codes.formats.toCodeDetail
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -11,10 +12,17 @@ import kotlin.test.assertTrue
 
 class CodesTest {
     @Test
+    fun usageTest() {
+        val code = Invalid.INVALID_VALUE
+        val detail = toCodeDetail(code, Err.on("firstname", "Missing"))
+        println(detail)
+    }
+
+    @Test
     fun successHasCorrectValues() {
         assertEquals("SUCCESS", Succeeded.SUCCESS.name)
         assertEquals(StatusConstants.KIIT, Succeeded.SUCCESS.origin)
-        assertEquals("The operation completed successfully.", Succeeded.SUCCESS.message)
+        assertEquals("The operation completed successfully.", Succeeded.SUCCESS.title)
         assertTrue(Succeeded.SUCCESS.success)
     }
 
@@ -243,7 +251,7 @@ class CodesToHttpTest {
      * [overrides] is keyed by `StatusKey` (origin+area+domain+group+name), not full structural
      * equality. A status sharing NOT_FOUND's identity but a different message still resolves to
      * its override, since [Status] being a data class would otherwise compare every field
-     * including [Status.message].
+     * including [Status.title].
      */
     @Test
     fun overrideMatchesByIdentityNotFullStatusEquality() {

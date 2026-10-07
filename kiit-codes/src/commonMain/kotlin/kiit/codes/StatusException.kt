@@ -46,7 +46,7 @@ import kotlin.jvm.JvmOverloads
 sealed class StatusException(
     val checked: Checked,
     cause: Throwable? = null,
-) : Exception(checked.status.message, cause) {
+) : Exception(checked.status.title, cause) {
     val status: Status get() = checked.status
     val errors: List<Err> get() = checked.errors
 

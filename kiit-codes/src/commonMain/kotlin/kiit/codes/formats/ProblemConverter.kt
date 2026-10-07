@@ -9,6 +9,12 @@ import kiit.codes.code
 import kotlin.jvm.JvmOverloads
 
 private const val KIIT_BASE_URL = "https://www.kiit.dev/docs/kiit-codes"
+private const val DOCS_PATH = "/docs/codes"
+
+// Two or more dot-separated labels of letters, digits and hyphens, e.g. "stripe.com". Form only, no DNS lookup.
+private val DOMAIN = Regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$")
+
+private fun isDomain(origin: String): Boolean = DOMAIN.matches(origin)
 
 /**
  * Converts a [Status] and an optional [Err] into an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html)
@@ -18,16 +24,22 @@ private const val KIIT_BASE_URL = "https://www.kiit.dev/docs/kiit-codes"
  * TERMS
  * 1. origin: [Status.origin], the key of each [baseUrls] entry, e.g. `"stripe.com"`.
  * 2. baseUrl: text before the suffix, path prefix included, no trailing slash. e.g. `"https://stripe.com/errors"`
- * 3. suffix: `{scope}/{group}/{name}` in lowercase-dash, empty scope skipped.
- *    e.g. `"payments.cards/rejected/duplicate-charge"`
- * 4. type: the RFC 9457 `type` field, `{baseUrl}/{suffix}`.
+ * 3. suffix: `{scope}/{status}/{group}/{name}` in lowercase-dash. Each `.` in the scope starts a new segment, an empty
+ *    scope is skipped, and status is `passed` or `failed`. e.g. `"payments/cards/failed/rejected/duplicate-charge"`
+ * 4. type: the RFC 9457 `type` field, `{baseUrl}/{suffix}`. It is the problem's identity as well as its docs pointer.
  *
  *
  * OPTIONAL
  * 1. [baseUrls] is optional.
- * 2. Without an entry, `https://{origin}/problems` is the baseUrl. The origin is lowercased and not validated.
- * 3. Add an entry when an origin's problem docs live elsewhere, or when it isn't a domain.
- * 4. An entry wins over the origin-derived baseUrl.
+ * 2. Without an entry, the baseUrl comes from the origin, lowercased. A domain origin (two or more dot-separated
+ *    labels of letters, digits and hyphens) gives `https://{origin}/docs/codes`. Any other origin, such as
+ *    `"myapp1"`, gives the relative `/docs/codes`. Only the form is checked, not DNS.
+ * 3. The relative form is a fallback. RFC 9457 prefers absolute URIs, and a relative `type` resolves against the base
+ *    URI of the response, so it points at the API's own host. Add an entry to get an absolute URL.
+ * 4. An entry wins over the origin-derived baseUrl. It is always absolute, and only the suffix is built for it.
+ * 5. `type` is the problem's identity, so pick the base once and keep it. Two statuses must not produce the same
+ *    `type`. Lowercasing, `_` to `-` and scope `.` to `/` can collide for names or scopes that differ only by case
+ *    or `_` vs `-`.
  *
  *
  * EXAMPLE
@@ -42,14 +54,15 @@ private const val KIIT_BASE_URL = "https://www.kiit.dev/docs/kiit-codes"
  * With the first entry, a `Rejected` status named `DUPLICATE_CHARGE` with scope `payments.cards` converts to:
  * ```json
  * {
- *     "type": "https://stripe.com/errors/payments.cards/rejected/duplicate-charge",
+ *     "type": "https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge",
  *     "title": "This charge has already been processed",
  *     "status": 409
  * }
  * ```
  *
  * With no entry, the same status with origin `"stripe.com"` gets the `type`
- * `https://stripe.com/problems/payments.cards/rejected/duplicate-charge`.
+ * `https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge`. A status with the origin `"myapp1"`
+ * and no scope gets `/docs/codes/failed/rejected/out-of-stock`.
  *
  *
  * NOTES
@@ -58,6 +71,8 @@ private const val KIIT_BASE_URL = "https://www.kiit.dev/docs/kiit-codes"
  * 3. [StatusConstants.KIIT] can't be overridden. Its suffix is `?code=...#taxonomy`, joined with no `/`.
  * 4. Every `convert*` function ends in [convertCustomWithUrl], which is the only place a [Problem] is assembled.
  * 5. See [defaultTypeBuilder] for the suffix, and [Problem] for the RFC 9457 shape.
+ * 6. The suffix rules belong to [defaultTypeBuilder]. For another format pass a `typeBuilder`, use [convertWithUrl]
+ *    with a base and an empty suffix, or replace the field with `copy(type = ...)` for any URL.
  *
  * @param baseUrls optional map of origin to baseUrl. Keys are lowercased, a trailing `/` on a value is trimmed.
  * @param mapping supplies the `status` code of each [Problem], defaults to [CodesToHttp]'s standard mapping.
@@ -77,7 +92,9 @@ class ProblemConverter
          * the origin when there is no entry.
          *
          * @param status the status to convert.
-         * @param err optional error, an [Err.ErrorList] fills `errors`, any other fills `instance`. Both fill `detail`.
+         * @param err optional error. Every error in it goes into `errors`: an [Err.ErrorList] is expanded, recursively,
+         *   and any other [Err] is one entry, so an [Err.ErrorField] keeps its field. `detail` is the error's message,
+         *   or the first non-blank error message when that is blank. A single error also fills `instance` from `ref`.
          * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to [defaultTypeBuilder].
          */
         @Suppress("ktlint:standard:function-signature")
@@ -91,7 +108,7 @@ class ProblemConverter
         }
 
         /**
-         * Same as [convert], but each [Err.ErrorList] entry goes through [mapper] into a [Problem]\<[T]\>. Use this
+         * Same as [convert], but each error goes through [mapper] into a [Problem]\<[T]\>. Use this
          * for anything richer than field + message, see [ErrorItem].
          *
          * It is named differently from [convert], not an overload, because both end in a function parameter and
@@ -101,7 +118,7 @@ class ProblemConverter
          * @param status the status to convert.
          * @param err optional error, see [convert].
          * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to [defaultTypeBuilder].
-         * @param mapper turns each [Err.ErrorList] entry into a [T].
+         * @param mapper turns each error into a [T].
          */
         fun <T : ErrorItem> convertCustom(
             status: Status,
@@ -138,7 +155,7 @@ class ProblemConverter
          * @param err optional error, see [convert].
          * @param baseUrl text before the suffix, path prefix included. A trailing `/` is trimmed.
          * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to [defaultTypeBuilder].
-         * @param mapper turns each [Err.ErrorList] entry into a [T].
+         * @param mapper turns each error into a [T].
          */
         fun <T : ErrorItem> convertCustomWithUrl(
             status: Status,
@@ -156,44 +173,41 @@ class ProblemConverter
                     else -> "$base/$path"
                 }
             val code = mapping.toCode(status)
-            return when (err) {
-                is Err.ErrorList ->
-                    Problem(
-                        type = type,
-                        title = status.message,
-                        status = code,
-                        detail = err.message,
-                        errors = err.errors.map(mapper),
-                    )
-                else ->
-                    Problem(
-                        type = type,
-                        title = status.message,
-                        status = code,
-                        detail = err?.message,
-                        instance = err?.ref?.toString(),
-                    )
-            }
+            val parts = err.toParts(mapper)
+            return Problem(
+                type = type,
+                title = status.title,
+                status = code,
+                detail = parts.detail,
+                instance = parts.instance,
+                errors = parts.errors,
+                code = status.detailCode(),
+            )
         }
 
         private fun baseUrlFor(status: Status): String {
             val origin = status.origin.lowercase()
-            return registered[origin] ?: "https://$origin/problems"
+            return registered[origin] ?: if (isDomain(origin)) "https://$origin$DOCS_PATH" else DOCS_PATH
         }
     }
 
 /**
- * Default `type` suffix appended to the baseUrl: `scope`/`group`/`name`, lowercase-dash. `origin`
- * is left out on purpose, the baseUrl is already specific to one origin (see [ProblemConverter]), so
- * repeating it would just name that origin twice in the URL. An empty `scope` is skipped.
+ * Default `type` suffix appended to the baseUrl: `scope`/`status`/`group`/`name`, lowercase-dash. Each `.` in the
+ * `scope` starts a new segment and an empty `scope` is skipped. `status` is `passed` or `failed`, the first part of
+ * [Status.code]. The last three segments are always `status/group/name`, so a scope of any depth stays unambiguous.
+ * `origin` is left out on purpose, the baseUrl is already specific to one origin (see [ProblemConverter]), so
+ * repeating it would just name that origin twice in the URL.
  *
  * ```kotlin
  * val status = Failed.Rejected("DUPLICATE_CHARGE", "Duplicate", origin = "stripe.com", scope = "payments.cards")
- * defaultTypeBuilder(status)   // "payments.cards/rejected/duplicate-charge"
+ * defaultTypeBuilder(status)   // "payments/cards/failed/rejected/duplicate-charge"
  *
  * val noScope = Failed.Rejected("OUT_OF_STOCK", "Out of stock", origin = "myapp1")
- * defaultTypeBuilder(noScope)  // "rejected/out-of-stock"
+ * defaultTypeBuilder(noScope)  // "failed/rejected/out-of-stock"
  * ```
+ *
+ * This is the default suffix only. It applies with or without a `baseUrls` entry. Pass your own `typeBuilder` to
+ * [ProblemConverter.convert] for another format.
  *
  * [StatusConstants.KIIT] is the exception: kiit-codes' own docs don't have a per-code anchor yet,
  * just the taxonomy page as a whole, so every kiit-origin [Status] instead gets `status.code` as
@@ -207,6 +221,7 @@ fun defaultTypeBuilder(status: Status): String {
     if (status.origin == StatusConstants.KIIT) return "?code=${status.code}#taxonomy"
 
     fun String.toUriSegment() = lowercase().replace("_", "-")
-    val segments = listOfNotNull(status.scope.ifEmpty { null }, status.group, status.name)
-    return segments.joinToString("/") { it.toUriSegment() }
+    val scope = status.scope.split('.').filter { it.isNotEmpty() }
+    val state = if (status.success) "passed" else "failed"
+    return (scope + state + status.group + status.name).joinToString("/") { it.toUriSegment() }
 }

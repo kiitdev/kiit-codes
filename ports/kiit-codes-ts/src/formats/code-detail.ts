@@ -1,11 +1,10 @@
 /**
- * kiit-native counterpart to `Problem`: `code`/`message` instead of RFC 9457's
- * `type`/`title`/`status`.
+ * kiit-native counterpart to `Problem`: `code` instead of RFC 9457's `type`, and `status` is optional.
  *
  * {
  *     "code": "stripe.com:payments.cards:Failed:Rejected:DUPLICATE_CHARGE",
  *     "success": false,
- *     "message": "This charge has already been processed"
+ *     "title": "This charge has already been processed"
  * }
  *
  * 1. Meant for internal service-to-service calls.
@@ -17,29 +16,26 @@
  *    over HTTP and the status code is worth carrying alongside it.
  */
 
-import { statusCode } from "../status.js";
 import type { Status } from "../status.js";
 import type { Err } from "../err.js";
 import type { CodeLookup } from "../codes.js";
 import { type ErrorItem, type ErrorDetail, defaultErrorItem } from "./error-item.js";
+import { detailCode, errParts } from "./internal.js";
 
 export interface CodeDetail<T extends ErrorItem = ErrorItem> {
   readonly code: string;
   readonly success: boolean;
-  readonly message: string;
+  readonly title: string;
   readonly detail?: string;
   readonly instance?: string;
   readonly errors?: readonly T[];
   readonly status?: number;
 }
 
-function detailCode(status: Status): string {
-  return `${status.origin}:${status.scope}:${statusCode(status)}`;
-}
-
 /**
- * Builds a `CodeDetail<T>` for `status`, mapping each entry of an `ErrorList` through `mapper`.
- * Pass `mapping` to also populate `CodeDetail.status` with the equivalent HTTP status code.
+ * Builds a `CodeDetail<T>` for `status`, mapping every error in `err` through `mapper`. An `ErrorList` is expanded,
+ * recursively, and any other `Err` is one entry. `detail` is the error's message, or the first non-blank error
+ * message when that is blank. Pass `mapping` to also populate `CodeDetail.status` with the equivalent HTTP status code.
  */
 export function toCodeDetailCustom<T extends ErrorItem>(
   status: Status,
@@ -47,24 +43,15 @@ export function toCodeDetailCustom<T extends ErrorItem>(
   mapper: (err: Err) => T,
   mapping?: CodeLookup,
 ): CodeDetail<T> {
-  const httpStatus = mapping?.toCode(status);
-  if (err?.kind === "ErrorList") {
-    return {
-      code: detailCode(status),
-      success: status.success,
-      message: status.message,
-      detail: err.message,
-      errors: err.errors.map(mapper),
-      status: httpStatus,
-    };
-  }
+  const parts = errParts(err, mapper);
   return {
     code: detailCode(status),
     success: status.success,
-    message: status.message,
-    detail: err?.message,
-    instance: err?.ref !== undefined ? String(err.ref) : undefined,
-    status: httpStatus,
+    title: status.title,
+    detail: parts.detail,
+    instance: parts.instance,
+    errors: parts.errors,
+    status: mapping?.toCode(status),
   };
 }
 

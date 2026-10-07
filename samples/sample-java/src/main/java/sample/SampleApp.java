@@ -92,8 +92,9 @@ public class SampleApp {
                         "payments.cards");
         System.out.println("http code: " + http.toCode(duplicateCharge));
 
-        // baseUrls supplies baseUrl per origin; an origin with no entry gets https://{origin}/problems,
-        // and a built-in Status defaults to kiit-codes' own taxonomy docs.
+        // baseUrls supplies baseUrl per origin; an origin with no entry gets https://{origin}/docs/codes for a
+        // domain, or the relative /docs/codes for a plain id, and a built-in Status defaults to kiit-codes' own
+        // taxonomy docs.
         ProblemConverter problems = new ProblemConverter(Map.of("stripe.com", "https://stripe.com/errors"), http);
 
         // Two independent converters off the same Status, pick whichever fits the boundary:
@@ -109,7 +110,7 @@ public class SampleApp {
         CodeDetail<ErrorDetail> stripeCode = CodeDetails.toCodeDetail(duplicateCharge);
         System.out.println("[kiit] code: " + stripeCode.getCode());
         System.out.println("[kiit] success: " + stripeCode.getSuccess());
-        System.out.println("[kiit] message: " + stripeCode.getMessage());
+        System.out.println("[kiit] title: " + stripeCode.getTitle());
         System.out.println("[kiit] status: " + stripeCode.getStatus()); // null, no mapping supplied
 
         // Pass a mapping when this shape is still going out over HTTP and the status is worth

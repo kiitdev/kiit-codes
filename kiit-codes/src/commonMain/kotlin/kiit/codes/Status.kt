@@ -7,7 +7,7 @@ import kotlin.jvm.JvmField
 object StatusConstants {
     /**
      * Origin for every built-in [Codes] entry. It is kiit's own domain, but [kiit.codes.formats.ProblemConverter]
-     * doesn't build `https://kiit.dev/problems/...` for it, it points at kiit-codes' own docs instead.
+     * doesn't build `https://kiit.dev/docs/codes/...` for it, it points at kiit-codes' own docs instead.
      */
     const val KIIT = "kiit.dev"
 
@@ -20,8 +20,8 @@ object StatusConstants {
 
     /**
      * Default origin for consumer/custom statuses that don't specify one explicitly. With no `baseUrls`
-     * entry, [kiit.codes.formats.ProblemConverter] would build `https://custom/problems/...` for it, so
-     * custom statuses that reach RFC 9457 output should set their own origin.
+     * entry, [kiit.codes.formats.ProblemConverter] would build the relative `/docs/codes/...` for it, since it is not
+     * a domain, so custom statuses that reach RFC 9457 output should set their own origin.
      */
     const val CUSTOM = "custom"
 }
@@ -36,7 +36,7 @@ object StatusConstants {
  *      "group"   : "Restricted",
  *      "origin"  : "kiit.dev",
  *      "scope"   : "codes",
- *      "message" : "The request was denied.",
+ *      "title"   : "The request was denied.",
  *      "success" : false
  * }
  *
@@ -61,8 +61,9 @@ sealed interface Status {
      * [StatusConstants.KIIT], so a status can never accidentally misrepresent where it came from.
      *
      * 1. It is either a real domain (`"stripe.com"`) or any other id (`"myapp1"`).
-     * 2. [kiit.codes.formats.ProblemConverter] lowercases it. With no `baseUrls` entry it builds the RFC 9457
-     *    `type` as `https://{origin}/problems/...`. The origin is not validated.
+     * 2. [kiit.codes.formats.ProblemConverter] lowercases it. With no `baseUrls` entry, a domain origin builds the
+     *    RFC 9457 `type` as `https://{origin}/docs/codes/...`, and any other id builds the relative `/docs/codes/...`.
+     *    Only the form is checked, not DNS.
      * 3. Nothing stops two consumers from choosing the same non-domain id, and kiit-codes can't detect it.
      *    Pick a specific name when there is no domain. A real domain is unique through DNS.
      */
@@ -87,7 +88,7 @@ sealed interface Status {
      * detail belongs on whatever wraps this Status, not here. Do not use this as a key, use
      * [name] instead.
      */
-    val message: String
+    val title: String
 
     /**
      * True for all [Passed] subtypes, false for all [Failed] subtypes. Callers that don't need
@@ -101,7 +102,7 @@ sealed interface Status {
     /**
      * True if this is its group's built-in default (e.g. [Failed.Invalid.INVALID_VALUE] for
      * `Invalid`), the same instance as that group's `DEFAULT`. Compared by value, so a `copy()`
-     * that changes any field, `message` included, is not the default.
+     * that changes any field, `title` included, is not the default.
      */
     val isDefault: Boolean
 }
@@ -212,7 +213,7 @@ sealed class Passed : Status {
     /** See [Passed.groupDescription] for this group's definition. */
     data class Succeeded(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
@@ -307,7 +308,7 @@ sealed class Passed : Status {
     /** See [Passed.groupDescription] for this group's definition. */
     data class Pending(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
@@ -377,7 +378,7 @@ sealed class Passed : Status {
      */
     data class Excluded(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
@@ -445,7 +446,7 @@ sealed class Passed : Status {
     /** See [Passed.groupDescription] for this group's definition. */
     data class Information(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
@@ -552,7 +553,7 @@ sealed class Failed : Status {
     /** See [Failed.groupDescription] for this group's definition. */
     data class Restricted(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {
@@ -620,7 +621,7 @@ sealed class Failed : Status {
     /** See [Failed.groupDescription] for this group's definition. */
     data class Invalid(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {
@@ -688,7 +689,7 @@ sealed class Failed : Status {
     /** See [Failed.groupDescription] for this group's definition. */
     data class Rejected(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {
@@ -762,7 +763,7 @@ sealed class Failed : Status {
      */
     data class Unserved(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {

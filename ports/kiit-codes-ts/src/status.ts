@@ -9,7 +9,7 @@
  *     "group"   : "Restricted",
  *     "origin"  : "kiit.dev",
  *     "scope"   : "codes",
- *     "message" : "The request was denied.",
+ *     "title"   : "The request was denied.",
  *     "success" : false
  * }
  *
@@ -101,7 +101,7 @@ export function statusCode(status: Status): string {
 
 /**
  * True if `status` equals its group's built-in default (e.g. `Invalid.INVALID_VALUE` for
- * `Invalid`). Compared by value on every field, so a copy that changes any field, `message`
+ * `Invalid`). Compared by value on every field, so a copy that changes any field, `title`
  * included, is not the default. Works on a `Status` parsed from JSON, like the other functions
  * here. Exhaustive over every group.
  */
@@ -132,7 +132,7 @@ function sameStatus(a: Status, b: Status): boolean {
   return (
     a.group === b.group &&
     a.name === b.name &&
-    a.message === b.message &&
+    a.title === b.title &&
     a.origin === b.origin &&
     a.scope === b.scope
   );

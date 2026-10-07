@@ -10,17 +10,36 @@ All notable changes to kiit-codes are documented here. Format follows
 - `DEFAULT` on each group's companion (`Invalid.DEFAULT`, `Restricted.DEFAULT`, ...), an alias for that group's
   default code (`INVALID_VALUE`, `DENIED`, ...). It is the same instance, not a new registry entry.
 - `Status.isDefault`, true when a status equals its group's `DEFAULT`. Compared by value, so a `copy()` that
-  changes any field, `message` included, is not the default.
+  changes any field, `title` included, is not the default.
 - TypeScript port: the same `DEFAULT` constants and a standalone `isDefault(status)` function.
 - An origin can be a real domain. With no `baseUrls` entry, `ProblemConverter` builds the RFC 9457 `type` as
-  `https://{origin}/problems/{scope}/{group}/{name}`. The origin is lowercased and not validated, so a plain id
-  such as `"myapp1"` gives `https://myapp1/problems/...`. Register a base URL to change that.
+  `{base}/docs/codes/{scope...}/{status}/{group}/{name}`, lowercase with dashes. `status` is `passed` or `failed`, and
+  each `.` in a scope starts a new segment. A domain origin (two or more dot-separated labels of letters, digits and
+  hyphens) gives an absolute `https://{origin}/docs/codes/...`. Any other id, such as `"myapp1"`, gives the relative
+  `/docs/codes/...`, since it is not a host. RFC 9457 prefers absolute URIs, so register a base URL to get one. An
+  entry always wins and is always absolute, and only the suffix is built for it. `type` is the problem's identity, so
+  pick the base once and keep it, and do not let two statuses produce the same `type`. The default suffix is
+  `defaultTypeBuilder`. For your own URL, pass a `typeBuilder`, call `convertWithUrl` with a base and an empty
+  suffix, or replace the field with `copy(type = ...)`.
+- `Problem.code`, the exact `{origin}:{scope}:{Status.code}` string, the same value as `CodeDetail.code`. It is a kiit
+  extension member, always set by `ProblemConverter`, and `null` by default for a `Problem` built by hand. Read it
+  instead of parsing the lowercase `type`. The TypeScript port builds the same `type` and has the same optional `code`.
 - `ProblemConverter()` needs no arguments. Both `baseUrls` and `mapping` have defaults.
 - TypeScript port: the same `ProblemConverter` changes. `ProblemConverter(baseUrls = {}, mapping = CodesToHttp())` is a
   factory function with the same `convert`, `convertCustom`, `convertWithUrl` and `convertCustomWithUrl` members.
   `mapper` comes before the defaulted `typeBuilder` in the two `*Custom*` members, as TypeScript requires.
 
 ### Changed
+- **Breaking**: `Status.message` is now `title`, on every status. It is the fixed text of a code, and `Err.message`
+  stays the text of one occurrence. Named `message =` arguments in a custom status become `title =`, and Java
+  `getMessage()` becomes `getTitle()`. `Problem.title` and `CodeDetail.title` are filled from it. The TypeScript
+  port's `Status` has `title` too.
+- **Breaking**: `CodeDetail.message` is now `title`, matching `Problem.title`. The TypeScript port's `CodeDetail` too.
+- `toCodeDetail` and `ProblemConverter` put every error in `errors`. A single `Err.ErrorField` is one entry that keeps
+  its field, a plain `Err.ErrorInfo` is one entry with no field, and an `Err.ErrorList` is expanded, including lists
+  nested in lists. Before, only an `Err.ErrorList` filled `errors`, and a single error left it `null` and lost its
+  field. `detail` is the error's message, or the first non-blank error message when that is blank. The TypeScript
+  port does the same.
 - **Breaking**: the built-in origin value changed from `"dev.kiit"` to `"kiit.dev"`. Anything comparing against or
   storing the old value needs updating. The Maven group ID is still `dev.kiit`.
 - **Breaking**: `CodeDetail` has one identifier instead of two. `path` is removed, and `code` is now
@@ -51,7 +70,7 @@ All notable changes to kiit-codes are documented here. Format follows
 - **Breaking**: `CodeLookup.toStatus(code)`, and with it `CodesToHttp.toStatus`, `CodesToGrpc.toStatus` and
   `CompositeLookup.toStatus`. Many statuses share one protocol code, so the reverse lookup was lossy and relied on
   a hand-kept preference list to pick a winner. `toCode` is unchanged. To carry a status across a boundary, use
-  `CodeDetail.code` or the RFC 9457 `type`. The TypeScript port's `toStatus` is removed too.
+  `CodeDetail.code` or `Problem.code`. The TypeScript port's `toStatus` is removed too.
 - **Breaking**: `Catalog`. Pass the map to `ProblemConverter(baseUrls = ...)` instead. Keys are lowercased and
   `kiit.dev` is always fixed to kiit-codes' own docs, as before.
 - **Breaking**: the TypeScript port's `Catalog` and `CodesToProblem`, replaced by `ProblemConverter`.

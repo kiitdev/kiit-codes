@@ -11,14 +11,13 @@ import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 
 /**
- * kiit-native counterpart to [Problem]: `code`/`message` instead of RFC 9457's
- * `type`/`title`/`status`.
+ * kiit-native counterpart to [Problem]: `code` instead of RFC 9457's `type`, and `status` is optional.
  *
  * ```json
  * {
  *     "code": "stripe.com:payments.cards:Failed:Rejected:DUPLICATE_CHARGE",
  *     "success": false,
- *     "message": "This charge has already been processed"
+ *     "title": "This charge has already been processed"
  * }
  * ```
  *
@@ -33,14 +32,15 @@ import kotlin.jvm.JvmOverloads
 data class CodeDetail<T : ErrorItem>(
     val code: String,
     val success: Boolean,
-    val message: String,
+    val title: String,
     val detail: String? = null,
     val instance: String? = null,
     val errors: List<T>? = null,
     val status: Int? = null,
 )
 
-private fun Status.detailCode(): String = "$origin:$scope:$code"
+/** The exact identity of a status, `{origin}:{scope}:{Status.code}`. Shared by [CodeDetail.code] and [Problem.code]. */
+internal fun Status.detailCode(): String = "$origin:$scope:$code"
 
 /**
  * Builds the default [CodeDetail]\<[ErrorDetail]\> for [status] (and optionally [err]). Pass
@@ -52,7 +52,7 @@ fun toCodeDetail(status: Status, err: Err? = null, mapping: CodesToHttp? = null)
 }
 
 /**
- * Builds a [CodeDetail]\<[T]\> for [status], mapping each entry of an [Err.ErrorList] through
+ * Builds a [CodeDetail]\<[T]\> for [status], mapping every error in [err] through
  * [mapper]. Use this when the default [ErrorDetail] shape (field + message only) isn't enough —
  * `err.ref` is the usual place to stash whatever extra context [mapper] needs. Pass [mapping] to
  * also populate [CodeDetail.status].
@@ -65,24 +65,14 @@ fun <T : ErrorItem> toCodeDetail(
     mapper: (Err) -> T,
 ): CodeDetail<T> {
     val httpStatus = mapping?.toCode(status)
-    return when (err) {
-        is Err.ErrorList ->
-            CodeDetail(
-                code = status.detailCode(),
-                success = status.success,
-                message = status.message,
-                detail = err.message,
-                errors = err.errors.map(mapper),
-                status = httpStatus,
-            )
-        else ->
-            CodeDetail(
-                code = status.detailCode(),
-                success = status.success,
-                message = status.message,
-                detail = err?.message,
-                instance = err?.ref?.toString(),
-                status = httpStatus,
-            )
-    }
+    val parts = err.toParts(mapper)
+    return CodeDetail(
+        code = status.detailCode(),
+        success = status.success,
+        title = status.title,
+        detail = parts.detail,
+        instance = parts.instance,
+        errors = parts.errors,
+        status = httpStatus,
+    )
 }

@@ -45,7 +45,7 @@ export abstract class StatusError extends Error {
   readonly checked: Checked;
 
   constructor(checked: Checked, options?: ErrorOptions) {
-    super(checked.status.message, options);
+    super(checked.status.title, options);
     this.checked = checked;
     this.name = new.target.name;
   }

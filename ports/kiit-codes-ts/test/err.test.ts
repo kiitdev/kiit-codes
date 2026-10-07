@@ -23,7 +23,7 @@ describe("Err.ofStatus", () => {
   it("uses the status's message", () => {
     const err = Err.ofStatus(Restricted.UNAUTHORIZED);
     expect(err.kind).toBe("ErrorInfo");
-    expect(err.message).toBe(Restricted.UNAUTHORIZED.message);
+    expect(err.message).toBe(Restricted.UNAUTHORIZED.title);
   });
 });
 
@@ -105,7 +105,7 @@ describe("Err.build", () => {
   });
 
   it("falls back to Unserved.UNEXPECTED's message for null/undefined", () => {
-    expect(Err.build(null).message).toBe(Unserved.UNEXPECTED.message);
-    expect(Err.build(undefined).message).toBe(Unserved.UNEXPECTED.message);
+    expect(Err.build(null).message).toBe(Unserved.UNEXPECTED.title);
+    expect(Err.build(undefined).message).toBe(Unserved.UNEXPECTED.title);
   });
 });
