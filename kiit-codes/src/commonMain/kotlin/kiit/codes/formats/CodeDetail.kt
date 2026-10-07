@@ -70,7 +70,7 @@ fun <T : ErrorItem> toCodeDetail(
             CodeDetail(
                 code = status.detailCode(),
                 success = status.success,
-                title = status.message,
+                title = status.title,
                 detail = err.message,
                 errors = err.errors.map(mapper),
                 status = httpStatus,
@@ -79,7 +79,7 @@ fun <T : ErrorItem> toCodeDetail(
             CodeDetail(
                 code = status.detailCode(),
                 success = status.success,
-                title = status.message,
+                title = status.title,
                 detail = err?.message,
                 instance = err?.ref?.toString(),
                 status = httpStatus,

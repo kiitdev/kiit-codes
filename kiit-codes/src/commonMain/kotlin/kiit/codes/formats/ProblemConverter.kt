@@ -160,7 +160,7 @@ class ProblemConverter
                 is Err.ErrorList ->
                     Problem(
                         type = type,
-                        title = status.message,
+                        title = status.title,
                         status = code,
                         detail = err.message,
                         errors = err.errors.map(mapper),
@@ -168,7 +168,7 @@ class ProblemConverter
                 else ->
                     Problem(
                         type = type,
-                        title = status.message,
+                        title = status.title,
                         status = code,
                         detail = err?.message,
                         instance = err?.ref?.toString(),

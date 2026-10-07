@@ -114,7 +114,7 @@ class ProblemConverterTest {
     @Test
     fun titleIsStatusMessageAndStatusIsHttpCode() {
         val problem = converter.convert(Restricted.FORBIDDEN)
-        assertEquals(Restricted.FORBIDDEN.message, problem.title)
+        assertEquals(Restricted.FORBIDDEN.title, problem.title)
         assertEquals(403, problem.status)
     }
 

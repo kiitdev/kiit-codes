@@ -76,8 +76,8 @@ class DefaultStatusTest {
     @Test
     fun nonDefaultsInOneGroupDoNotMatchAnotherGroupsDefault() {
         // Same name in a different group is a different status, only its own group's DEFAULT matches.
-        assertFalse(Failed.Rejected("INVALID_VALUE", Failed.Invalid.DEFAULT.message, origin = StatusConstants.KIIT).isDefault)
-        assertFalse(Passed.Pending("SUCCESS", Passed.Succeeded.DEFAULT.message, origin = StatusConstants.KIIT).isDefault)
+        assertFalse(Failed.Rejected("INVALID_VALUE", Failed.Invalid.DEFAULT.title, origin = StatusConstants.KIIT).isDefault)
+        assertFalse(Passed.Pending("SUCCESS", Passed.Succeeded.DEFAULT.title, origin = StatusConstants.KIIT).isDefault)
     }
 
     @Test
@@ -85,14 +85,14 @@ class DefaultStatusTest {
         val customs: List<Status> =
             defaults.map {
                 when (it) {
-                    is Passed.Succeeded -> Passed.Succeeded(it.name, it.message)
-                    is Passed.Pending -> Passed.Pending(it.name, it.message)
-                    is Passed.Excluded -> Passed.Excluded(it.name, it.message)
-                    is Passed.Information -> Passed.Information(it.name, it.message)
-                    is Failed.Restricted -> Failed.Restricted(it.name, it.message)
-                    is Failed.Invalid -> Failed.Invalid(it.name, it.message)
-                    is Failed.Rejected -> Failed.Rejected(it.name, it.message)
-                    is Failed.Unserved -> Failed.Unserved(it.name, it.message)
+                    is Passed.Succeeded -> Passed.Succeeded(it.name, it.title)
+                    is Passed.Pending -> Passed.Pending(it.name, it.title)
+                    is Passed.Excluded -> Passed.Excluded(it.name, it.title)
+                    is Passed.Information -> Passed.Information(it.name, it.title)
+                    is Failed.Restricted -> Failed.Restricted(it.name, it.title)
+                    is Failed.Invalid -> Failed.Invalid(it.name, it.title)
+                    is Failed.Rejected -> Failed.Rejected(it.name, it.title)
+                    is Failed.Unserved -> Failed.Unserved(it.name, it.title)
                 }
             }
         // Default origin is CUSTOM, not KIIT, so none of these equal a built-in default.
@@ -102,7 +102,7 @@ class DefaultStatusTest {
     @Test
     fun exactReplicaOfDefaultEqualsAndReportsDefault() {
         val d = Failed.Invalid.DEFAULT
-        val replica = Failed.Invalid(d.name, d.message, origin = d.origin, scope = d.scope)
+        val replica = Failed.Invalid(d.name, d.title, origin = d.origin, scope = d.scope)
         assertEquals(d, replica)
         assertTrue(replica.isDefault)
     }
@@ -117,14 +117,14 @@ class DefaultStatusTest {
 
     private fun Status.withMessage(): Status =
         when (this) {
-            is Passed.Succeeded -> copy(message = "m")
-            is Passed.Pending -> copy(message = "m")
-            is Passed.Excluded -> copy(message = "m")
-            is Passed.Information -> copy(message = "m")
-            is Failed.Restricted -> copy(message = "m")
-            is Failed.Invalid -> copy(message = "m")
-            is Failed.Rejected -> copy(message = "m")
-            is Failed.Unserved -> copy(message = "m")
+            is Passed.Succeeded -> copy(title = "m")
+            is Passed.Pending -> copy(title = "m")
+            is Passed.Excluded -> copy(title = "m")
+            is Passed.Information -> copy(title = "m")
+            is Failed.Restricted -> copy(title = "m")
+            is Failed.Invalid -> copy(title = "m")
+            is Failed.Rejected -> copy(title = "m")
+            is Failed.Unserved -> copy(title = "m")
         }
 
     private fun Status.withScope(): Status =

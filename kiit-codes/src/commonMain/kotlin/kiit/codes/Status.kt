@@ -87,7 +87,7 @@ sealed interface Status {
      * detail belongs on whatever wraps this Status, not here. Do not use this as a key, use
      * [name] instead.
      */
-    val message: String
+    val title: String
 
     /**
      * True for all [Passed] subtypes, false for all [Failed] subtypes. Callers that don't need
@@ -212,7 +212,7 @@ sealed class Passed : Status {
     /** See [Passed.groupDescription] for this group's definition. */
     data class Succeeded(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
@@ -307,7 +307,7 @@ sealed class Passed : Status {
     /** See [Passed.groupDescription] for this group's definition. */
     data class Pending(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
@@ -377,7 +377,7 @@ sealed class Passed : Status {
      */
     data class Excluded(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
@@ -445,7 +445,7 @@ sealed class Passed : Status {
     /** See [Passed.groupDescription] for this group's definition. */
     data class Information(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
@@ -552,7 +552,7 @@ sealed class Failed : Status {
     /** See [Failed.groupDescription] for this group's definition. */
     data class Restricted(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {
@@ -620,7 +620,7 @@ sealed class Failed : Status {
     /** See [Failed.groupDescription] for this group's definition. */
     data class Invalid(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {
@@ -688,7 +688,7 @@ sealed class Failed : Status {
     /** See [Failed.groupDescription] for this group's definition. */
     data class Rejected(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {
@@ -762,7 +762,7 @@ sealed class Failed : Status {
      */
     data class Unserved(
         override val name: String,
-        override val message: String,
+        override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {

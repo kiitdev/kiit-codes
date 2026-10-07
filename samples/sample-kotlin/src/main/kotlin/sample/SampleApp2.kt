@@ -44,9 +44,9 @@ data class Task(val title: String, val listId: String)
 
 /** Custom codes for the to-do list. Constant, they only say what kind of outcome it is. */
 object TaskCodes {
-    val EMPTY_TITLE = Invalid(name = "EMPTY_TITLE", message = "Title must not be empty", origin = ORIGIN)
+    val EMPTY_TITLE = Invalid(name = "EMPTY_TITLE", title = "Title must not be empty", origin = ORIGIN)
     val DUPLICATE_TASK =
-        Rejected(name = "DUPLICATE_TASK", message = "A task with this title exists", origin = ORIGIN, scope = "lists.team")
+        Rejected(name = "DUPLICATE_TASK", title = "A task with this title exists", origin = ORIGIN, scope = "lists.team")
 }
 
 class TaskService {
@@ -172,7 +172,7 @@ fun showOverview(tasks: TaskService) {
     // Every status carries the same fields, built-in or custom
     val status: Status = Succeeded.SUCCESS
     println("name=${status.name} group=${status.group} origin=${status.origin} scope='${status.scope}'")
-    println("success=${status.success} message=${status.message}")
+    println("success=${status.success} message=${status.title}")
     // name=SUCCESS group=Succeeded origin=kiit.dev scope='codes'
     // success=true message=The operation completed successfully.
     // </example>
@@ -181,7 +181,7 @@ fun showOverview(tasks: TaskService) {
     verify("overview-shape: origin", status.origin == StatusConstants.KIIT && status.origin == "kiit.dev")
     verify("overview-shape: scope", status.scope == StatusConstants.CODES)
     verify("overview-shape: success", status.success)
-    verify("overview-shape: message", status.message == "The operation completed successfully.")
+    verify("overview-shape: message", status.title == "The operation completed successfully.")
 
     // <example id="overview-checks" tags="concepts">
     // Check a status with .success (simplest), or with the two branches (Passed | Failed)
@@ -189,7 +189,7 @@ fun showOverview(tasks: TaskService) {
     if (outcome.success) println("created: ${outcome.name}")
     when (outcome) {
         is Passed -> println("passed: ${outcome.name}")
-        is Failed -> println("failed: ${outcome.name}, ${outcome.message}")
+        is Failed -> println("failed: ${outcome.name}, ${outcome.title}")
     }
     // </example>
     verify("overview-checks: .success and Passed agree", outcome.success && outcome is Passed)
@@ -244,7 +244,7 @@ fun showTaxonomy(tasks: TaskService) {
     println(Invalid.DEFAULT === Invalid.INVALID_VALUE) // true, not a new code
     println(Invalid.INVALID_VALUE.isDefault) // true
     println(Invalid.BAD_REQUEST.isDefault) // false
-    println(Invalid.DEFAULT.copy(message = "custom").isDefault) // false, isDefault compares every field
+    println(Invalid.DEFAULT.copy(title = "custom").isDefault) // false, isDefault compares every field
     // </example>
     verify(
         "taxonomy-defaults: names",
@@ -256,7 +256,7 @@ fun showTaxonomy(tasks: TaskService) {
     verify("taxonomy-defaults: all isDefault", defaults.all { it.isDefault })
     verify("taxonomy-defaults: alias is the same instance", Invalid.DEFAULT === Invalid.INVALID_VALUE)
     verify("taxonomy-defaults: non-default", !Invalid.BAD_REQUEST.isDefault)
-    verify("taxonomy-defaults: changed copy", !Invalid.DEFAULT.copy(message = "custom").isDefault)
+    verify("taxonomy-defaults: changed copy", !Invalid.DEFAULT.copy(title = "custom").isDefault)
 
     // <example id="taxonomy-builtin" tags="concepts">
     // Built-in codes from Pending and Excluded, not only Succeeded and Failed ones
@@ -273,9 +273,9 @@ fun showTaxonomy(tasks: TaskService) {
 
     // <example id="taxonomy-custom" tags="concepts,origin">
     // Create your own codes in any of the 8 groups. Constant, they only say what kind of outcome it is.
-    val missingDate = Invalid(name = "MISSING_DATE", message = "Date not supplied", origin = "samples.kiit.dev")
+    val missingDate = Invalid(name = "MISSING_DATE", title = "Date not supplied", origin = "samples.kiit.dev")
     val duplicate =
-        Rejected(name = "DUPLICATE_TASK", message = "A task with this title exists", origin = "samples.kiit.dev", scope = "lists.team")
+        Rejected(name = "DUPLICATE_TASK", title = "A task with this title exists", origin = "samples.kiit.dev", scope = "lists.team")
     println("${missingDate.group}: ${missingDate.name} origin=${missingDate.origin} scope='${missingDate.scope}'")
     println("${duplicate.group}: ${duplicate.name} origin=${duplicate.origin} scope='${duplicate.scope}'")
     // Invalid: MISSING_DATE origin=samples.kiit.dev scope=''
@@ -287,8 +287,8 @@ fun showTaxonomy(tasks: TaskService) {
 
     // <example id="taxonomy-origin" tags="origin">
     // An origin is a real domain you own, or any other id. It also becomes the host of the RFC 9457 type (Part 5).
-    val withDomain = Rejected(name = "OUT_OF_STOCK", message = "Out of stock", origin = "samples.kiit.dev")
-    val withPlainId = Rejected(name = "OUT_OF_STOCK", message = "Out of stock", origin = "myapp1")
+    val withDomain = Rejected(name = "OUT_OF_STOCK", title = "Out of stock", origin = "samples.kiit.dev")
+    val withPlainId = Rejected(name = "OUT_OF_STOCK", title = "Out of stock", origin = "myapp1")
 
     // A domain is unique through DNS. A plain id can collide with another team's "myapp1", and kiit-codes
     // can't detect that. Pick a specific name when you have no domain.
@@ -460,7 +460,7 @@ fun showProblemDetails(tasks: TaskService) {
     println("${withErrors.detail}, ${withErrors.errors?.size} errors") // Validation failed, 2 errors
     // </example>
     verify("rfc9457-minimal: type", minimal.type == "https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy")
-    verify("rfc9457-minimal: title", minimal.title == Rejected.CONFLICT.message)
+    verify("rfc9457-minimal: title", minimal.title == Rejected.CONFLICT.title)
     verify("rfc9457-minimal: status", minimal.status == 409)
     verify("rfc9457-minimal: detail", withErrors.detail == "Validation failed")
     verify("rfc9457-minimal: errors", withErrors.errors?.size == 2)
@@ -651,7 +651,7 @@ fun showProblemDetails(tasks: TaskService) {
 
     // <example id="rfc9457-plain-origin" tags="rfc9457,origin">
     // A plain id is used as is. It looks like a host, so register a base URL or use a domain.
-    val plain = Rejected(name = "OUT_OF_STOCK", message = "Out of stock", origin = "myapp1")
+    val plain = Rejected(name = "OUT_OF_STOCK", title = "Out of stock", origin = "myapp1")
     println(problems.convert(plain).type) // https://myapp1/problems/rejected/out-of-stock
     val fixed = ProblemConverter(baseUrls = mapOf("myapp1" to "https://docs.example.com/myapp1/errors"))
     println(fixed.convert(plain).type) // https://docs.example.com/myapp1/errors/rejected/out-of-stock

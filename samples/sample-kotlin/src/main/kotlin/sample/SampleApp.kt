@@ -64,7 +64,7 @@ fun test0() {
     val status =
         Failed.Invalid(
             name = "CREATED",
-            message = "failure",
+            title = "failure",
             origin = "kiit"
         )
 
@@ -128,7 +128,7 @@ fun test4() {
     val duplicateCharge =
         Rejected(
             name = "DUPLICATE_CHARGE",
-            message = "This charge has already been processed",
+            title = "This charge has already been processed",
             origin = "stripe.com",
             scope = "payments.cards",
         )

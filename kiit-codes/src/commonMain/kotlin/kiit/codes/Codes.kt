@@ -204,7 +204,7 @@ open class CodesToGrpc
  *
  * [toCode] matches [extensions] on [Status.origin]/[Status.name] directly rather than [Map]'s
  * built-in `equals`/`hashCode`-based `[]` access, since [Status] is a data class that compares
- * every field. A status with the same origin/name but a different [Status.message] would
+ * every field. A status with the same origin/name but a different [Status.title] would
  * otherwise miss the override.
  *
  * ```kotlin

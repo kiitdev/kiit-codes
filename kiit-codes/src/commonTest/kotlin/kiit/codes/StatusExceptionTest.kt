@@ -39,7 +39,7 @@ class StatusExceptionTest {
     fun defaultErrorsWrapTheStatusSingly() {
         val ex = StatusException.RestrictedException(Restricted.UNAUTHORIZED)
         assertEquals(1, ex.errors.size)
-        assertEquals(Restricted.UNAUTHORIZED.message, ex.errors.single().message)
+        assertEquals(Restricted.UNAUTHORIZED.title, ex.errors.single().message)
     }
 
     @Test
@@ -59,7 +59,7 @@ class StatusExceptionTest {
     @Test
     fun messageComesFromCheckedStatus() {
         val ex = StatusException.UnservedException(Unserved.UNREACHABLE)
-        assertEquals(ex.checked.status.message, ex.message)
+        assertEquals(ex.checked.status.title, ex.message)
     }
 
     @Test
