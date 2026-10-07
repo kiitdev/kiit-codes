@@ -19,7 +19,7 @@ describe("Codes.all: data", () => {
   it("SUCCESS has the correct values", () => {
     expect(Succeeded.SUCCESS.name).toBe("SUCCESS");
     expect(Succeeded.SUCCESS.origin).toBe(StatusConstants.KIIT);
-    expect(Succeeded.SUCCESS.message).toBe("The operation completed successfully.");
+    expect(Succeeded.SUCCESS.title).toBe("The operation completed successfully.");
     expect(Succeeded.SUCCESS.success).toBe(true);
   });
 

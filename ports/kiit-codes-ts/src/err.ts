@@ -80,9 +80,9 @@ export const Err = {
     return ErrorInfo(message, cause);
   },
 
-  /** Builds an `Err` directly from a `Status`, using its `message`. */
+  /** Builds an `Err` directly from a `Status`, using its `title`. */
   ofStatus(status: Status): Err {
-    return ErrorInfo(status.message);
+    return ErrorInfo(status.title);
   },
 
   on(field: string, value: string, message: string, cause?: Error): Err {
@@ -114,7 +114,7 @@ export const Err = {
   },
 
   build(error: unknown): Err {
-    if (error === null || error === undefined) return Err.of(Unserved.UNEXPECTED.message);
+    if (error === null || error === undefined) return Err.of(Unserved.UNEXPECTED.title);
     if (isErr(error)) return error;
     if (typeof error === "string") return Err.of(error);
     if (error instanceof Error) return Err.ex(error);

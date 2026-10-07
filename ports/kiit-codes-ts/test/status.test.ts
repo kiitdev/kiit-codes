@@ -184,17 +184,17 @@ describe("isDefault", () => {
   });
 
   it("is false for a custom status with the same name under the default origin", () => {
-    expect(isDefault(Invalid("INVALID_VALUE", Invalid.DEFAULT.message))).toBe(false);
+    expect(isDefault(Invalid("INVALID_VALUE", Invalid.DEFAULT.title))).toBe(false);
   });
 
   it("is false when a different group's status shares the default's name and message", () => {
-    const other = Rejected("INVALID_VALUE", Invalid.DEFAULT.message, StatusConstants.KIIT);
+    const other = Rejected("INVALID_VALUE", Invalid.DEFAULT.title, StatusConstants.KIIT);
     expect(isDefault(other)).toBe(false);
   });
 
   it("is false when any field of a default is changed", () => {
     for (const d of defaults) {
-      expect(isDefault({ ...d, message: "m" })).toBe(false);
+      expect(isDefault({ ...d, title: "m" })).toBe(false);
       expect(isDefault({ ...d, scope: "s" })).toBe(false);
       expect(isDefault({ ...d, origin: "o" })).toBe(false);
       expect(isDefault({ ...d, name: "n" })).toBe(false);

@@ -11,7 +11,7 @@
 export const StatusConstants = {
   /**
    * Origin for every built-in code. It is kiit's own domain, but `ProblemConverter` doesn't build
-   * `https://kiit.dev/problems/...` for it, it points at kiit-codes' own docs instead.
+   * `https://kiit.dev/docs/codes/...` for it, it points at kiit-codes' own docs instead.
    */
   KIIT: "kiit.dev",
   /**
@@ -68,7 +68,7 @@ interface StatusFields {
    * Human-readable constant description, never built from runtime data. Per-instance detail
    * belongs on whatever wraps this Status, not here. Don't use this as a key, use `name` instead.
    */
-  readonly message: string;
+  readonly title: string;
 }
 
 /** The operation completed successfully. */
@@ -78,11 +78,11 @@ export interface Succeeded extends StatusFields {
 }
 export function Succeeded(
   name: string,
-  message: string,
+  title: string,
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Succeeded {
-  return { group: Groups.SUCCEEDED, success: true, name, message, origin, scope };
+  return { group: Groups.SUCCEEDED, success: true, name, title, origin, scope };
 }
 export namespace Succeeded {
   export const SUCCESS: Succeeded = Succeeded(
@@ -150,11 +150,11 @@ export interface Pending extends StatusFields {
 }
 export function Pending(
   name: string,
-  message: string,
+  title: string,
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Pending {
-  return { group: Groups.PENDING, success: true, name, message, origin, scope };
+  return { group: Groups.PENDING, success: true, name, title, origin, scope };
 }
 export namespace Pending {
   export const ACCEPTED: Pending = Pending(
@@ -204,11 +204,11 @@ export interface Excluded extends StatusFields {
 }
 export function Excluded(
   name: string,
-  message: string,
+  title: string,
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Excluded {
-  return { group: Groups.EXCLUDED, success: true, name, message, origin, scope };
+  return { group: Groups.EXCLUDED, success: true, name, title, origin, scope };
 }
 export namespace Excluded {
   export const OMITTED: Excluded = Excluded(
@@ -258,11 +258,11 @@ export interface Information extends StatusFields {
 }
 export function Information(
   name: string,
-  message: string,
+  title: string,
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Information {
-  return { group: Groups.INFORMATION, success: true, name, message, origin, scope };
+  return { group: Groups.INFORMATION, success: true, name, title, origin, scope };
 }
 export namespace Information {
   export const NOTICE: Information = Information(
@@ -312,11 +312,11 @@ export interface Restricted extends StatusFields {
 }
 export function Restricted(
   name: string,
-  message: string,
+  title: string,
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Restricted {
-  return { group: Groups.RESTRICTED, success: false, name, message, origin, scope };
+  return { group: Groups.RESTRICTED, success: false, name, title, origin, scope };
 }
 export namespace Restricted {
   export const DENIED: Restricted = Restricted(
@@ -366,11 +366,11 @@ export interface Invalid extends StatusFields {
 }
 export function Invalid(
   name: string,
-  message: string,
+  title: string,
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Invalid {
-  return { group: Groups.INVALID, success: false, name, message, origin, scope };
+  return { group: Groups.INVALID, success: false, name, title, origin, scope };
 }
 export namespace Invalid {
   export const INVALID_VALUE: Invalid = Invalid(
@@ -420,11 +420,11 @@ export interface Rejected extends StatusFields {
 }
 export function Rejected(
   name: string,
-  message: string,
+  title: string,
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Rejected {
-  return { group: Groups.REJECTED, success: false, name, message, origin, scope };
+  return { group: Groups.REJECTED, success: false, name, title, origin, scope };
 }
 export namespace Rejected {
   export const RULE_VIOLATION: Rejected = Rejected(
@@ -478,11 +478,11 @@ export interface Unserved extends StatusFields {
 }
 export function Unserved(
   name: string,
-  message: string,
+  title: string,
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Unserved {
-  return { group: Groups.UNSERVED, success: false, name, message, origin, scope };
+  return { group: Groups.UNSERVED, success: false, name, title, origin, scope };
 }
 export namespace Unserved {
   export const UNEXPECTED: Unserved = Unserved(

@@ -8,15 +8,21 @@
  * TERMS
  * 1. origin: `Status.origin`, the key of each `baseUrls` entry, e.g. `"stripe.com"`.
  * 2. baseUrl: text before the suffix, path prefix included, no trailing slash. e.g. `"https://stripe.com/errors"`
- * 3. suffix: `{scope}/{group}/{name}` in lowercase-dash, empty scope skipped.
- *    e.g. `"payments.cards/rejected/duplicate-charge"`
- * 4. type: the RFC 9457 `type` field, `{baseUrl}/{suffix}`.
+ * 3. suffix: `{scope}/{status}/{group}/{name}` in lowercase-dash. Each `.` in the scope starts a new segment, an empty
+ *    scope is skipped, and status is `passed` or `failed`. e.g. `"payments/cards/failed/rejected/duplicate-charge"`
+ * 4. type: the RFC 9457 `type` field, `{baseUrl}/{suffix}`. It is the problem's identity as well as its docs pointer.
  *
  * OPTIONAL
  * 1. `baseUrls` is optional.
- * 2. Without an entry, `https://{origin}/problems` is the baseUrl. The origin is lowercased and not validated.
- * 3. Add an entry when an origin's problem docs live elsewhere, or when it isn't a domain.
- * 4. An entry wins over the origin-derived baseUrl.
+ * 2. Without an entry, the baseUrl comes from the origin, lowercased. A domain origin (two or more dot-separated
+ *    labels of letters, digits and hyphens) gives `https://{origin}/docs/codes`. Any other origin, such as
+ *    `"myapp1"`, gives the relative `/docs/codes`. Only the form is checked, not DNS.
+ * 3. The relative form is a fallback. RFC 9457 prefers absolute URIs, and a relative `type` resolves against the base
+ *    URI of the response, so it points at the API's own host. Add an entry to get an absolute URL.
+ * 4. An entry wins over the origin-derived baseUrl. It is always absolute, and only the suffix is built for it.
+ * 5. `type` is the problem's identity, so pick the base once and keep it. Two statuses must not produce the same
+ *    `type`. Lowercasing, `_` to `-` and scope `.` to `/` can collide for names or scopes that differ only by case
+ *    or `_` vs `-`.
  *
  * EXAMPLE
  * 1. origin `"stripe.com"` -> baseUrl `"https://stripe.com/errors"`
@@ -30,14 +36,15 @@
  * With the first entry, a `Rejected` status named `DUPLICATE_CHARGE` with scope `payments.cards` converts to:
  * ```json
  * {
- *     "type": "https://stripe.com/errors/payments.cards/rejected/duplicate-charge",
+ *     "type": "https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge",
  *     "title": "This charge has already been processed",
  *     "status": 409
  * }
  * ```
  *
  * With no entry, the same status with origin `"stripe.com"` gets the `type`
- * `https://stripe.com/problems/payments.cards/rejected/duplicate-charge`.
+ * `https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge`. A status with the origin `"myapp1"`
+ * and no scope gets `/docs/codes/failed/rejected/out-of-stock`.
  *
  * NOTES
  * 1. Keys of `baseUrls` are lowercased and trailing `/` on a value is trimmed.
@@ -47,6 +54,8 @@
  * 5. `convertCustom`/`convertCustomWithUrl` take `mapper` before the defaulted `typeBuilder`, the opposite
  *    order from the Kotlin source: TypeScript requires defaulted parameters to come last, so `mapper`
  *    (no default, effectively required for the *Custom variants) has to sit before it.
+ * 6. The suffix rules belong to `defaultTypeBuilder`. For another format pass a `typeBuilder`, use `convertWithUrl`
+ *    with a base and an empty suffix, or spread the problem with your own `type` for any URL.
  */
 
 import type { Status } from "../status.js";
@@ -57,22 +66,36 @@ import { StatusConstants } from "../groups.js";
 import { statusCode } from "../status.js";
 import type { ErrorItem, ErrorDetail } from "./error-item.js";
 import { defaultErrorItem } from "./error-item.js";
+import { detailCode, errParts } from "./internal.js";
 import type { Problem } from "./problem.js";
 
 const KIIT_BASE_URL = "https://www.kiit.dev/docs/kiit-codes";
+const DOCS_PATH = "/docs/codes";
+
+// Two or more dot-separated labels of letters, digits and hyphens, e.g. "stripe.com". Form only, no DNS lookup.
+const DOMAIN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+
+function isDomain(origin: string): boolean {
+  return DOMAIN.test(origin);
+}
 
 /**
- * Default `type` suffix appended to the baseUrl: `scope`/`group`/`name`, lowercase-dash. `origin` is
- * left out on purpose, the baseUrl is already specific to one origin, so repeating it would just
- * name that origin twice in the URL. An empty `scope` is skipped.
+ * Default `type` suffix appended to the baseUrl: `scope`/`status`/`group`/`name`, lowercase-dash. Each `.` in the
+ * `scope` starts a new segment and an empty `scope` is skipped. `status` is `passed` or `failed`, the first part of
+ * `statusCode`. The last three segments are always `status/group/name`, so a scope of any depth stays unambiguous.
+ * `origin` is left out on purpose, the baseUrl is already specific to one origin, so repeating it would just name
+ * that origin twice in the URL.
  *
  * ```ts
  * const status = Rejected("DUPLICATE_CHARGE", "Duplicate", "stripe.com", "payments.cards");
- * defaultTypeBuilder(status);   // "payments.cards/rejected/duplicate-charge"
+ * defaultTypeBuilder(status);   // "payments/cards/failed/rejected/duplicate-charge"
  *
  * const noScope = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1");
- * defaultTypeBuilder(noScope);  // "rejected/out-of-stock"
+ * defaultTypeBuilder(noScope);  // "failed/rejected/out-of-stock"
  * ```
+ *
+ * This is the default suffix only. It applies with or without a `baseUrls` entry. Pass your own `typeBuilder` to
+ * `convert` for another format.
  *
  * `StatusConstants.KIIT` is the exception: kiit-codes' own docs don't have a per-code anchor yet,
  * just the taxonomy page as a whole, so every kiit-origin status instead gets its `code` as a
@@ -85,8 +108,9 @@ export function defaultTypeBuilder(status: Status): string {
   if (status.origin === StatusConstants.KIIT) return `?code=${statusCode(status)}#taxonomy`;
 
   const toUriSegment = (s: string): string => s.toLowerCase().replace(/_/g, "-");
-  const segments = [status.scope, status.group, status.name].filter((s): s is string => s.length > 0);
-  return segments.map(toUriSegment).join("/");
+  const scope = status.scope.split(".").filter((s) => s.length > 0);
+  const state = status.success ? "passed" : "failed";
+  return [...scope, state, status.group, status.name].map(toUriSegment).join("/");
 }
 
 /**
@@ -105,17 +129,17 @@ export function ProblemConverter(
 
   function baseUrlFor(status: Status): string {
     const origin = status.origin.toLowerCase();
-    return registered.get(origin) ?? `https://${origin}/problems`;
+    return registered.get(origin) ?? (isDomain(origin) ? `https://${origin}${DOCS_PATH}` : DOCS_PATH);
   }
 
   /**
-   * Same as `convertWithUrl`, but each `Err.ErrorList` entry goes through `mapper` into a `Problem<T>`.
+   * Same as `convertWithUrl`, but each error goes through `mapper` into a `Problem<T>`.
    * This is the one function that assembles the `Problem`, every other `convert*` function ends here.
    *
    * @param status the status to convert.
    * @param err optional error, see `convert`.
    * @param baseUrl text before the suffix, path prefix included. A trailing `/` is trimmed.
-   * @param mapper turns each `Err.ErrorList` entry into a `T`.
+   * @param mapper turns each error into a `T`.
    * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to `defaultTypeBuilder`.
    */
   function convertCustomWithUrl<T extends ErrorItem>(
@@ -129,17 +153,15 @@ export function ProblemConverter(
     const path = typeBuilder(status);
     const joinedWithoutSlash = path.startsWith("?") || path.startsWith("#");
     const type = path.length === 0 ? base : joinedWithoutSlash ? `${base}${path}` : `${base}/${path}`;
-    const code = mapping.toCode(status);
-
-    if (err?.kind === "ErrorList") {
-      return { type, title: status.message, status: code, detail: err.message, errors: err.errors.map(mapper) };
-    }
+    const parts = errParts(err, mapper);
     return {
       type,
-      title: status.message,
-      status: code,
-      detail: err?.message,
-      instance: err?.ref !== undefined ? String(err.ref) : undefined,
+      title: status.title,
+      status: mapping.toCode(status),
+      detail: parts.detail,
+      instance: parts.instance,
+      errors: parts.errors,
+      code: detailCode(status),
     };
   }
 
@@ -161,12 +183,12 @@ export function ProblemConverter(
   }
 
   /**
-   * Same as `convert`, but each `Err.ErrorList` entry goes through `mapper` into a `Problem<T>`. Use this
+   * Same as `convert`, but each error goes through `mapper` into a `Problem<T>`. Use this
    * for anything richer than field + message, see `ErrorItem`.
    *
    * @param status the status to convert.
    * @param err optional error, see `convert`.
-   * @param mapper turns each `Err.ErrorList` entry into a `T`.
+   * @param mapper turns each error into a `T`.
    * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to `defaultTypeBuilder`.
    */
   function convertCustom<T extends ErrorItem>(
@@ -183,7 +205,9 @@ export function ProblemConverter(
    * the origin when there is no entry.
    *
    * @param status the status to convert.
-   * @param err optional error, an `Err.ErrorList` fills `errors`, any other fills `instance`. Both fill `detail`.
+   * @param err optional error. Every error in it goes into `errors`: an `ErrorList` is expanded, recursively, and any
+   *   other `Err` is one entry, so an `ErrorField` keeps its field. `detail` is the error's message, or the first
+   *   non-blank error message when that is blank. A single error also fills `instance` from `ref`.
    * @param typeBuilder returns the `type` suffix, not a full URL. Defaults to `defaultTypeBuilder`.
    */
   function convert(

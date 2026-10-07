@@ -24,7 +24,7 @@ describe("RestrictedError / InvalidError / RejectedError / UnservedError", () =>
   it("defaults errors to a single entry wrapping the status", () => {
     const e = new RestrictedError(Restricted.UNAUTHORIZED);
     expect(e.errors).toHaveLength(1);
-    expect(e.errors[0]?.message).toBe(Restricted.UNAUTHORIZED.message);
+    expect(e.errors[0]?.message).toBe(Restricted.UNAUTHORIZED.title);
   });
 
   it("stores explicit errors instead of the default", () => {
@@ -41,7 +41,7 @@ describe("RestrictedError / InvalidError / RejectedError / UnservedError", () =>
 
   it("takes its message from the underlying status", () => {
     const e = new UnservedError(Unserved.UNREACHABLE);
-    expect(e.message).toBe(e.checked.status.message);
+    expect(e.message).toBe(e.checked.status.title);
   });
 
   it("sets .name to the concrete subclass name, not the abstract base", () => {
