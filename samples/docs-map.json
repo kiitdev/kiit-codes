@@ -13,11 +13,11 @@
   },
   "versions": {
     "kotlin": {
-      "file": "kiit-codes-kotlin/kiit-codes/build.gradle.kts",
+      "file": "kiit-codes/build.gradle.kts",
       "regex": "val libraryVersion = \"([^\"]+)\""
     },
     "java": {
-      "file": "kiit-codes-kotlin/kiit-codes/build.gradle.kts",
+      "file": "kiit-codes/build.gradle.kts",
       "regex": "val libraryVersion = \"([^\"]+)\""
     },
     "typescript": {

@@ -17,11 +17,11 @@ import {
 /**
  * Cross-checks this TS port's `Codes` directly against the Kotlin source text, so a future
  * Kotlin change (a renamed/added/removed code, a reworded message) fails this test instead of
- * silently drifting. Depends on this repo's layout: kiit-codes-kotlin/ as a sibling of ports/.
+ * silently drifting. Depends on this repo's layout: kiit-codes/ as a sibling of ports/.
  */
 
 const KOTLIN_STATUS_PATH = fileURLToPath(
-  new URL("../../../kiit-codes-kotlin/kiit-codes/src/commonMain/kotlin/kiit/codes/Status.kt", import.meta.url),
+  new URL("../../../kiit-codes/src/commonMain/kotlin/kiit/codes/Status.kt", import.meta.url),
 );
 
 const GROUP_NAMES = [
