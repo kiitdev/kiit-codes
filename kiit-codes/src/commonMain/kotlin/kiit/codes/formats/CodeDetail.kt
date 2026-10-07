@@ -11,14 +11,13 @@ import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 
 /**
- * kiit-native counterpart to [Problem]: `code`/`message` instead of RFC 9457's
- * `type`/`title`/`status`.
+ * kiit-native counterpart to [Problem]: `code` instead of RFC 9457's `type`, and `status` is optional.
  *
  * ```json
  * {
  *     "code": "stripe.com:payments.cards:Failed:Rejected:DUPLICATE_CHARGE",
  *     "success": false,
- *     "message": "This charge has already been processed"
+ *     "title": "This charge has already been processed"
  * }
  * ```
  *
@@ -40,7 +39,8 @@ data class CodeDetail<T : ErrorItem>(
     val status: Int? = null,
 )
 
-private fun Status.detailCode(): String = "$origin:$scope:$code"
+/** The exact identity of a status, `{origin}:{scope}:{Status.code}`. Shared by [CodeDetail.code] and [Problem.code]. */
+internal fun Status.detailCode(): String = "$origin:$scope:$code"
 
 /**
  * Builds the default [CodeDetail]\<[ErrorDetail]\> for [status] (and optionally [err]). Pass
