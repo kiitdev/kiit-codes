@@ -33,7 +33,7 @@ import kotlin.jvm.JvmOverloads
 data class CodeDetail<T : ErrorItem>(
     val code: String,
     val success: Boolean,
-    val message: String,
+    val title: String,
     val detail: String? = null,
     val instance: String? = null,
     val errors: List<T>? = null,
@@ -70,7 +70,7 @@ fun <T : ErrorItem> toCodeDetail(
             CodeDetail(
                 code = status.detailCode(),
                 success = status.success,
-                message = status.message,
+                title = status.message,
                 detail = err.message,
                 errors = err.errors.map(mapper),
                 status = httpStatus,
@@ -79,7 +79,7 @@ fun <T : ErrorItem> toCodeDetail(
             CodeDetail(
                 code = status.detailCode(),
                 success = status.success,
-                message = status.message,
+                title = status.message,
                 detail = err?.message,
                 instance = err?.ref?.toString(),
                 status = httpStatus,

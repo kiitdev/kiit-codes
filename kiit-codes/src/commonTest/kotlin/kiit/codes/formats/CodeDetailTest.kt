@@ -36,7 +36,7 @@ class CodeDetailTest {
         val detail = toCodeDetail(status)
         assertEquals("${status.origin}:${status.scope}:${status.code}", detail.code)
         assertEquals(status.success, detail.success)
-        assertEquals(status.message, detail.message)
+        assertEquals(status.message, detail.title)
     }
 
     @Test

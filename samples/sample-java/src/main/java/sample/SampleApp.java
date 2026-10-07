@@ -109,7 +109,7 @@ public class SampleApp {
         CodeDetail<ErrorDetail> stripeCode = CodeDetails.toCodeDetail(duplicateCharge);
         System.out.println("[kiit] code: " + stripeCode.getCode());
         System.out.println("[kiit] success: " + stripeCode.getSuccess());
-        System.out.println("[kiit] message: " + stripeCode.getMessage());
+        System.out.println("[kiit] message: " + stripeCode.title());
         System.out.println("[kiit] status: " + stripeCode.getStatus()); // null, no mapping supplied
 
         // Pass a mapping when this shape is still going out over HTTP and the status is worth

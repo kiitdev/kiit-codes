@@ -151,7 +151,7 @@ fun test4() {
     val stripeCode = toCodeDetail(duplicateCharge)
     println("[kiit] code: ${stripeCode.code}")
     println("[kiit] success: ${stripeCode.success}")
-    println("[kiit] message: ${stripeCode.message}")
+    println("[kiit] message: ${stripeCode.title}")
     println("[kiit] status: ${stripeCode.status}") // null, no mapping supplied
 
     // Pass a mapping when this shape is still going out over HTTP and the status is worth
