@@ -21,6 +21,8 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 [plugins]
 kotlin-jvm              = { id = "org.jetbrains.kotlin.jvm",         version.ref = "kotlin" }
 kotlinMultiplatform     = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+# Sample apps only, for @Serializable in the docs examples
+kotlin-serialization    = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 androidLibrary          = { id = "com.android.library",              version.ref = "agp"    }
 vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish",     version.ref = "vanniktechMavenPublish" }
 ktlint                  = { id = "org.jlleitschuh.gradle.ktlint",    version.ref = "ktlint"  }

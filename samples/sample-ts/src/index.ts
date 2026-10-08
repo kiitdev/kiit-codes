@@ -43,8 +43,11 @@ import {
   ErrorList,
   ProblemConverter,
   toCodeDetail,
+  isDefault,
+  toError,
+  RejectedError,
 } from "@kiitdev/codes";
-import type { Status, Passed, Failed, ErrorItem } from "@kiitdev/codes";
+import type { Status, Passed, Failed, ErrorItem, CodeLookup } from "@kiitdev/codes";
 
 function check(condition: boolean, label: string): void {
   if (!condition) {
@@ -404,6 +407,342 @@ function showFormats(): void {
   check(richProblem.detail === "Too long", "convertCustom(...) with a custom error shape");
 }
 
+/**
+ * Guide: recipes. Each one stands alone, so the page can show it as it is.
+ * The TypeScript port has no CodesToGrpc and no CompositeLookup yet, so those two recipes differ from Kotlin.
+ */
+function showGuide(): void {
+  guideBuiltins();
+  guideCustomCode();
+  guidePatternMatching();
+  guideCollectErrors();
+  guideErrorDetails();
+  guideExceptions();
+  guideJson();
+  guideTypeUrl();
+  guideCustomTypeUrl();
+  guideHttp();
+  guideCustomProtocol();
+}
+
+function guideBuiltins(): void {
+  section("Guide: Status: Built-ins");
+
+  // <example id="guide-builtins" tags="guide">
+  // A specific built-in code
+  const created = Succeeded.CREATED;
+  // The group's default, when you only know the kind of outcome
+  const failed = Invalid.DEFAULT;
+  // INVALID_VALUE
+  console.log(failed.name);
+  // true
+  console.log(isDefault(failed));
+  // false
+  console.log(isDefault(Invalid.BAD_REQUEST));
+  // </example>
+  check(created.name === "CREATED", "guide-builtins: created");
+  check(failed === Invalid.INVALID_VALUE && isDefault(failed), "guide-builtins: default");
+  check(!isDefault(Invalid.BAD_REQUEST), "guide-builtins: not default");
+}
+
+function guideCustomCode(): void {
+  section("Guide: Status: Custom code");
+
+  // <example id="guide-custom-code" tags="guide">
+  const PAYMENT_DECLINED = Rejected("PAYMENT_DECLINED", "Payment declined", "payments.example.com", "payments.cards");
+  // </example>
+  check(PAYMENT_DECLINED.group === Groups.REJECTED, "guide-custom-code: group");
+  check(
+    PAYMENT_DECLINED.origin === "payments.example.com" && PAYMENT_DECLINED.scope === "payments.cards",
+    "guide-custom-code: origin and scope",
+  );
+}
+
+function guidePatternMatching(): void {
+  section("Guide: Status: Pattern matching");
+
+  // <example id="guide-pattern-matching" tags="guide">
+  // 1. Passed or Failed
+  function binary(status: Status): string {
+    if (status.success) {
+      return `ok: ${status.name}`;
+    }
+    return `failed: ${status.name}`;
+  }
+
+  // 2. Each of the eight groups. The compiler flags a missing group.
+  function nested(status: Status): string {
+    switch (status.group) {
+      case Groups.SUCCEEDED:
+        return "done";
+      case Groups.PENDING:
+        return "in progress";
+      case Groups.EXCLUDED:
+        return "skipped";
+      case Groups.INFORMATION:
+        return "for your information";
+      case Groups.RESTRICTED:
+        return "not allowed";
+      case Groups.INVALID:
+        return "fix the input";
+      case Groups.REJECTED:
+        return "refused by a rule";
+      case Groups.UNSERVED:
+        return "try again later";
+      default:
+        return assertNever(status);
+    }
+  }
+
+  // 3. Specific to broad: a code, then a group, then Failed or Passed
+  function hybrid(status: Status): string {
+    if (status.group === Groups.REJECTED && status.name === "CONFLICT") {
+      return "already exists";
+    }
+    if (status.group === Groups.INVALID) {
+      return "fix the input";
+    }
+    if (!status.success) {
+      return `failed: ${status.name}`;
+    }
+    return `ok: ${status.name}`;
+  }
+
+  // failed: INVALID_VALUE
+  console.log(binary(Invalid.INVALID_VALUE));
+  // in progress
+  console.log(nested(Pending.QUEUED));
+  // already exists
+  console.log(hybrid(Rejected.CONFLICT));
+  // </example>
+  check(binary(Invalid.INVALID_VALUE) === "failed: INVALID_VALUE" && binary(Succeeded.SUCCESS) === "ok: SUCCESS", "guide-pattern-matching: binary");
+  check(nested(Succeeded.SUCCESS) === "done" && nested(Pending.QUEUED) === "in progress", "guide-pattern-matching: nested passed");
+  check(nested(Excluded.SKIPPED) === "skipped" && nested(Information.NOTICE) === "for your information", "guide-pattern-matching: nested passed rest");
+  check(nested(Invalid.INVALID_VALUE) === "fix the input" && nested(Unserved.TIMEOUT) === "try again later", "guide-pattern-matching: nested failed");
+  check(nested(Restricted.DENIED) === "not allowed" && nested(Rejected.CONFLICT) === "refused by a rule", "guide-pattern-matching: nested failed rest");
+  check(hybrid(Rejected.CONFLICT) === "already exists", "guide-pattern-matching: hybrid code first");
+  check(hybrid(Invalid.INVALID_VALUE) === "fix the input", "guide-pattern-matching: hybrid group");
+  check(hybrid(Unserved.TIMEOUT) === "failed: TIMEOUT" && hybrid(Succeeded.SUCCESS) === "ok: SUCCESS", "guide-pattern-matching: hybrid broad");
+}
+
+function guideCollectErrors(): void {
+  section("Guide: Error Handling: Collect errors");
+
+  // <example id="guide-collect-errors" tags="guide">
+  function validateTitle(title: string): Checked {
+    if (title.trim() !== "") {
+      return Checked.success();
+    }
+    return Checked.failure(Invalid.INVALID_VALUE, [Err.on("title", title, "must not be blank")]);
+  }
+
+  function validateListId(listId: string): Checked {
+    if (["personal", "team"].includes(listId)) {
+      return Checked.success();
+    }
+    return Checked.failure(Invalid.NOT_FOUND, [Err.on("listId", listId, "unknown list")]);
+  }
+
+  const checked = collect(validateTitle(""), validateListId("unknown-list"));
+  // valid = false, errors = 2
+  console.log(`valid = ${checked.isValid}, errors = ${checked.errors.length}`);
+  // </example>
+  check(!checked.isValid, "guide-collect-errors: invalid");
+  check(checked.errors.length === 2, "guide-collect-errors: two errors");
+}
+
+function guideErrorDetails(): void {
+  section("Guide: Error Handling: Error details");
+
+  // <example id="guide-error-details" tags="guide">
+  // A plain message
+  const plain = Err.of("title is required");
+  // An error on one field, with its value
+  const title = Err.on("title", "", "must be 1-100 characters");
+  // The same, without the value
+  const password = Err.onField("password", "must be at least 12 characters");
+  // Several plain messages under one message
+  const many = Err.list(["title is required", "list is unknown"], "Validation failed");
+  // </example>
+  check(plain.message === "title is required", "guide-error-details: plain");
+  check(title.kind === "ErrorField" && title.field === "title", "guide-error-details: field");
+  check(password.kind === "ErrorField" && password.field === "password", "guide-error-details: no value");
+  check(many.errors.length === 2 && many.message === "Validation failed", "guide-error-details: list");
+}
+
+function guideExceptions(): void {
+  section("Guide: Error Handling: Exceptions");
+
+  // <example id="guide-exceptions" tags="guide">
+  function create(title: string): Status {
+    return title === "groceries" ? Rejected.CONFLICT : Succeeded.CREATED;
+  }
+
+  function createOrThrow(title: string): void {
+    const status = create(title);
+    if (!status.success) {
+      throw toError(status);
+    }
+  }
+
+  try {
+    createOrThrow("groceries");
+  } catch (e) {
+    if (e instanceof RejectedError) {
+      // CONFLICT
+      console.log(e.status.name);
+    }
+  }
+  // </example>
+  let caught = "";
+  try {
+    createOrThrow("groceries");
+  } catch (e) {
+    if (e instanceof RejectedError) caught = e.status.name;
+  }
+  check(caught === "CONFLICT", "guide-exceptions: caught");
+}
+
+function guideJson(): void {
+  section("Guide: Response: JSON");
+
+  // <example id="guide-json" tags="guide">
+  // A Problem and a CodeDetail are plain objects, so JSON.stringify works on them directly.
+  // Listing the fields sets their order in the JSON.
+  const errors = ErrorList([Err.on("title", "", "must be 1-100 characters")], "Validation failed");
+  const problem = ProblemConverter().convert(Invalid.INVALID_VALUE, errors);
+  const detail = toCodeDetail(Invalid.INVALID_VALUE, errors);
+
+  // An RFC 9457 problem, for an HTTP API
+  console.log(
+    JSON.stringify(
+      {
+        type: problem.type,
+        title: problem.title,
+        detail: problem.detail,
+        code: problem.code,
+        status: problem.status,
+        errors: problem.errors,
+      },
+      null,
+      2,
+    ),
+  );
+  // A CodeDetail, for your own services
+  console.log(
+    JSON.stringify(
+      {
+        code: detail.code,
+        title: detail.title,
+        detail: detail.detail,
+        success: detail.success,
+        errors: detail.errors,
+      },
+      null,
+      2,
+    ),
+  );
+  // </example>
+  const problemText = JSON.stringify({ type: problem.type, title: problem.title, detail: problem.detail, code: problem.code, status: problem.status, errors: problem.errors }, null, 2);
+  const detailText = JSON.stringify({ code: detail.code, title: detail.title, detail: detail.detail, success: detail.success, errors: detail.errors }, null, 2);
+  const keys = (text: string) => text.split("\n").filter((l) => /^  "/.test(l)).map((l) => l.trim().split(":")[0]);
+  check(keys(problemText).join() === '"type","title","detail","code","status","errors"', "guide-json: problem field order");
+  check(keys(detailText).join() === '"code","title","detail","success","errors"', "guide-json: code detail field order");
+}
+
+function guideTypeUrl(): void {
+  section("Guide: Response: Type URL");
+
+  // <example id="guide-type-url" tags="guide">
+  const stripe = Rejected("DUPLICATE_CHARGE", "Duplicate charge", "stripe.com", "payments.cards");
+  const plain = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1");
+
+  // 1. A domain origin and nothing registered
+  // https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge
+  console.log(ProblemConverter().convert(stripe).type);
+
+  // 2. A plain id is not a domain, so the type is relative
+  // /docs/codes/failed/rejected/out-of-stock
+  console.log(ProblemConverter().convert(plain).type);
+
+  // 3. A base URL registered for the origin
+  // https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge
+  const registered = ProblemConverter({ "stripe.com": "https://stripe.com/errors" });
+  console.log(registered.convert(stripe).type);
+  // </example>
+  check(
+    ProblemConverter().convert(stripe).type === "https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge",
+    "guide-type-url: domain",
+  );
+  check(ProblemConverter().convert(plain).type === "/docs/codes/failed/rejected/out-of-stock", "guide-type-url: plain id");
+  check(
+    registered.convert(stripe).type === "https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge",
+    "guide-type-url: registered",
+  );
+}
+
+function guideCustomTypeUrl(): void {
+  section("Guide: Response: Custom type URL");
+
+  // <example id="guide-custom-type-url" tags="guide">
+  const stripe = Rejected("DUPLICATE_CHARGE", "Duplicate charge", "stripe.com", "payments.cards");
+  const problems = ProblemConverter();
+
+  // 1. Your own suffix, with a type builder
+  // https://stripe.com/docs/codes/charges/duplicate
+  console.log(problems.convert(stripe, undefined, () => "charges/duplicate").type);
+
+  // 2. Exactly one URL, a base with an empty suffix
+  // https://example.com/probs/duplicate-charge
+  console.log(problems.convertWithUrl(stripe, undefined, "https://example.com/probs/duplicate-charge", () => "").type);
+
+  // 3. Any URL at all, by copying the Problem
+  // https://other.example.org/probs/duplicate
+  console.log({ ...problems.convert(stripe), type: "https://other.example.org/probs/duplicate" }.type);
+  // </example>
+  check(problems.convert(stripe, undefined, () => "charges/duplicate").type === "https://stripe.com/docs/codes/charges/duplicate", "guide-custom-type-url: builder");
+  check(
+    problems.convertWithUrl(stripe, undefined, "https://example.com/probs/duplicate-charge", () => "").type === "https://example.com/probs/duplicate-charge",
+    "guide-custom-type-url: exact",
+  );
+  check({ ...problems.convert(stripe), type: "https://other.example.org/probs/duplicate" }.type === "https://other.example.org/probs/duplicate", "guide-custom-type-url: copy");
+  check(problems.convert(stripe).code === { ...problems.convert(stripe), type: "https://x.example/y" }.code, "guide-custom-type-url: code unchanged");
+}
+
+function guideHttp(): void {
+  section("Guide: Response: HTTP");
+
+  // <example id="guide-http" tags="guide">
+  const http = CodesToHttp();
+
+  // 201
+  console.log(http.toCode(Succeeded.CREATED));
+  // 409
+  console.log(http.toCode(Rejected.CONFLICT));
+  // </example>
+  check(http.toCode(Succeeded.CREATED) === 201 && http.toCode(Rejected.CONFLICT) === 409, "guide-http: http");
+}
+
+function guideCustomProtocol(): void {
+  section("Guide: Response: Custom protocol");
+
+  // <example id="guide-custom-protocol" tags="guide">
+  const PAYMENT_DECLINED = Rejected("PAYMENT_DECLINED", "Payment declined", "payments.example.com");
+
+  // Your value first, the base mapping for everything else
+  const base = CodesToHttp();
+  const http: CodeLookup = {
+    toCode: (status) => (status.origin === PAYMENT_DECLINED.origin && status.name === PAYMENT_DECLINED.name ? 402 : base.toCode(status)),
+  };
+  // 402
+  console.log(http.toCode(PAYMENT_DECLINED));
+  // 409
+  console.log(http.toCode(Rejected.CONFLICT));
+  // </example>
+  check(http.toCode(PAYMENT_DECLINED) === 402, "guide-custom-protocol: extension");
+  check(http.toCode(Rejected.CONFLICT) === 409, "guide-custom-protocol: falls back to the base");
+}
+
 showCoreFunctionality();
 showExhaustivenessOverPassedAndFailed();
 showExhaustivenessOverPassedGroups();
@@ -411,6 +750,7 @@ showExhaustivenessOverFailedGroups();
 showErrors();
 showChecked();
 showFormats();
+showGuide();
 
 console.log(`\n${SEPARATOR}`);
 console.log("All sample-ts checks passed.");
