@@ -201,7 +201,6 @@ function showFormats(): void {
   const EMPTY_TITLE = Invalid("EMPTY_TITLE", "Title must not be empty", "samples.kiit.dev");
   const DUPLICATE_TASK = Rejected("DUPLICATE_TASK", "That task is already on the list", "samples.kiit.dev", "lists.team");
 
-  // <example id="rfc9457-minimal" tags="rfc9457,conversion">
   // A built-in status as an RFC 9457 problem. Built-in codes point at the kiit taxonomy page.
   const problems = ProblemConverter();
   const minimal = problems.convert(Rejected.CONFLICT);
@@ -219,14 +218,12 @@ function showFormats(): void {
   );
   const withErrors = problems.convert(Invalid.INVALID_VALUE, validation);
   console.log(`${withErrors.detail}, ${withErrors.errors?.length} errors`); // Validation failed, 2 errors
-  // </example>
   check(minimal.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy", "rfc9457-minimal: type");
   check(minimal.title === Rejected.CONFLICT.title, "rfc9457-minimal: title");
   check(minimal.status === 409, "rfc9457-minimal: status");
   check(withErrors.detail === "Validation failed", "rfc9457-minimal: detail");
   check(withErrors.errors?.length === 2, "rfc9457-minimal: errors");
 
-  // <example id="rfc9457-problem" tags="rfc9457,json">
   // A validation failure as an RFC 9457 problem, written as JSON
   const fieldErrors = ErrorList(
     [
@@ -238,11 +235,9 @@ function showFormats(): void {
   const body = ProblemConverter().convert(Invalid.INVALID_VALUE, fieldErrors);
 
   console.log(JSON.stringify(body, null, 2));
-  // </example>
   check(body.status === 400, "rfc9457-problem: status");
   check(body.errors?.length === 2, "rfc9457-problem: errors");
 
-  // <example id="codedetail-json" tags="codedetail,json">
   // A validation failure as a CodeDetail, written as JSON
   const codeFailures = ErrorList(
     [
@@ -254,35 +249,27 @@ function showFormats(): void {
   const codeDetail = toCodeDetail(Invalid.INVALID_VALUE, codeFailures);
 
   console.log(JSON.stringify(codeDetail, null, 2));
-  // </example>
   check(codeDetail.code === "kiit.dev:codes:Failed:Invalid:INVALID_VALUE", "codedetail-json: code");
   check(codeDetail.errors?.length === 2, "codedetail-json: errors");
 
-  // <example id="rfc9457-domain-origin" tags="rfc9457,origin">
   // A custom code whose origin is a domain needs no registration: https://{origin}/docs/codes/{status}/{group}/{name}
   const domain = problems.convert(EMPTY_TITLE);
   console.log(domain.type); // https://samples.kiit.dev/docs/codes/failed/invalid/empty-title
-  // </example>
   check(domain.type === "https://samples.kiit.dev/docs/codes/failed/invalid/empty-title", "rfc9457-domain-origin: type");
 
-  // <example id="rfc9457-registered" tags="rfc9457,origin">
   // Register a base URL when the docs live somewhere else. An entry wins over the origin.
   const registered = ProblemConverter({ "samples.kiit.dev": "https://docs.samples.kiit.dev/errors" });
   console.log(registered.convert(EMPTY_TITLE).type); // https://docs.samples.kiit.dev/errors/failed/invalid/empty-title
-  // </example>
   check(
     registered.convert(EMPTY_TITLE).type === "https://docs.samples.kiit.dev/errors/failed/invalid/empty-title",
     "rfc9457-registered: type",
   );
 
-  // <example id="rfc9457-scope" tags="rfc9457">
   // Each dot in a scope starts a new path segment, before the status, group and name
   const scoped = problems.convert(DUPLICATE_TASK);
   console.log(scoped.type); // https://samples.kiit.dev/docs/codes/lists/team/failed/rejected/duplicate-task
-  // </example>
   check(scoped.type === "https://samples.kiit.dev/docs/codes/lists/team/failed/rejected/duplicate-task", "rfc9457-scope: type");
 
-  // <example id="rfc9457-custom-item" tags="rfc9457">
   // When field + message isn't enough, map each error into your own type
   interface RichError extends ErrorItem {
     readonly field?: string;
@@ -295,11 +282,9 @@ function showFormats(): void {
     hint: "ask the list owner instead",
   }));
   console.log(rich.errors?.[0]); // { field: 'title', message: 'must be 1-100 characters', hint: 'ask the list owner instead' }
-  // </example>
   check(rich.errors?.[0]?.hint === "ask the list owner instead", "rfc9457-custom-item: hint");
   check(rich.errors?.length === 2, "rfc9457-custom-item: count");
 
-  // <example id="rfc9457-vs-codedetail" tags="rfc9457,conversion">
   // The same status as an RFC 9457 problem (for an HTTP API) and as kiit's own CodeDetail (service to service)
   const forbidden = Restricted.FORBIDDEN;
   const asProblem = ProblemConverter().convert(forbidden);
@@ -320,24 +305,20 @@ function showFormats(): void {
   //   "title": "Access to this resource is forbidden.",
   //   "status": 403
   // }
-  // </example>
   check(asProblem.status === 403 && asDetail.status === 403, "rfc9457-vs-codedetail: same status");
   check(asDetail.code === "kiit.dev:codes:Failed:Restricted:FORBIDDEN", "rfc9457-vs-codedetail: code");
 
-  // <example id="rfc9457-plain-origin" tags="rfc9457,origin">
   // A plain id isn't a domain, so the type is a relative path. Register a base URL or use a domain for an absolute URL.
   const plain = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1");
   console.log(problems.convert(plain).type); // /docs/codes/failed/rejected/out-of-stock
   const fixed = ProblemConverter({ myapp1: "https://docs.example.com/myapp1/errors" });
   console.log(fixed.convert(plain).type); // https://docs.example.com/myapp1/errors/failed/rejected/out-of-stock
-  // </example>
   check(problems.convert(plain).type === "/docs/codes/failed/rejected/out-of-stock", "rfc9457-plain-origin: relative");
   check(
     fixed.convert(plain).type === "https://docs.example.com/myapp1/errors/failed/rejected/out-of-stock",
     "rfc9457-plain-origin: registered",
   );
 
-  // <example id="rfc9457-custom-type" tags="rfc9457,origin">
   // For your own type URLs there is no new API. Pick the way that fits how much of the URL you control.
   // 1. A typeBuilder builds the part after the base URL. Wrap it once so callers don't repeat it.
   const taskType = (status: Status): string => `tasks/${status.name.toLowerCase().replace(/_/g, "-")}`;
@@ -354,7 +335,6 @@ function showFormats(): void {
 
   // code is built from the status, not from type, so it is the same in all three
   console.log(replaced.code); // samples.kiit.dev::Failed:Invalid:EMPTY_TITLE
-  // </example>
   check(toProblem(EMPTY_TITLE).type === "https://samples.kiit.dev/docs/codes/tasks/empty-title", "rfc9457-custom-type: typeBuilder");
   check(exact.type === "https://example.com/probs/empty-title", "rfc9457-custom-type: empty suffix");
   check(replaced.type === "https://other.example.org/probs/empty-title", "rfc9457-custom-type: spread");
@@ -405,6 +385,85 @@ function showFormats(): void {
     hint: "check formatting",
   }));
   check(richProblem.detail === "Too long", "convertCustom(...) with a custom error shape");
+}
+
+/** Tutorial: three short steps, each one a quick win. */
+function showTutorial(): void {
+  tutorialStatus();
+  tutorialValidate();
+}
+
+function tutorialStatus(): void {
+  section("Tutorial 1: Return a status");
+
+  // <example id="tutorial-status" tags="tutorial">
+  // A failure you expect is a value, not an exception
+  function validate(title: string): Status {
+    if (title.trim() === "") {
+      return Invalid.INVALID_VALUE;
+    }
+    return Succeeded.SUCCESS;
+  }
+
+  const good = validate("buy milk");
+  // success = true, group = Succeeded, name = SUCCESS
+  console.log(`success = ${good.success}, group = ${good.group}, name = ${good.name}`);
+
+  const bad = validate("");
+  // success = false, group = Invalid, name = INVALID_VALUE
+  console.log(`success = ${bad.success}, group = ${bad.group}, name = ${bad.name}`);
+  // </example>
+  check(good === Succeeded.SUCCESS && good.success && good.group === "Succeeded", "tutorial-status: passes");
+  check(bad === Invalid.INVALID_VALUE && !bad.success && bad.group === "Invalid", "tutorial-status: fails");
+}
+
+function tutorialValidate(): void {
+  section("Tutorial 2 and 3: Validate, then build a problem");
+
+  // <example id="tutorial-validate" tags="tutorial">
+  // Checked carries the status and the errors together
+  function validate(title: string): Checked {
+    if (title.trim() !== "") {
+      return Checked.success();
+    }
+    return Checked.failure(Invalid.INVALID_VALUE, [Err.on("title", title, "must not be blank")]);
+  }
+
+  const checked = validate("");
+  // failed: INVALID_VALUE
+  if (checked.status.success) {
+    console.log(`ok: ${checked.status.name}`);
+  } else {
+    console.log(`failed: ${checked.status.name}`);
+  }
+  // </example>
+  check(!checked.isValid && !checked.status.success, "tutorial-validate: failed");
+  check(checked.errors.length === 1, "tutorial-validate: one error");
+
+  // <example id="tutorial-problem" tags="tutorial,rfc9457">
+  const errors = ErrorList(checked.errors, "Validation failed");
+
+  // The failure as an RFC 9457 problem, for an HTTP API
+  const problem = ProblemConverter().convert(checked.status, errors);
+  // 400
+  console.log(problem.status);
+  // 1
+  console.log(problem.errors?.length);
+
+  // The same failure as kiit's CodeDetail, self-contained, for your own services
+  const detail = toCodeDetail(checked.status, errors);
+  // kiit.dev:codes:Failed:Invalid:INVALID_VALUE
+  console.log(detail.code);
+  // false
+  console.log(detail.success);
+  // </example>
+  check(problem.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#taxonomy", "tutorial-problem: type");
+  check(problem.title === "The request had an invalid value." && problem.status === 400, "tutorial-problem: title and status");
+  check(problem.detail === "Validation failed" && problem.errors?.length === 1, "tutorial-problem: detail and errors");
+  check(problem.code === "kiit.dev:codes:Failed:Invalid:INVALID_VALUE", "tutorial-problem: code");
+  check(detail.code === "kiit.dev:codes:Failed:Invalid:INVALID_VALUE" && !detail.success, "tutorial-problem: detail code and success");
+  check(detail.title === "The request had an invalid value." && detail.detail === "Validation failed", "tutorial-problem: detail title and text");
+  check(detail.errors?.length === 1 && detail.errors[0].field === "title", "tutorial-problem: detail errors");
 }
 
 /**
@@ -750,6 +809,7 @@ showExhaustivenessOverFailedGroups();
 showErrors();
 showChecked();
 showFormats();
+showTutorial();
 showGuide();
 
 console.log(`\n${SEPARATOR}`);

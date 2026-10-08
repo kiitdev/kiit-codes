@@ -14,8 +14,7 @@ application {
 
 dependencies {
     implementation(project(":kiit-codes"))
-    // Only used to show a Problem as JSON three ways in SampleApp, kiit-codes has no serialization dependency
-    implementation(libs.jackson.module.kotlin)
+    // Only used to show a Problem as JSON in SampleApp, kiit-codes has no serialization dependency
     implementation(libs.kotlinx.serialization.json)
 }
 
