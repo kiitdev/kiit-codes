@@ -1,0 +1,40 @@
+{
+  "name": "kiit-codes",
+  "tagline": "A Kotlin library to classify and handle success and failure.",
+  "status": "published",
+  "license": "Apache-2.0",
+  "repo": "https://github.com/kiitdev/kiit-codes",
+  "links": {
+    "issues": "https://github.com/kiitdev/kiit-codes/issues",
+    "ci": "https://github.com/kiitdev/kiit-codes/actions/workflows/ci.yml",
+    "changelog": "https://github.com/kiitdev/kiit-codes/blob/main/CHANGELOG.md"
+  },
+  "artifacts": {
+    "maven": {"group": "dev.kiit", "id": "kiit-codes"},
+    "npm": {"name": "@kiitdev/codes"}
+  },
+  "ios": {"baseName": "KiitCodes"},
+  "platforms": {
+    "kotlin": ["jvm", "android", "iosArm64", "iosSimulatorArm64", "iosX64"],
+    "typescript": ["node", "browser"]
+  },
+  "requirements": {"node": ">=24"},
+  "dependencies": [],
+  "folders": {
+    "source": "kiit-codes",
+    "ts": "ports/kiit-codes-ts",
+    "samples": "samples"
+  },
+  "examples": {
+    "sources": {
+      "kotlin": "samples/sample-kotlin/src/main/kotlin/sample/SampleApp.kt",
+      "java": "samples/sample-java/src/main/java/sample/SampleApp.java",
+      "typescript": "samples/sample-ts/src/index.ts"
+    },
+    "versions": {
+      "kotlin": {"file": "kiit-codes/build.gradle.kts", "regex": "val libraryVersion = \"([^\"]+)\""},
+      "java": {"file": "kiit-codes/build.gradle.kts", "regex": "val libraryVersion = \"([^\"]+)\""},
+      "typescript": {"file": "ports/kiit-codes-ts/package.json", "json": "version"}
+    }
+  }
+}
