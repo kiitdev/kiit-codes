@@ -7,7 +7,7 @@
   },
   "page": "docs/foundations/kiit-codes.md",
   "sources": {
-    "kotlin": "samples/sample-kotlin/src/main/kotlin/sample/SampleApp2.kt",
+    "kotlin": "samples/sample-kotlin/src/main/kotlin/sample/SampleApp.kt",
     "java": "samples/sample-java/src/main/java/sample/SampleApp.java",
     "typescript": "samples/sample-ts/src/index.ts"
   },
