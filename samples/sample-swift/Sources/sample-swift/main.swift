@@ -345,11 +345,11 @@ func guideCustomProtocol() {
     section("Guide: Response: Custom protocol")
 
     // <example id="guide-custom-protocol" tags="guide">
-    let PAYMENT_DECLINED: Status = Failed.Rejected(name: "PAYMENT_DECLINED", title: "Payment declined", origin: "payments.example.com", scope: "")
+    let PAYMENT_DECLINED = Failed.Rejected(name: "PAYMENT_DECLINED", title: "Payment declined", origin: "payments.example.com", scope: "")
 
     let http = CompositeLookup(
         base: CodesToHttp(overrides: CodesToHttp.companion.DEFAULT_OVERRIDES),
-        extensions: [PAYMENT_DECLINED: 402]
+        extensions: [PAYMENT_DECLINED: KotlinInt(int: 402)]
     )
     // 402
     print(http.toCode(status: PAYMENT_DECLINED))
