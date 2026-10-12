@@ -59,7 +59,7 @@ import { ProblemConverter, Rejected, Err } from "@kiitdev/codes";
 const status = Rejected("DUPLICATE_CHARGE", "This charge has already been processed", "stripe.com", "payments.cards");
 const problem = ProblemConverter().convert(status, Err.onField("amount", "Too low"));
 // {
-//   type: "https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge",
+//   type: "https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE",
 //   title: "This charge has already been processed",
 //   status: 409,
 //   detail: "Too low",
@@ -68,10 +68,27 @@ const problem = ProblemConverter().convert(status, Err.onField("amount", "Too lo
 // }
 ```
 
-1. **type:** `{base}/{scope…}/{status}/{group}/{name}`, lowercase with dashes, and each `.` in a scope starts a new segment. A domain origin gives `https://{origin}/docs/codes/...`. Any other origin, such as `"myapp1"`, gives the relative `/docs/codes/...`, so register a base URL to get an absolute one: `ProblemConverter({ myapp1: "https://docs.example.com/myapp1/errors" })`.
-2. **Identity:** `type` is the problem's identity as well as its docs pointer, so pick the base once and keep it. `code` is the exact `{origin}:{scope}:{status code}`, the same string as `CodeDetail.code`. Read it instead of parsing `type`.
-3. **errors:** every error in the `Err` goes into `errors`. A list is expanded, and a single `Err.onField(...)` is one entry that keeps its field.
-4. **Your own type URL:** pass a `typeBuilder` to `convert`, call `convertWithUrl` with a base and an empty suffix, or spread the problem with your own `type`: `{ ...problem, type: "https://..." }`. `code` does not change.
+Four cases cover every `type`:
+
+```ts
+const duplicate = Rejected("DUPLICATE_CHARGE", "Duplicate charge", "stripe.com", "payments.cards");
+const outOfStock = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1");
+```
+
+| # | Case | `type` |
+|---|---|---|
+| 1 | Built-in | `https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes` |
+| 2 | Custom, no base URL, domain origin | `https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE` |
+| 3 | Custom, no base URL, plain id | `/docs/codes/Failed/Rejected/OUT_OF_STOCK` (relative) |
+| 4 | Custom, with a base URL | `https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE` |
+
+1. **type:** `{base}/{scope}/{status}/{group}/{name}`, in exact case. `status` is `Passed` or `Failed`, and each `.` in a scope starts a new segment. The last three segments are the same values as `statusCode(status)`, with `/` in place of `:`. The origin is not in the tail.
+2. **Base:** a `baseUrls` entry for the origin, which is always absolute. With no entry, a domain origin gives `https://{origin}/docs/codes`, and any other id, such as `"myapp1"`, gives the relative `/docs/codes`, so register a base URL for a plain id.
+3. **Built-ins:** the origin `kiit.dev` links to the Codes section of the kiit-codes docs, as `?code=Failed:Invalid:INVALID_VALUE#codes`, and an entry for `kiit.dev` is ignored. The origin is reserved for kiit-authored codes, so a custom status must not use it.
+4. **Names:** a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. Nothing checks this.
+5. **Identity:** `type` is the problem's identity as well as its docs pointer, so pick the base once and keep it. `code` is the exact `{origin}:{scope}:{status code}`, the same string as `CodeDetail.code`. Read it for the origin, the scope and the status. The tail of `type` is not meant to be parsed.
+6. **errors:** every error in the `Err` goes into `errors`. A list is expanded, and a single `Err.onField(...)` is one entry that keeps its field.
+7. **Your own type URL:** pass a `typeBuilder` to `convert`, call `convertWithUrl` with a base and an empty suffix, or spread the problem with your own `type`: `{ ...problem, type: "https://..." }`. `code` does not change.
 
 ## Publishing
 

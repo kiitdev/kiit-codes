@@ -61,22 +61,20 @@ dependencies {
 }
 ```
 
-A status can represent an outcome without requiring exceptions or a result type:
+This is how a code is constructed: a name, a title, an origin that says who owns it, and an optional scope inside that origin.
 
 ```kotlin
 import kiit.codes.*
 
-fun authorize(userId: String, requesterId: String): Status =
-    if (userId != requesterId) Restricted.UNAUTHORIZED
-    else Succeeded.SUCCESS
-
-when (val status = authorize(userId, requesterId)) {
-    is Passed -> log.info("ok: ${status.name}")
-    is Failed -> log.warn("failed: ${status.name} — ${status.title}")
-}
+val MISSING_DATE = Invalid(
+    name = "MISSING_DATE",
+    title = "Date not supplied",
+    origin = "samples.kiit.dev",
+    scope = "tasks",
+)
 ```
 
-Built-in codes expose stable fields suitable for application logic, logging, APIs, and diagnostics:
+Codes expose stable fields suitable for application logic, logging, APIs, and diagnostics:
 
 ```json
 {
@@ -174,40 +172,52 @@ grpc.toCode(Rejected.CONFLICT)   // 6, ALREADY_EXISTS
 
 ### RFC 9457 (Problem Details)
 
-`ProblemConverter` converts a status into an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html) problem details object, for an HTTP API response. A kiit-native equivalent, `CodeDetail`, covers boundaries an HTTP-shaped response doesn't fit — service-to-service calls, background jobs, and similar.
+`ProblemConverter` converts a status into an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html) problem details object, for an HTTP API response. A kiit-native equivalent, `CodeDetail`, covers boundaries an HTTP-shaped response doesn't fit, such as service-to-service calls and background jobs.
 
-The `type` is `{baseUrl}/{scope...}/{status}/{group}/{name}`, lowercase with dashes. `status` is `passed` or `failed`, and each `.` in a scope starts a new segment, so `payments.cards` becomes `payments/cards`. With no entry in `baseUrls`:
-
-1. **Domain origin:** a status with the origin `stripe.com` gets `https://stripe.com/docs/codes/...`, with no registration.
-2. **Any other origin:** an id such as `myapp1` is not a host, so the `type` is the relative `/docs/codes/...`. RFC 9457 prefers absolute URIs, and a relative `type` resolves against the response's own host, so register a base URL to get an absolute one.
-
-Add an entry when an origin's docs live elsewhere. An entry always wins and is always absolute.
+Four cases cover every `type`:
 
 ```kotlin
-import kiit.codes.formats.*
-
-val problems = ProblemConverter(baseUrls = mapOf("payments" to "https://example.com/problems"))
-
-problems.convert(PAYMENT_DECLINED)
+val duplicate = Rejected("DUPLICATE_CHARGE", "Duplicate charge", origin = "stripe.com", scope = "payments.cards")
+val outOfStock = Rejected("OUT_OF_STOCK", "Out of stock", origin = "myapp1")
 ```
+
+| # | Case | `type` |
+|---|---|---|
+| 1 | Built-in | `https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes` |
+| 2 | Custom, no base URL, domain origin | `https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE` |
+| 3 | Custom, no base URL, plain id | `/docs/codes/Failed/Rejected/OUT_OF_STOCK` (relative) |
+| 4 | Custom, with a base URL | `https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE` |
+
+The rules behind them:
+
+1. **Tail:** `{scope}/{status}/{group}/{name}`, in exact case. `status` is `Passed` or `Failed`, and each `.` in a scope starts a new segment. The last three segments are the same values as `Status.code`, with `/` in place of `:`.
+2. **Base:** a `baseUrls` entry for the origin, which is always absolute. With no entry, a domain origin gives `https://{origin}/docs/codes`, and any other id, such as `myapp1`, gives the relative `/docs/codes`. RFC 9457 prefers absolute URIs, and a relative `type` resolves against the response's own host, so register a base URL for a plain id.
+3. **Origin:** it is not in the tail, since the base already belongs to one origin.
+4. **Built-ins:** the origin `kiit.dev` links to the Codes section of these docs, as `?code=Failed:Invalid:INVALID_VALUE#codes`, and a `baseUrls` entry for `kiit.dev` is ignored. The origin is reserved for kiit-authored codes, so a custom status must not use it.
+5. **Names:** a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. Nothing checks this.
 
 ```json
 {
-    "type": "https://example.com/problems/failed/rejected/payment-declined",
+    "type": "https://example.com/problems/Failed/Rejected/PAYMENT_DECLINED",
     "title": "Payment declined",
     "status": 409,
     "code": "payments::Failed:Rejected:PAYMENT_DECLINED"
 }
 ```
 
-`type` is the problem's identity as well as its docs pointer, so pick the base once and keep it, and do not let two statuses produce the same `type`. `code` is the exact `{origin}:{scope}:{Status.code}`, the same string as `CodeDetail.code`. Read it instead of parsing `type`, which is lowercase and may not carry the origin. Every error in the `Err` goes into `errors`: a list is expanded, and a single `Err.on("email", "Missing")` is one entry that keeps its field.
+That is `ProblemConverter(baseUrls = mapOf("payments" to "https://example.com/problems")).convert(PAYMENT_DECLINED)`.
 
-| | `Problem.type` | `CodeDetail.code` |
+`type` is the problem's identity as well as its docs pointer, so pick the base once and keep it, and do not let two statuses produce the same `type`. `code` is the exact `{origin}:{scope}:{Status.code}`, the same string as `CodeDetail.code`, and an empty scope stays an empty slot. Read it for the origin, the scope and the status. The tail of `type` is a readable form of the same values and is not meant to be parsed. Every error in the `Err` goes into `errors`: a list is expanded, and a single `Err.on("email", "Missing")` is one entry that keeps its field.
+
+RFC 9457 sets no structure for `type` beyond being a URI reference, so the exact-case tail is compliant. `code` and `errors` are extension members, which clients ignore if they don't know them.
+
+| Member | `Problem` | `CodeDetail` |
 |---|---|---|
-| Identity | yes, RFC 9457's primary identifier | yes, exact |
-| Docs | yes, when it resolves | no |
-| Self-contained | no, needs a host or a base | yes |
-| Case | lowercase-dash | as written |
+| `code` | `{origin}:{scope}:{Status.code}` | the same string |
+| `title`, `detail`, `instance`, `errors` | same | same |
+| `status` | the HTTP status, always set | optional |
+| `type` | identity and docs link | none |
+| `success` | none | `true` or `false` |
 
 To set your own `type`, no new API is needed. Pass a `typeBuilder` to `convert`, call `convertWithUrl` with a base and an empty suffix, or replace the field with `copy(type = ...)`. `code` is built from the status, so it does not change.
 
