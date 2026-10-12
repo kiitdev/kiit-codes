@@ -7,6 +7,8 @@ import kiit.codes.Invalid
 import kiit.codes.Passed
 import kiit.codes.Restricted
 import kiit.codes.StatusConstants
+import kiit.codes.Succeeded
+import kiit.codes.code
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -19,7 +21,7 @@ class ProblemConverterTest {
         val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = StatusConstants.KIIT)
         val problem = converter.convert(status)
         assertEquals(
-            "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:PAYMENT_REQUIRES_3DS#taxonomy",
+            "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:PAYMENT_REQUIRES_3DS#codes",
             problem.type,
         )
     }
@@ -28,7 +30,7 @@ class ProblemConverterTest {
     fun domainOriginWithNoEntryBuildsTypeFromOrigin() {
         val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "stripe.com", scope = "payments.cards")
         assertEquals(
-            "https://stripe.com/docs/codes/payments/cards/failed/restricted/payment-requires-3ds",
+            "https://stripe.com/docs/codes/payments/cards/Failed/Restricted/PAYMENT_REQUIRES_3DS",
             converter.convert(status).type,
         )
     }
@@ -36,22 +38,22 @@ class ProblemConverterTest {
     @Test
     fun plainIdOriginWithNoEntryGivesARelativeType() {
         val status = Failed.Rejected("OUT_OF_STOCK", "Out of stock", origin = "myapp1")
-        assertEquals("/docs/codes/failed/rejected/out-of-stock", converter.convert(status).type)
+        assertEquals("/docs/codes/Failed/Rejected/OUT_OF_STOCK", converter.convert(status).type)
     }
 
     @Test
     fun originIsLowercasedInTheDerivedBaseUrl() {
         val status = Failed.Rejected("OUT_OF_STOCK", "Out of stock", origin = "Stripe.com")
-        assertEquals("https://stripe.com/docs/codes/failed/rejected/out-of-stock", converter.convert(status).type)
+        assertEquals("https://stripe.com/docs/codes/Failed/Rejected/OUT_OF_STOCK", converter.convert(status).type)
     }
 
     @Test
     fun emptyScopeIsSkippedAndScopeIsTheFirstSegmentWhenSet() {
         val noScope = Failed.Rejected("OUT_OF_STOCK", "Out of stock", origin = "stripe.com")
         val scoped = noScope.copy(scope = "payments.cards")
-        assertEquals("https://stripe.com/docs/codes/failed/rejected/out-of-stock", converter.convert(noScope).type)
+        assertEquals("https://stripe.com/docs/codes/Failed/Rejected/OUT_OF_STOCK", converter.convert(noScope).type)
         assertEquals(
-            "https://stripe.com/docs/codes/payments/cards/failed/rejected/out-of-stock",
+            "https://stripe.com/docs/codes/payments/cards/Failed/Rejected/OUT_OF_STOCK",
             converter.convert(scoped).type,
         )
     }
@@ -60,28 +62,28 @@ class ProblemConverterTest {
     fun convertUsesRegisteredBaseUrlAndFullTypePath() {
         val problems = ProblemConverter(mapOf("stripe.com" to "https://stripe.com/errors"))
         val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "stripe.com", scope = "payments.cards")
-        assertEquals("https://stripe.com/errors/payments/cards/failed/restricted/payment-requires-3ds", problems.convert(status).type)
+        assertEquals("https://stripe.com/errors/payments/cards/Failed/Restricted/PAYMENT_REQUIRES_3DS", problems.convert(status).type)
     }
 
     @Test
     fun registeredEntryWinsOverTheOriginDerivedBaseUrl() {
         val problems = ProblemConverter(mapOf("stripe.com" to "https://docs.stripe.com/errors"))
         val status = Failed.Rejected("DUPLICATE_CHARGE", "Already processed", origin = "stripe.com", scope = "payments.cards")
-        assertEquals("https://docs.stripe.com/errors/payments/cards/failed/rejected/duplicate-charge", problems.convert(status).type)
+        assertEquals("https://docs.stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE", problems.convert(status).type)
     }
 
     @Test
     fun registeredKeysAreLowercasedAndTrailingSlashIsTrimmed() {
         val problems = ProblemConverter(mapOf("Stripe.com" to "https://docs.stripe.com/errors/"))
         val status = Failed.Rejected("DUPLICATE_CHARGE", "Already processed", origin = "stripe.com")
-        assertEquals("https://docs.stripe.com/errors/failed/rejected/duplicate-charge", problems.convert(status).type)
+        assertEquals("https://docs.stripe.com/errors/Failed/Rejected/DUPLICATE_CHARGE", problems.convert(status).type)
     }
 
     @Test
     fun kiitOriginIsFixedAndCannotBeOverridden() {
         val problems = ProblemConverter(mapOf(StatusConstants.KIIT to "https://example.com/problems"))
         assertEquals(
-            "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:DENIED#taxonomy",
+            "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:DENIED#codes",
             problems.convert(Restricted.DENIED).type,
         )
     }
@@ -103,7 +105,7 @@ class ProblemConverterTest {
     fun convertWithUrlTrimsATrailingSlash() {
         val status = Failed.Restricted("PAYMENT_REQUIRES_3DS", "3DS required", origin = "stripe.com")
         val problem = converter.convertWithUrl(status, baseUrl = "https://example.com/probs/")
-        assertEquals("https://example.com/probs/failed/restricted/payment-requires-3ds", problem.type)
+        assertEquals("https://example.com/probs/Failed/Restricted/PAYMENT_REQUIRES_3DS", problem.type)
     }
 
     @Test
@@ -111,7 +113,7 @@ class ProblemConverterTest {
         val status = Failed.Invalid("BAD_EMAIL", "Bad email", origin = "stripe.com")
         val err = Err.ErrorList(errors = listOf(Err.ErrorField("email", "x", "Invalid email")), message = "Validation failed")
         val problem = converter.convertCustomWithUrl(status, err, "https://example.com/probs") { ErrorDetail("mapped", it.message) }
-        assertEquals("https://example.com/probs/failed/invalid/bad-email", problem.type)
+        assertEquals("https://example.com/probs/Failed/Invalid/BAD_EMAIL", problem.type)
         assertEquals(ErrorDetail("mapped", "Invalid email"), problem.errors?.single())
     }
 
@@ -119,7 +121,7 @@ class ProblemConverterTest {
     fun dottedScopeBecomesSlashSeparatedSegments() {
         val status = Failed.Rejected("DUPLICATE_CHARGE", "Duplicate", origin = "stripe.com", scope = "payments.cards")
         assertEquals(
-            "https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge",
+            "https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE",
             converter.convert(status).type,
         )
     }
@@ -128,31 +130,50 @@ class ProblemConverterTest {
     fun deepScopeKeepsTheLastThreeSegmentsAsStatusGroupName() {
         val status = Failed.Rejected("DUPLICATE_CHARGE", "Duplicate", origin = "stripe.com", scope = "a.b.c.d")
         assertEquals(
-            "https://stripe.com/docs/codes/a/b/c/d/failed/rejected/duplicate-charge",
+            "https://stripe.com/docs/codes/a/b/c/d/Failed/Rejected/DUPLICATE_CHARGE",
             converter.convert(status).type,
         )
     }
 
     @Test
-    fun scopeSegmentsAreLowercasedAndUnderscoresBecomeDashes() {
+    fun scopeSegmentsKeepTheirExactCaseAndUnderscores() {
         val status = Failed.Rejected("DUPLICATE_CHARGE", "Duplicate", origin = "stripe.com", scope = "Pay_ments.Cards")
         assertEquals(
-            "https://stripe.com/docs/codes/pay-ments/cards/failed/rejected/duplicate-charge",
+            "https://stripe.com/docs/codes/Pay_ments/Cards/Failed/Rejected/DUPLICATE_CHARGE",
             converter.convert(status).type,
         )
+    }
+
+    @Test
+    fun eachBuiltInGetsItsOwnTypeWithTheCodesFragment() {
+        assertEquals(
+            "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes",
+            converter.convert(Invalid.INVALID_VALUE).type,
+        )
+        assertEquals(
+            "https://www.kiit.dev/docs/kiit-codes?code=Passed:Succeeded:SUCCESS#codes",
+            converter.convert(Succeeded.SUCCESS).type,
+        )
+    }
+
+    @Test
+    fun customTailIsTheScopeThenTheStatusCodeWithSlashes() {
+        val status = Failed.Rejected("DUPLICATE_CHARGE", "Duplicate", origin = "stripe.com", scope = "payments.cards")
+        val tail = "payments/cards/" + status.code.replace(':', '/')
+        assertEquals("https://stripe.com/docs/codes/$tail", converter.convert(status).type)
     }
 
     @Test
     fun passedStatusUsesThePassedSegment() {
         val status = Passed.Succeeded("ORDER_CREATED", "Order created", origin = "stripe.com")
-        assertEquals("https://stripe.com/docs/codes/passed/succeeded/order-created", converter.convert(status).type)
+        assertEquals("https://stripe.com/docs/codes/Passed/Succeeded/ORDER_CREATED", converter.convert(status).type)
     }
 
     @Test
     fun domainOriginsWithHyphensAndManyLabelsAreAbsolute() {
         val status = Failed.Rejected("OUT_OF_STOCK", "Out of stock", origin = "api.my-shop.example.com")
         assertEquals(
-            "https://api.my-shop.example.com/docs/codes/failed/rejected/out-of-stock",
+            "https://api.my-shop.example.com/docs/codes/Failed/Rejected/OUT_OF_STOCK",
             converter.convert(status).type,
         )
     }
@@ -161,21 +182,21 @@ class ProblemConverterTest {
     fun originsThatAreNotDomainsGiveARelativeType() {
         listOf("localhost", "localhost:8080", "my_app", "-bad.com", "bad-.com", "stripe.com.", "a..b", "my app.com").forEach { origin ->
             val status = Failed.Rejected("OUT_OF_STOCK", "Out of stock", origin = origin)
-            assertEquals("/docs/codes/failed/rejected/out-of-stock", converter.convert(status).type, origin)
+            assertEquals("/docs/codes/Failed/Rejected/OUT_OF_STOCK", converter.convert(status).type, origin)
         }
     }
 
     @Test
     fun customOriginDefaultGivesARelativeType() {
         val status = Failed.Rejected("OUT_OF_STOCK", "Out of stock")
-        assertEquals("/docs/codes/failed/rejected/out-of-stock", converter.convert(status).type)
+        assertEquals("/docs/codes/Failed/Rejected/OUT_OF_STOCK", converter.convert(status).type)
     }
 
     @Test
     fun registeredEntryForANonDomainOriginIsAbsoluteWithTheNewSuffix() {
         val problems = ProblemConverter(mapOf("myapp1" to "https://docs.example.com/myapp1/errors"))
         val status = Failed.Rejected("OUT_OF_STOCK", "Out of stock", origin = "myapp1", scope = "shop.cart")
-        assertEquals("https://docs.example.com/myapp1/errors/shop/cart/failed/rejected/out-of-stock", problems.convert(status).type)
+        assertEquals("https://docs.example.com/myapp1/errors/shop/cart/Failed/Rejected/OUT_OF_STOCK", problems.convert(status).type)
     }
 
     @Test

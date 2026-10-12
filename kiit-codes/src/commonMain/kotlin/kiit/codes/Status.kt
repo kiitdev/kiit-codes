@@ -7,7 +7,8 @@ import kotlin.jvm.JvmField
 object StatusConstants {
     /**
      * Origin for every built-in [Codes] entry. It is kiit's own domain, but [kiit.codes.formats.ProblemConverter]
-     * doesn't build `https://kiit.dev/docs/codes/...` for it, it points at kiit-codes' own docs instead.
+     * doesn't build `https://kiit.dev/docs/codes/...` for it, it points at kiit-codes' own docs instead. The origin is
+     * reserved for kiit-authored codes, a custom status must not use it. Nothing checks this.
      */
     const val KIIT = "kiit.dev"
 
@@ -63,7 +64,9 @@ sealed interface Status {
      * 1. It is either a real domain (`"stripe.com"`) or any other id (`"myapp1"`).
      * 2. [kiit.codes.formats.ProblemConverter] lowercases it. With no `baseUrls` entry, a domain origin builds the
      *    RFC 9457 `type` as `https://{origin}/docs/codes/...`, and any other id builds the relative `/docs/codes/...`.
-     *    Only the form is checked, not DNS.
+     *    Only the form is checked, not DNS. The `type` suffix is built from [scope], [group] and [name] in their
+     *    exact case, so a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. Nothing
+     *    checks this.
      * 3. Nothing stops two consumers from choosing the same non-domain id, and kiit-codes can't detect it.
      *    Pick a specific name when there is no domain. A real domain is unique through DNS.
      */

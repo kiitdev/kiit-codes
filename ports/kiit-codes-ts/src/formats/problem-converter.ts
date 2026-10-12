@@ -8,8 +8,9 @@
  * TERMS
  * 1. origin: `Status.origin`, the key of each `baseUrls` entry, e.g. `"stripe.com"`.
  * 2. baseUrl: text before the suffix, path prefix included, no trailing slash. e.g. `"https://stripe.com/errors"`
- * 3. suffix: `{scope}/{status}/{group}/{name}` in lowercase-dash. Each `.` in the scope starts a new segment, an empty
- *    scope is skipped, and status is `passed` or `failed`. e.g. `"payments/cards/failed/rejected/duplicate-charge"`
+ * 3. suffix: `{scope}/{code}`, where `{code}` is `{status}/{group}/{name}`. Every segment is exact, with no case change
+ *    or character replacement. Each `.` in the scope starts a new segment, an empty scope is skipped, and status is
+ *    `Passed` or `Failed`. e.g. `"payments/cards/Failed/Rejected/DUPLICATE_CHARGE"`
  * 4. type: the RFC 9457 `type` field, `{baseUrl}/{suffix}`. It is the problem's identity as well as its docs pointer.
  *
  * OPTIONAL
@@ -21,8 +22,7 @@
  *    URI of the response, so it points at the API's own host. Add an entry to get an absolute URL.
  * 4. An entry wins over the origin-derived baseUrl. It is always absolute, and only the suffix is built for it.
  * 5. `type` is the problem's identity, so pick the base once and keep it. Two statuses must not produce the same
- *    `type`. Lowercasing, `_` to `-` and scope `.` to `/` can collide for names or scopes that differ only by case
- *    or `_` vs `-`.
+ *    `type`. A name or scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. Nothing checks this.
  *
  * EXAMPLE
  * 1. origin `"stripe.com"` -> baseUrl `"https://stripe.com/errors"`
@@ -36,25 +36,28 @@
  * With the first entry, a `Rejected` status named `DUPLICATE_CHARGE` with scope `payments.cards` converts to:
  * ```json
  * {
- *     "type": "https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge",
+ *     "type": "https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE",
  *     "title": "This charge has already been processed",
  *     "status": 409
  * }
  * ```
  *
  * With no entry, the same status with origin `"stripe.com"` gets the `type`
- * `https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge`. A status with the origin `"myapp1"`
- * and no scope gets `/docs/codes/failed/rejected/out-of-stock`.
+ * `https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE`. A status with the origin `"myapp1"`
+ * and no scope gets `/docs/codes/Failed/Rejected/OUT_OF_STOCK`.
  *
  * NOTES
  * 1. Keys of `baseUrls` are lowercased and trailing `/` on a value is trimmed.
  * 2. `StatusConstants.KIIT` is always present and resolves to kiit-codes' own taxonomy docs.
- * 3. `StatusConstants.KIIT` can't be overridden. Its suffix is `?code=...#taxonomy`, joined with no `/`.
+ * 3. `StatusConstants.KIIT` can't be overridden. Its suffix is `?code=...#codes`, joined with no `/`. The origin is
+ *    reserved for kiit-authored codes, a custom status must not use it. Nothing checks this.
  * 4. Every `convert*` function ends in `convertCustomWithUrl`, the only place a `Problem` is assembled.
  * 5. `convertCustom`/`convertCustomWithUrl` take `mapper` before the defaulted `typeBuilder`, the opposite
  *    order from the Kotlin source: TypeScript requires defaulted parameters to come last, so `mapper`
  *    (no default, effectively required for the *Custom variants) has to sit before it.
- * 6. The suffix rules belong to `defaultTypeBuilder`. For another format pass a `typeBuilder`, use `convertWithUrl`
+ * 6. `Problem.code` carries the full identity, origin and scope included. The suffix is a readable form of the same
+ *    values and is not meant to be parsed.
+ * 7. The suffix rules belong to `defaultTypeBuilder`. For another format pass a `typeBuilder`, use `convertWithUrl`
  *    with a base and an empty suffix, or spread the problem with your own `type` for any URL.
  */
 
@@ -80,37 +83,39 @@ function isDomain(origin: string): boolean {
 }
 
 /**
- * Default `type` suffix appended to the baseUrl: `scope`/`status`/`group`/`name`, lowercase-dash. Each `.` in the
- * `scope` starts a new segment and an empty `scope` is skipped. `status` is `passed` or `failed`, the first part of
- * `statusCode`. The last three segments are always `status/group/name`, so a scope of any depth stays unambiguous.
- * `origin` is left out on purpose, the baseUrl is already specific to one origin, so repeating it would just name
- * that origin twice in the URL.
+ * Default `type` suffix appended to the baseUrl: `scope`/`{code}`, where `{code}` is `status`/`group`/`name`. Every
+ * segment is the exact value of the status, with no case change or character replacement, so the last three segments
+ * are the same `Passed` or `Failed`, group and name as `statusCode`, joined with `/` instead of `:`. Each `.` in the
+ * `scope` starts a new segment and an empty `scope` is skipped. `origin` is left out on purpose, the baseUrl is
+ * already specific to one origin, so repeating it would just name that origin twice in the URL.
+ *
+ * A name or scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. Nothing checks this.
  *
  * ```ts
  * const status = Rejected("DUPLICATE_CHARGE", "Duplicate", "stripe.com", "payments.cards");
- * defaultTypeBuilder(status);   // "payments/cards/failed/rejected/duplicate-charge"
+ * defaultTypeBuilder(status);   // "payments/cards/Failed/Rejected/DUPLICATE_CHARGE"
  *
  * const noScope = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1");
- * defaultTypeBuilder(noScope);  // "failed/rejected/out-of-stock"
+ * defaultTypeBuilder(noScope);  // "Failed/Rejected/OUT_OF_STOCK"
  * ```
  *
  * This is the default suffix only. It applies with or without a `baseUrls` entry. Pass your own `typeBuilder` to
  * `convert` for another format.
  *
- * `StatusConstants.KIIT` is the exception: kiit-codes' own docs don't have a per-code anchor yet,
- * just the taxonomy page as a whole, so every kiit-origin status instead gets its `code` as a
- * query param on that same page, e.g. `?code=Failed:Invalid:INVALID_VALUE#taxonomy`.
+ * `StatusConstants.KIIT` is the exception: kiit-codes' docs have a Codes section but no page per code, so every
+ * kiit-origin status instead gets its `statusCode` as a query param on that page, e.g.
+ * `?code=Failed:Invalid:INVALID_VALUE#codes`. A `code` is a colon-delimited identifier (letters, digits,
+ * underscores), safe unencoded in a URI query, and it keeps each built-in's `type` different. The origin is reserved
+ * for kiit-authored codes, a custom status must not use it.
  *
  * @param status the status to build the suffix for.
  * @returns the suffix, to be appended to a baseUrl. It is not a full URL.
  */
 export function defaultTypeBuilder(status: Status): string {
-  if (status.origin === StatusConstants.KIIT) return `?code=${statusCode(status)}#taxonomy`;
+  if (status.origin === StatusConstants.KIIT) return `?code=${statusCode(status)}#codes`;
 
-  const toUriSegment = (s: string): string => s.toLowerCase().replace(/_/g, "-");
   const scope = status.scope.split(".").filter((s) => s.length > 0);
-  const state = status.success ? "passed" : "failed";
-  return [...scope, state, status.group, status.name].map(toUriSegment).join("/");
+  return [...scope, ...statusCode(status).split(":")].join("/");
 }
 
 /**

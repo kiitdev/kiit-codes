@@ -201,10 +201,10 @@ function showFormats(): void {
   const EMPTY_TITLE = Invalid("EMPTY_TITLE", "Title must not be empty", "samples.kiit.dev");
   const DUPLICATE_TASK = Rejected("DUPLICATE_TASK", "That task is already on the list", "samples.kiit.dev", "lists.team");
 
-  // A built-in status as an RFC 9457 problem. Built-in codes point at the kiit taxonomy page.
+  // A built-in status as an RFC 9457 problem. Built-in codes point at the Codes section of the kiit-codes docs.
   const problems = ProblemConverter();
   const minimal = problems.convert(Rejected.CONFLICT);
-  console.log(minimal.type); // https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy
+  console.log(minimal.type); // https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#codes
   console.log(minimal.title); // The request conflicts with the current state.
   console.log(minimal.status); // 409
 
@@ -218,7 +218,7 @@ function showFormats(): void {
   );
   const withErrors = problems.convert(Invalid.INVALID_VALUE, validation);
   console.log(`${withErrors.detail}, ${withErrors.errors?.length} errors`); // Validation failed, 2 errors
-  check(minimal.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#taxonomy", "rfc9457-minimal: type");
+  check(minimal.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Rejected:CONFLICT#codes", "rfc9457-minimal: type");
   check(minimal.title === Rejected.CONFLICT.title, "rfc9457-minimal: title");
   check(minimal.status === 409, "rfc9457-minimal: status");
   check(withErrors.detail === "Validation failed", "rfc9457-minimal: detail");
@@ -252,23 +252,23 @@ function showFormats(): void {
   check(codeDetail.code === "kiit.dev:codes:Failed:Invalid:INVALID_VALUE", "codedetail-json: code");
   check(codeDetail.errors?.length === 2, "codedetail-json: errors");
 
-  // A custom code whose origin is a domain needs no registration: https://{origin}/docs/codes/{status}/{group}/{name}
+  // A custom code whose origin is a domain needs no registration: https://{origin}/docs/codes/{scope}/{code}
   const domain = problems.convert(EMPTY_TITLE);
-  console.log(domain.type); // https://samples.kiit.dev/docs/codes/failed/invalid/empty-title
-  check(domain.type === "https://samples.kiit.dev/docs/codes/failed/invalid/empty-title", "rfc9457-domain-origin: type");
+  console.log(domain.type); // https://samples.kiit.dev/docs/codes/Failed/Invalid/EMPTY_TITLE
+  check(domain.type === "https://samples.kiit.dev/docs/codes/Failed/Invalid/EMPTY_TITLE", "rfc9457-domain-origin: type");
 
   // Register a base URL when the docs live somewhere else. An entry wins over the origin.
   const registered = ProblemConverter({ "samples.kiit.dev": "https://docs.samples.kiit.dev/errors" });
-  console.log(registered.convert(EMPTY_TITLE).type); // https://docs.samples.kiit.dev/errors/failed/invalid/empty-title
+  console.log(registered.convert(EMPTY_TITLE).type); // https://docs.samples.kiit.dev/errors/Failed/Invalid/EMPTY_TITLE
   check(
-    registered.convert(EMPTY_TITLE).type === "https://docs.samples.kiit.dev/errors/failed/invalid/empty-title",
+    registered.convert(EMPTY_TITLE).type === "https://docs.samples.kiit.dev/errors/Failed/Invalid/EMPTY_TITLE",
     "rfc9457-registered: type",
   );
 
   // Each dot in a scope starts a new path segment, before the status, group and name
   const scoped = problems.convert(DUPLICATE_TASK);
-  console.log(scoped.type); // https://samples.kiit.dev/docs/codes/lists/team/failed/rejected/duplicate-task
-  check(scoped.type === "https://samples.kiit.dev/docs/codes/lists/team/failed/rejected/duplicate-task", "rfc9457-scope: type");
+  console.log(scoped.type); // https://samples.kiit.dev/docs/codes/lists/team/Failed/Rejected/DUPLICATE_TASK
+  check(scoped.type === "https://samples.kiit.dev/docs/codes/lists/team/Failed/Rejected/DUPLICATE_TASK", "rfc9457-scope: type");
 
   // When field + message isn't enough, map each error into your own type
   interface RichError extends ErrorItem {
@@ -292,7 +292,7 @@ function showFormats(): void {
 
   console.log(JSON.stringify(asProblem, null, 2));
   // {
-  //   "type": "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:FORBIDDEN#taxonomy",
+  //   "type": "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:FORBIDDEN#codes",
   //   "title": "Access to this resource is forbidden.",
   //   "status": 403,
   //   "code": "kiit.dev:codes:Failed:Restricted:FORBIDDEN"
@@ -310,12 +310,12 @@ function showFormats(): void {
 
   // A plain id isn't a domain, so the type is a relative path. Register a base URL or use a domain for an absolute URL.
   const plain = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1");
-  console.log(problems.convert(plain).type); // /docs/codes/failed/rejected/out-of-stock
+  console.log(problems.convert(plain).type); // /docs/codes/Failed/Rejected/OUT_OF_STOCK
   const fixed = ProblemConverter({ myapp1: "https://docs.example.com/myapp1/errors" });
-  console.log(fixed.convert(plain).type); // https://docs.example.com/myapp1/errors/failed/rejected/out-of-stock
-  check(problems.convert(plain).type === "/docs/codes/failed/rejected/out-of-stock", "rfc9457-plain-origin: relative");
+  console.log(fixed.convert(plain).type); // https://docs.example.com/myapp1/errors/Failed/Rejected/OUT_OF_STOCK
+  check(problems.convert(plain).type === "/docs/codes/Failed/Rejected/OUT_OF_STOCK", "rfc9457-plain-origin: relative");
   check(
-    fixed.convert(plain).type === "https://docs.example.com/myapp1/errors/failed/rejected/out-of-stock",
+    fixed.convert(plain).type === "https://docs.example.com/myapp1/errors/Failed/Rejected/OUT_OF_STOCK",
     "rfc9457-plain-origin: registered",
   );
 
@@ -355,7 +355,7 @@ function showFormats(): void {
 
   const stripeProblem = stripe.convert(duplicateCharge);
   check(
-    stripeProblem.type === "https://stripe.com/errors/payments/cards/failed/restricted/duplicate-charge",
+    stripeProblem.type === "https://stripe.com/errors/payments/cards/Failed/Restricted/DUPLICATE_CHARGE",
     "ProblemConverter.convert(...).type",
   );
   check(stripeProblem.status === 401, "ProblemConverter.convert(...).status");
@@ -364,11 +364,11 @@ function showFormats(): void {
   check(detail.code === "stripe.com:payments.cards:Failed:Restricted:DUPLICATE_CHARGE", "toCodeDetail(...).code");
   check(detail.status === undefined, "toCodeDetail(...).status is undefined without a mapping");
 
-  // A built-in kiit status needs no baseUrls entry, and its `type` resolves to the real taxonomy
-  // page instead of a made-up path, with the code carried as a query param.
+  // A built-in kiit status needs no baseUrls entry, and its `type` resolves to the real kiit-codes
+  // docs page instead of a made-up path, with the code carried as a query param.
   const builtInProblem = stripe.convert(Invalid.INVALID_VALUE);
   check(
-    builtInProblem.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#taxonomy",
+    builtInProblem.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes",
     "ProblemConverter.convert(...) for a built-in kiit status",
   );
 
@@ -457,7 +457,7 @@ function tutorialValidate(): void {
   // false
   console.log(detail.success);
   // </example>
-  check(problem.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#taxonomy", "tutorial-problem: type");
+  check(problem.type === "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes", "tutorial-problem: type");
   check(problem.title === "The request had an invalid value." && problem.status === 400, "tutorial-problem: title and status");
   check(problem.detail === "Validation failed" && problem.errors?.length === 1, "tutorial-problem: detail and errors");
   check(problem.code === "kiit.dev:codes:Failed:Invalid:INVALID_VALUE", "tutorial-problem: code");
@@ -717,25 +717,25 @@ function guideTypeUrl(): void {
   const plain = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1");
 
   // 1. A domain origin and nothing registered
-  // https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge
+  // https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE
   console.log(ProblemConverter().convert(stripe).type);
 
   // 2. A plain id is not a domain, so the type is relative
-  // /docs/codes/failed/rejected/out-of-stock
+  // /docs/codes/Failed/Rejected/OUT_OF_STOCK
   console.log(ProblemConverter().convert(plain).type);
 
   // 3. A base URL registered for the origin
-  // https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge
+  // https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE
   const registered = ProblemConverter({ "stripe.com": "https://stripe.com/errors" });
   console.log(registered.convert(stripe).type);
   // </example>
   check(
-    ProblemConverter().convert(stripe).type === "https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge",
+    ProblemConverter().convert(stripe).type === "https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE",
     "guide-type-url: domain",
   );
-  check(ProblemConverter().convert(plain).type === "/docs/codes/failed/rejected/out-of-stock", "guide-type-url: plain id");
+  check(ProblemConverter().convert(plain).type === "/docs/codes/Failed/Rejected/OUT_OF_STOCK", "guide-type-url: plain id");
   check(
-    registered.convert(stripe).type === "https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge",
+    registered.convert(stripe).type === "https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE",
     "guide-type-url: registered",
   );
 }

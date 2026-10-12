@@ -163,7 +163,7 @@ public class SampleApp {
         // false
         System.out.println(detail.getSuccess());
         // </example>
-        check(problem.getType().equals("https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#taxonomy"), "tutorial-problem: type");
+        check(problem.getType().equals("https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes"), "tutorial-problem: type");
         check(problem.getTitle().equals("The request had an invalid value.") && problem.getStatus() == 400, "tutorial-problem: title and status");
         check("Validation failed".equals(problem.getDetail()) && problem.getErrors().size() == 1, "tutorial-problem: detail and errors");
         check("kiit.dev:codes:Failed:Invalid:INVALID_VALUE".equals(problem.getCode()), "tutorial-problem: code");
@@ -337,21 +337,21 @@ public class SampleApp {
         Failed.Rejected plain = new Failed.Rejected("OUT_OF_STOCK", "Out of stock", "myapp1", "");
 
         // 1. A domain origin and nothing registered
-        // https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge
+        // https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE
         System.out.println(new ProblemConverter().convert(stripe).getType());
 
         // 2. A plain id is not a domain, so the type is relative
-        // /docs/codes/failed/rejected/out-of-stock
+        // /docs/codes/Failed/Rejected/OUT_OF_STOCK
         System.out.println(new ProblemConverter().convert(plain).getType());
 
         // 3. A base URL registered for the origin
-        // https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge
+        // https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE
         ProblemConverter registered = new ProblemConverter(Map.of("stripe.com", "https://stripe.com/errors"));
         System.out.println(registered.convert(stripe).getType());
         // </example>
-        check(new ProblemConverter().convert(stripe).getType().equals("https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge"), "guide-type-url: domain");
-        check(new ProblemConverter().convert(plain).getType().equals("/docs/codes/failed/rejected/out-of-stock"), "guide-type-url: plain id");
-        check(registered.convert(stripe).getType().equals("https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge"), "guide-type-url: registered");
+        check(new ProblemConverter().convert(stripe).getType().equals("https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE"), "guide-type-url: domain");
+        check(new ProblemConverter().convert(plain).getType().equals("/docs/codes/Failed/Rejected/OUT_OF_STOCK"), "guide-type-url: plain id");
+        check(registered.convert(stripe).getType().equals("https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE"), "guide-type-url: registered");
     }
 
     private static void guideCustomTypeUrl() {

@@ -133,7 +133,7 @@ fun showTutorialValidate() {
     // false
     println(detail.success)
     // </example>
-    verify("tutorial-problem: type", problem.type == "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#taxonomy")
+    verify("tutorial-problem: type", problem.type == "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes")
     verify("tutorial-problem: title", problem.title == "The request had an invalid value.")
     verify("tutorial-problem: status", problem.status == 400)
     verify("tutorial-problem: detail", problem.detail == "Validation failed")
@@ -388,21 +388,21 @@ private fun guideTypeUrl() {
     val plain = Rejected("OUT_OF_STOCK", "Out of stock", origin = "myapp1")
 
     // 1. A domain origin and nothing registered
-    // https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge
+    // https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE
     println(ProblemConverter().convert(stripe).type)
 
     // 2. A plain id is not a domain, so the type is relative
-    // /docs/codes/failed/rejected/out-of-stock
+    // /docs/codes/Failed/Rejected/OUT_OF_STOCK
     println(ProblemConverter().convert(plain).type)
 
     // 3. A base URL registered for the origin
-    // https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge
+    // https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE
     val registered = ProblemConverter(baseUrls = mapOf("stripe.com" to "https://stripe.com/errors"))
     println(registered.convert(stripe).type)
     // </example>
-    verify("guide-type-url: domain", ProblemConverter().convert(stripe).type == "https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge")
-    verify("guide-type-url: plain id", ProblemConverter().convert(plain).type == "/docs/codes/failed/rejected/out-of-stock")
-    verify("guide-type-url: registered", registered.convert(stripe).type == "https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge")
+    verify("guide-type-url: domain", ProblemConverter().convert(stripe).type == "https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE")
+    verify("guide-type-url: plain id", ProblemConverter().convert(plain).type == "/docs/codes/Failed/Rejected/OUT_OF_STOCK")
+    verify("guide-type-url: registered", registered.convert(stripe).type == "https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE")
 }
 
 private fun guideCustomTypeUrl() {

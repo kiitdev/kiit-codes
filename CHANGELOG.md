@@ -13,7 +13,7 @@ All notable changes to kiit-codes are documented here. Format follows
   changes any field, `title` included, is not the default.
 - TypeScript port: the same `DEFAULT` constants and a standalone `isDefault(status)` function.
 - An origin can be a real domain. With no `baseUrls` entry, `ProblemConverter` builds the RFC 9457 `type` as
-  `{base}/docs/codes/{scope...}/{status}/{group}/{name}`, lowercase with dashes. `status` is `passed` or `failed`, and
+  `{base}/docs/codes/{scope...}/{status}/{group}/{name}`, in exact case. `status` is `Passed` or `Failed`, and
   each `.` in a scope starts a new segment. A domain origin (two or more dot-separated labels of letters, digits and
   hyphens) gives an absolute `https://{origin}/docs/codes/...`. Any other id, such as `"myapp1"`, gives the relative
   `/docs/codes/...`, since it is not a host. RFC 9457 prefers absolute URIs, so register a base URL to get one. An
@@ -23,13 +23,21 @@ All notable changes to kiit-codes are documented here. Format follows
   suffix, or replace the field with `copy(type = ...)`.
 - `Problem.code`, the exact `{origin}:{scope}:{Status.code}` string, the same value as `CodeDetail.code`. It is a kiit
   extension member, always set by `ProblemConverter`, and `null` by default for a `Problem` built by hand. Read it
-  instead of parsing the lowercase `type`. The TypeScript port builds the same `type` and has the same optional `code`.
+  instead of parsing `type`. The TypeScript port builds the same `type` and has the same optional `code`.
+- Documented: a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`, and the origin
+  `kiit.dev` is reserved for kiit-authored codes. Neither is checked.
 - `ProblemConverter()` needs no arguments. Both `baseUrls` and `mapping` have defaults.
 - TypeScript port: the same `ProblemConverter` changes. `ProblemConverter(baseUrls = {}, mapping = CodesToHttp())` is a
   factory function with the same `convert`, `convertCustom`, `convertWithUrl` and `convertCustomWithUrl` members.
   `mapper` comes before the defaulted `typeBuilder` in the two `*Custom*` members, as TypeScript requires.
 
 ### Changed
+- **Breaking**: `Problem.type` changes against 1.1.0. A custom status's suffix is now `{scope...}/{status}/{group}/{name}`
+  in exact case, for example `payments/cards/Failed/Rejected/DUPLICATE_CHARGE`. 1.1.0 built `{scope...}/{group}/{name}`
+  in lowercase with dashes. A built-in's `type` now ends in `#codes` instead of `#taxonomy`, for example
+  `https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes`. The last three segments are the same
+  values as `Status.code`, with `/` in place of `:`. Anything that stores or compares `type` needs updating. The
+  TypeScript port changes the same way.
 - **Breaking**: `Status.message` is now `title`, on every status. It is the fixed text of a code, and `Err.message`
   stays the text of one occurrence. Named `message =` arguments in a custom status become `title =`, and Java
   `getMessage()` becomes `getTitle()`. `Problem.title` and `CodeDetail.title` are filled from it. The TypeScript
@@ -54,7 +62,7 @@ All notable changes to kiit-codes are documented here. Format follows
   status with an empty scope, so a custom status built with `origin = StatusConstants.KIIT` and no scope is no
   longer a built-in. `CodesToHttp` and `CodesToGrpc` overrides are keyed by `origin:scope:group:name`, so a
   hand-written key for a built-in needs `codes` in the scope slot. `Codes.statusFor(origin, group, name)` finds
-  built-ins by the same arguments. `Problem.type` of a built-in is unchanged, since it never uses the scope.
+  built-ins by the same arguments. This scope change does not change the `Problem.type` of a built-in, since it never uses the scope.
 - **Breaking**: `CodesToProblem` is now `ProblemConverter`, and it takes the origin-to-baseUrl map directly:
   `ProblemConverter(baseUrls = mapOf("stripe.com" to "https://stripe.com/errors"))`. This replaces
   `CodesToProblem(Catalog.of(...), mapping)`.
