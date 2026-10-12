@@ -7,6 +7,7 @@ import { ErrorField, ErrorInfo, ErrorList } from "../../src/err.js";
 import { Err } from "../../src/err.js";
 import { Rejected, Restricted, Invalid, Succeeded, StatusConstants } from "../../src/groups.js";
 import { toCodeDetail } from "../../src/formats/code-detail.js";
+import { statusCode } from "../../src/status.js";
 
 // Ported from formats/ProblemConverterTest.kt.
 
@@ -16,33 +17,33 @@ describe("ProblemConverter", () => {
   it("baseUrl defaults for the KIIT origin, with code as a query param", () => {
     const status = Restricted("PAYMENT_REQUIRES_3DS", "3DS required", StatusConstants.KIIT);
     expect(converter.convert(status).type).toBe(
-      "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:PAYMENT_REQUIRES_3DS#taxonomy",
+      "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:PAYMENT_REQUIRES_3DS#codes",
     );
   });
 
   it("a domain origin with no entry builds type from the origin", () => {
     const status = Restricted("PAYMENT_REQUIRES_3DS", "3DS required", "stripe.com", "payments.cards");
     expect(converter.convert(status).type).toBe(
-      "https://stripe.com/docs/codes/payments/cards/failed/restricted/payment-requires-3ds",
+      "https://stripe.com/docs/codes/payments/cards/Failed/Restricted/PAYMENT_REQUIRES_3DS",
     );
   });
 
   it("a plain id origin with no entry gives a relative type", () => {
     const status = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1");
-    expect(converter.convert(status).type).toBe("/docs/codes/failed/rejected/out-of-stock");
+    expect(converter.convert(status).type).toBe("/docs/codes/Failed/Rejected/OUT_OF_STOCK");
   });
 
   it("the origin is lowercased in the derived baseUrl", () => {
     const status = Rejected("OUT_OF_STOCK", "Out of stock", "Stripe.com");
-    expect(converter.convert(status).type).toBe("https://stripe.com/docs/codes/failed/rejected/out-of-stock");
+    expect(converter.convert(status).type).toBe("https://stripe.com/docs/codes/Failed/Rejected/OUT_OF_STOCK");
   });
 
   it("an empty scope is skipped and a set scope is the first segment", () => {
     const noScope = Rejected("OUT_OF_STOCK", "Out of stock", "stripe.com");
     const scoped = { ...noScope, scope: "payments.cards" };
-    expect(converter.convert(noScope).type).toBe("https://stripe.com/docs/codes/failed/rejected/out-of-stock");
+    expect(converter.convert(noScope).type).toBe("https://stripe.com/docs/codes/Failed/Rejected/OUT_OF_STOCK");
     expect(converter.convert(scoped).type).toBe(
-      "https://stripe.com/docs/codes/payments/cards/failed/rejected/out-of-stock",
+      "https://stripe.com/docs/codes/payments/cards/Failed/Rejected/OUT_OF_STOCK",
     );
   });
 
@@ -50,7 +51,7 @@ describe("ProblemConverter", () => {
     const problems = ProblemConverter({ "stripe.com": "https://stripe.com/errors" });
     const status = Restricted("PAYMENT_REQUIRES_3DS", "3DS required", "stripe.com", "payments.cards");
     expect(problems.convert(status).type).toBe(
-      "https://stripe.com/errors/payments/cards/failed/restricted/payment-requires-3ds",
+      "https://stripe.com/errors/payments/cards/Failed/Restricted/PAYMENT_REQUIRES_3DS",
     );
   });
 
@@ -58,20 +59,20 @@ describe("ProblemConverter", () => {
     const problems = ProblemConverter({ "stripe.com": "https://docs.stripe.com/errors" });
     const status = Rejected("DUPLICATE_CHARGE", "Already processed", "stripe.com", "payments.cards");
     expect(problems.convert(status).type).toBe(
-      "https://docs.stripe.com/errors/payments/cards/failed/rejected/duplicate-charge",
+      "https://docs.stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE",
     );
   });
 
   it("registered keys are lowercased and a trailing slash is trimmed", () => {
     const problems = ProblemConverter({ "Stripe.com": "https://docs.stripe.com/errors/" });
     const status = Rejected("DUPLICATE_CHARGE", "Already processed", "stripe.com");
-    expect(problems.convert(status).type).toBe("https://docs.stripe.com/errors/failed/rejected/duplicate-charge");
+    expect(problems.convert(status).type).toBe("https://docs.stripe.com/errors/Failed/Rejected/DUPLICATE_CHARGE");
   });
 
   it("the KIIT origin is fixed and cannot be overridden", () => {
     const problems = ProblemConverter({ [StatusConstants.KIIT]: "https://example.com/problems" });
     expect(problems.convert(Restricted.DENIED).type).toBe(
-      "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:DENIED#taxonomy",
+      "https://www.kiit.dev/docs/kiit-codes?code=Failed:Restricted:DENIED#codes",
     );
   });
 
@@ -88,13 +89,13 @@ describe("ProblemConverter", () => {
   it("convertWithUrl uses the explicit baseUrl regardless of baseUrls", () => {
     const status = Restricted("PAYMENT_REQUIRES_3DS", "3DS required", "stripe.com");
     const problem = converter.convertWithUrl(status, undefined, "https://example.com/probs");
-    expect(problem.type).toBe("https://example.com/probs/failed/restricted/payment-requires-3ds");
+    expect(problem.type).toBe("https://example.com/probs/Failed/Restricted/PAYMENT_REQUIRES_3DS");
   });
 
   it("convertWithUrl trims a trailing slash", () => {
     const status = Restricted("PAYMENT_REQUIRES_3DS", "3DS required", "stripe.com");
     const problem = converter.convertWithUrl(status, undefined, "https://example.com/probs/");
-    expect(problem.type).toBe("https://example.com/probs/failed/restricted/payment-requires-3ds");
+    expect(problem.type).toBe("https://example.com/probs/Failed/Restricted/PAYMENT_REQUIRES_3DS");
   });
 
   it("convertCustomWithUrl maps errors and uses the explicit baseUrl", () => {
@@ -103,47 +104,62 @@ describe("ProblemConverter", () => {
     const problem = converter.convertCustomWithUrl(status, err, "https://example.com/probs", (e) =>
       ErrorDetail("mapped", e.message),
     );
-    expect(problem.type).toBe("https://example.com/probs/failed/invalid/bad-email");
+    expect(problem.type).toBe("https://example.com/probs/Failed/Invalid/BAD_EMAIL");
     expect(problem.errors?.[0]).toEqual(ErrorDetail("mapped", "Invalid email"));
   });
 
   it("a dotted scope becomes slash separated segments", () => {
     const status = Rejected("DUPLICATE_CHARGE", "Duplicate", "stripe.com", "payments.cards");
     expect(converter.convert(status).type).toBe(
-      "https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge",
+      "https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE",
     );
   });
 
   it("a deep scope keeps the last three segments as status, group, name", () => {
     const status = Rejected("DUPLICATE_CHARGE", "Duplicate", "stripe.com", "a.b.c.d");
     expect(converter.convert(status).type).toBe(
-      "https://stripe.com/docs/codes/a/b/c/d/failed/rejected/duplicate-charge",
+      "https://stripe.com/docs/codes/a/b/c/d/Failed/Rejected/DUPLICATE_CHARGE",
     );
   });
 
-  it("scope segments are lowercased and underscores become dashes", () => {
+  it("scope segments keep their exact case and underscores", () => {
     const status = Rejected("DUPLICATE_CHARGE", "Duplicate", "stripe.com", "Pay_ments.Cards");
     expect(converter.convert(status).type).toBe(
-      "https://stripe.com/docs/codes/pay-ments/cards/failed/rejected/duplicate-charge",
+      "https://stripe.com/docs/codes/Pay_ments/Cards/Failed/Rejected/DUPLICATE_CHARGE",
     );
   });
 
-  it("a passed status uses the passed segment", () => {
+  it("each built-in gets its own type with the codes fragment", () => {
+    expect(converter.convert(Invalid.INVALID_VALUE).type).toBe(
+      "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes",
+    );
+    expect(converter.convert(Succeeded.SUCCESS).type).toBe(
+      "https://www.kiit.dev/docs/kiit-codes?code=Passed:Succeeded:SUCCESS#codes",
+    );
+  });
+
+  it("the custom tail is the scope then the status code with slashes", () => {
+    const status = Rejected("DUPLICATE_CHARGE", "Duplicate", "stripe.com", "payments.cards");
+    const tail = `payments/cards/${statusCode(status).replace(/:/g, "/")}`;
+    expect(converter.convert(status).type).toBe(`https://stripe.com/docs/codes/${tail}`);
+  });
+
+  it("a passed status uses the Passed segment", () => {
     const status = Succeeded("ORDER_CREATED", "Order created", "stripe.com");
-    expect(converter.convert(status).type).toBe("https://stripe.com/docs/codes/passed/succeeded/order-created");
+    expect(converter.convert(status).type).toBe("https://stripe.com/docs/codes/Passed/Succeeded/ORDER_CREATED");
   });
 
   it("domain origins with hyphens and many labels are absolute", () => {
     const status = Rejected("OUT_OF_STOCK", "Out of stock", "api.my-shop.example.com");
     expect(converter.convert(status).type).toBe(
-      "https://api.my-shop.example.com/docs/codes/failed/rejected/out-of-stock",
+      "https://api.my-shop.example.com/docs/codes/Failed/Rejected/OUT_OF_STOCK",
     );
   });
 
   it("origins that are not domains give a relative type", () => {
     for (const origin of ["localhost", "localhost:8080", "my_app", "-bad.com", "bad-.com", "stripe.com.", "a..b", "my app.com"]) {
       const status = Rejected("OUT_OF_STOCK", "Out of stock", origin);
-      expect(converter.convert(status).type, origin).toBe("/docs/codes/failed/rejected/out-of-stock");
+      expect(converter.convert(status).type, origin).toBe("/docs/codes/Failed/Rejected/OUT_OF_STOCK");
     }
   });
 
@@ -151,7 +167,7 @@ describe("ProblemConverter", () => {
     const problems = ProblemConverter({ myapp1: "https://docs.example.com/myapp1/errors" });
     const status = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1", "shop.cart");
     expect(problems.convert(status).type).toBe(
-      "https://docs.example.com/myapp1/errors/shop/cart/failed/rejected/out-of-stock",
+      "https://docs.example.com/myapp1/errors/shop/cart/Failed/Rejected/OUT_OF_STOCK",
     );
   });
 

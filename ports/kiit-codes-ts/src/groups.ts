@@ -11,7 +11,8 @@
 export const StatusConstants = {
   /**
    * Origin for every built-in code. It is kiit's own domain, but `ProblemConverter` doesn't build
-   * `https://kiit.dev/docs/codes/...` for it, it points at kiit-codes' own docs instead.
+   * `https://kiit.dev/docs/codes/...` for it, it points at kiit-codes' own docs instead. The origin is reserved for
+   * kiit-authored codes, a custom status must not use it. Nothing checks this.
    */
   KIIT: "kiit.dev",
   /**

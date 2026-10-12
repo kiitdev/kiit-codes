@@ -111,7 +111,7 @@ func tutorialValidate() {
     // false
     print(detail.success)
     // </example>
-    check(problem.type == "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#taxonomy", "tutorial-problem: type")
+    check(problem.type == "https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes", "tutorial-problem: type")
     check(problem.title == "The request had an invalid value." && problem.status == 400, "tutorial-problem: title and status")
     check(problem.detail == "Validation failed" && problem.errors?.count == 1, "tutorial-problem: detail and errors")
     check(problem.code == "kiit.dev:codes:Failed:Invalid:INVALID_VALUE", "tutorial-problem: code")
@@ -283,22 +283,22 @@ func guideTypeUrl() {
     let builder = ProblemConverterKt.defaultTypeBuilder
 
     // 1. A domain origin and nothing registered
-    // https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge
+    // https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE
     let problems = ProblemConverter(baseUrls: [:], mapping: http)
     print(problems.convert(status: stripe, err: nil, typeBuilder: builder).type)
 
     // 2. A plain id is not a domain, so the type is relative
-    // /docs/codes/failed/rejected/out-of-stock
+    // /docs/codes/Failed/Rejected/OUT_OF_STOCK
     print(problems.convert(status: plain, err: nil, typeBuilder: builder).type)
 
     // 3. A base URL registered for the origin
-    // https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge
+    // https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE
     let registered = ProblemConverter(baseUrls: ["stripe.com": "https://stripe.com/errors"], mapping: http)
     print(registered.convert(status: stripe, err: nil, typeBuilder: builder).type)
     // </example>
-    check(problems.convert(status: stripe, err: nil, typeBuilder: builder).type == "https://stripe.com/docs/codes/payments/cards/failed/rejected/duplicate-charge", "guide-type-url: domain")
-    check(problems.convert(status: plain, err: nil, typeBuilder: builder).type == "/docs/codes/failed/rejected/out-of-stock", "guide-type-url: plain id")
-    check(registered.convert(status: stripe, err: nil, typeBuilder: builder).type == "https://stripe.com/errors/payments/cards/failed/rejected/duplicate-charge", "guide-type-url: registered")
+    check(problems.convert(status: stripe, err: nil, typeBuilder: builder).type == "https://stripe.com/docs/codes/payments/cards/Failed/Rejected/DUPLICATE_CHARGE", "guide-type-url: domain")
+    check(problems.convert(status: plain, err: nil, typeBuilder: builder).type == "/docs/codes/Failed/Rejected/OUT_OF_STOCK", "guide-type-url: plain id")
+    check(registered.convert(status: stripe, err: nil, typeBuilder: builder).type == "https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE", "guide-type-url: registered")
 }
 
 func guideCustomTypeUrl() {
