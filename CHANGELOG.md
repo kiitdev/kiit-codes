@@ -24,8 +24,8 @@ All notable changes to kiit-codes are documented here. Format follows
 - `Problem.code`, the exact `{origin}:{scope}:{Status.code}` string, the same value as `CodeDetail.code`. It is a kiit
   extension member, always set by `ProblemConverter`, and `null` by default for a `Problem` built by hand. Read it
   instead of parsing `type`. The TypeScript port builds the same `type` and has the same optional `code`.
-- Documented: a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`, and the origin
-  `kiit.dev` is reserved for kiit-authored codes. Neither is checked.
+- Documented: a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`, an origin must not
+  contain `:`, and the origin `kiit.dev` is reserved for kiit-authored codes. None of this is checked.
 - `ProblemConverter()` needs no arguments. Both `baseUrls` and `mapping` have defaults.
 - TypeScript port: the same `ProblemConverter` changes. `ProblemConverter(baseUrls = {}, mapping = CodesToHttp())` is a
   factory function with the same `convert`, `convertCustom`, `convertWithUrl` and `convertCustomWithUrl` members.

@@ -65,8 +65,8 @@ sealed interface Status {
      * 2. [kiit.codes.formats.ProblemConverter] lowercases it. With no `baseUrls` entry, a domain origin builds the
      *    RFC 9457 `type` as `https://{origin}/docs/codes/...`, and any other id builds the relative `/docs/codes/...`.
      *    Only the form is checked, not DNS. The `type` suffix is built from [scope], [group] and [name] in their
-     *    exact case, so a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. Nothing
-     *    checks this.
+     *    exact case, so a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. An origin
+     *    must not contain `:`. Nothing checks this.
      * 3. Nothing stops two consumers from choosing the same non-domain id, and kiit-codes can't detect it.
      *    Pick a specific name when there is no domain. A real domain is unique through DNS.
      */
@@ -214,12 +214,17 @@ sealed class Passed : Status {
             }
 
     /** See [Passed.groupDescription] for this group's definition. */
-    data class Succeeded(
+    @Suppress("ktlint:standard:annotation")
+    data class Succeeded @Throws(IllegalArgumentException::class) constructor(
         override val name: String,
         override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
+        init {
+            StatusRules.validate(origin, scope, name)
+        }
+
         companion object {
             @JvmField
             val SUCCESS =
@@ -309,12 +314,17 @@ sealed class Passed : Status {
     }
 
     /** See [Passed.groupDescription] for this group's definition. */
-    data class Pending(
+    @Suppress("ktlint:standard:annotation")
+    data class Pending @Throws(IllegalArgumentException::class) constructor(
         override val name: String,
         override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
+        init {
+            StatusRules.validate(origin, scope, name)
+        }
+
         companion object {
             @JvmField
             val ACCEPTED =
@@ -379,12 +389,17 @@ sealed class Passed : Status {
     /**
      * See [Passed.groupDescription] for this group's definition.
      */
-    data class Excluded(
+    @Suppress("ktlint:standard:annotation")
+    data class Excluded @Throws(IllegalArgumentException::class) constructor(
         override val name: String,
         override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
+        init {
+            StatusRules.validate(origin, scope, name)
+        }
+
         companion object {
             @JvmField
             val OMITTED =
@@ -447,12 +462,17 @@ sealed class Passed : Status {
     }
 
     /** See [Passed.groupDescription] for this group's definition. */
-    data class Information(
+    @Suppress("ktlint:standard:annotation")
+    data class Information @Throws(IllegalArgumentException::class) constructor(
         override val name: String,
         override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Passed() {
+        init {
+            StatusRules.validate(origin, scope, name)
+        }
+
         companion object {
             @JvmField
             val NOTICE =
@@ -554,12 +574,17 @@ sealed class Failed : Status {
             }
 
     /** See [Failed.groupDescription] for this group's definition. */
-    data class Restricted(
+    @Suppress("ktlint:standard:annotation")
+    data class Restricted @Throws(IllegalArgumentException::class) constructor(
         override val name: String,
         override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {
+        init {
+            StatusRules.validate(origin, scope, name)
+        }
+
         companion object {
             @JvmField
             val DENIED =
@@ -622,12 +647,17 @@ sealed class Failed : Status {
     }
 
     /** See [Failed.groupDescription] for this group's definition. */
-    data class Invalid(
+    @Suppress("ktlint:standard:annotation")
+    data class Invalid @Throws(IllegalArgumentException::class) constructor(
         override val name: String,
         override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {
+        init {
+            StatusRules.validate(origin, scope, name)
+        }
+
         companion object {
             @JvmField
             val INVALID_VALUE =
@@ -690,12 +720,17 @@ sealed class Failed : Status {
     }
 
     /** See [Failed.groupDescription] for this group's definition. */
-    data class Rejected(
+    @Suppress("ktlint:standard:annotation")
+    data class Rejected @Throws(IllegalArgumentException::class) constructor(
         override val name: String,
         override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {
+        init {
+            StatusRules.validate(origin, scope, name)
+        }
+
         companion object {
             @JvmField
             val RULE_VIOLATION =
@@ -764,12 +799,17 @@ sealed class Failed : Status {
      * aborted dependency, a legal/regulatory block, or a genuinely unexpected/unhandled failure
      * (see [Unserved.UNEXPECTED]).
      */
-    data class Unserved(
+    @Suppress("ktlint:standard:annotation")
+    data class Unserved @Throws(IllegalArgumentException::class) constructor(
         override val name: String,
         override val title: String,
         override val origin: String = StatusConstants.CUSTOM,
         override val scope: String = "",
     ) : Failed() {
+        init {
+            StatusRules.validate(origin, scope, name)
+        }
+
         companion object {
             @JvmField
             val UNEXPECTED =

@@ -17,7 +17,7 @@ package kiit.codes.formats
  * 1. Opt-in output shape, produce one via [ProblemConverter].
  * 2. For internal service-to-service calls or anywhere else an HTTP status/URI doesn't apply,
  *    see [CodeDetail], kiit-codes' own native equivalent.
- * 3. [errors] and [code] aren't RFC 9457's own members (`type`/`title`/`status`/`detail`/`instance`) —
+ * 3. [errors] and [code] aren't RFC 9457's own members (`type`/`title`/`status`/`detail`/`instance`):
  *    they are kiit extensions, allowed under the spec's own provision for extension members. Clients
  *    that don't know them ignore them.
  * 4. [type] is the problem's identity and its docs pointer, compared as an opaque string. [code] is the exact kiit

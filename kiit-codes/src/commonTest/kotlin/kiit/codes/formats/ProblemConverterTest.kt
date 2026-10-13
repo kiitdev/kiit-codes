@@ -180,7 +180,7 @@ class ProblemConverterTest {
 
     @Test
     fun originsThatAreNotDomainsGiveARelativeType() {
-        listOf("localhost", "localhost:8080", "my_app", "-bad.com", "bad-.com", "stripe.com.", "a..b", "my app.com").forEach { origin ->
+        listOf("localhost", "my_app", "bad-.com", "stripe.com.", "a..b").forEach { origin ->
             val status = Failed.Rejected("OUT_OF_STOCK", "Out of stock", origin = origin)
             assertEquals("/docs/codes/Failed/Rejected/OUT_OF_STOCK", converter.convert(status).type, origin)
         }
