@@ -8,7 +8,7 @@ object StatusConstants {
     /**
      * Origin for every built-in [Codes] entry. It is kiit's own domain, but [kiit.codes.formats.ProblemConverter]
      * doesn't build `https://kiit.dev/docs/codes/...` for it, it points at kiit-codes' own docs instead. The origin is
-     * reserved for kiit-authored codes, a custom status must not use it. Nothing checks this.
+     * reserved for kiit-authored codes. It is a convention, nothing checks it.
      */
     const val KIIT = "kiit.dev"
 
@@ -53,6 +53,7 @@ sealed interface Status {
     /**
      * Unique domain label, e.g. "TOKEN_EXPIRED", "RATE_LIMITED".
      * SCREAMING_SNAKE_CASE and stable, used as a searchable/aggregable key in logs and metrics.
+     * It can only contain the characters [StatusRules] allows, and can't be empty.
      */
     val name: String
 
@@ -65,8 +66,8 @@ sealed interface Status {
      * 2. [kiit.codes.formats.ProblemConverter] lowercases it. With no `baseUrls` entry, a domain origin builds the
      *    RFC 9457 `type` as `https://{origin}/docs/codes/...`, and any other id builds the relative `/docs/codes/...`.
      *    Only the form is checked, not DNS. The `type` suffix is built from [scope], [group] and [name] in their
-     *    exact case, so a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. An origin
-     *    must not contain `:`. Nothing checks this.
+     *    exact case, so the origin, the scope and the name can only contain the characters [StatusRules] allows.
+     *    The constructor throws for any other value.
      * 3. Nothing stops two consumers from choosing the same non-domain id, and kiit-codes can't detect it.
      *    Pick a specific name when there is no domain. A real domain is unique through DNS.
      */
@@ -75,8 +76,7 @@ sealed interface Status {
     /**
      * Optional, free-form internal-organization label: a department, product area, route, or
      * anything else the consumer wants to attach, e.g. `"payments"`, `"payments.cards"`.
-     * `kiit-codes` never parses or enforces [scope]'s internal shape, only that it doesn't
-     * contain `:` (reserved, see [path]).
+     * `kiit-codes` doesn't parse [scope]'s internal shape. It only checks the characters, see [StatusRules].
      *
      * Empty string means unset. Every built-in has [StatusConstants.CODES], and any
      * [Passed]/[Failed] subtype that doesn't set it explicitly defaults to `""`. This is a real, defaulted field

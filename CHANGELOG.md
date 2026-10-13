@@ -24,14 +24,24 @@ All notable changes to kiit-codes are documented here. Format follows
 - `Problem.code`, the exact `{origin}:{scope}:{Status.code}` string, the same value as `CodeDetail.code`. It is a kiit
   extension member, always set by `ProblemConverter`, and `null` by default for a `Problem` built by hand. Read it
   instead of parsing `type`. The TypeScript port builds the same `type` and has the same optional `code`.
-- Documented: a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`, an origin must not
-  contain `:`, and the origin `kiit.dev` is reserved for kiit-authored codes. None of this is checked.
+- `StatusRules.check(origin, scope, name)` returns the first problem with the three values as a message, or `null`
+  when they are valid. It never throws, so use it for values from config or other runtime input. The TypeScript port
+  has the same `StatusRules.check`, returning `string | null`.
+- Documented: the origin `kiit.dev` is reserved for kiit-authored codes. It is a convention, nothing checks it.
 - `ProblemConverter()` needs no arguments. Both `baseUrls` and `mapping` have defaults.
 - TypeScript port: the same `ProblemConverter` changes. `ProblemConverter(baseUrls = {}, mapping = CodesToHttp())` is a
   factory function with the same `convert`, `convertCustom`, `convertWithUrl` and `convertCustomWithUrl` members.
   `mapper` comes before the defaulted `typeBuilder` in the two `*Custom*` members, as TypeScript requires.
 
 ### Changed
+- **Breaking**: `origin`, `scope` and `name` are checked when a status is created. They can only contain ASCII
+  letters, digits, `.`, `-` and `_`, and a value starts with a letter or digit. `origin` and `name` can't be empty,
+  `scope` can. Case is not checked and there is no length limit. Any other value, such as `host:8080`, `a/b` or a name
+  with a space, throws `IllegalArgumentException` (an `Error` in the TypeScript port), and `copy()` is checked too.
+  Before, any text was accepted and a `:` or `/` silently changed `code` and `type`. The message names the field and
+  shows the value, with control characters escaped and long values cut at 32 characters. Kotlin constructors have
+  `@Throws(IllegalArgumentException::class)`, so in Swift they are `throws` and calls need `try`. A TypeScript object made without a constructor, such as one
+  from `JSON.parse`, is not checked.
 - **Breaking**: `Problem.type` changes against 1.1.0. A custom status's suffix is now `{scope...}/{status}/{group}/{name}`
   in exact case, for example `payments/cards/Failed/Rejected/DUPLICATE_CHARGE`. 1.1.0 built `{scope...}/{group}/{name}`
   in lowercase with dashes. A built-in's `type` now ends in `#codes` instead of `#taxonomy`, for example

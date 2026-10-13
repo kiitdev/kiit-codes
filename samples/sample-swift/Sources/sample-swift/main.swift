@@ -144,17 +144,25 @@ func guideBuiltins() {
     check(!Failed.Invalid.companion.BAD_REQUEST.isDefault, "guide-builtins: not default")
 }
 
-func guideCustomCode() {
+func guideCustomCode() throws {
     section("Guide: Status: Custom code")
 
     // <example id="guide-custom-code" tags="guide">
-    let PAYMENT_DECLINED = Failed.Rejected(
+    let PAYMENT_DECLINED = try Failed.Rejected(
         name: "PAYMENT_DECLINED",
         title: "Payment declined",
         origin: "payments.example.com",
         scope: "payments.cards"
     )
+
+    // A bad origin, scope or name throws when the status is created. For values from config, check them first
+    // nil, the values are valid
+    print(StatusRules.shared.check(origin: "payments.example.com", scope: "payments.cards", name: "PAYMENT_DECLINED") ?? "nil")
+    // origin "host:8080" is invalid: allowed characters are a-z, A-Z, 0-9, '.', '-', '_'
+    print(StatusRules.shared.check(origin: "host:8080", scope: "", name: "PAYMENT_DECLINED") ?? "nil")
     // </example>
+    check(StatusRules.shared.check(origin: "payments.example.com", scope: "payments.cards", name: "PAYMENT_DECLINED") == nil, "guide-custom-code: check valid")
+    check(StatusRules.shared.check(origin: "host:8080", scope: "", name: "PAYMENT_DECLINED") == "origin \"host:8080\" is invalid: allowed characters are a-z, A-Z, 0-9, '.', '-', '_'", "guide-custom-code: check invalid")
     check(PAYMENT_DECLINED.group == "Rejected", "guide-custom-code: group")
     check(PAYMENT_DECLINED.origin == "payments.example.com" && PAYMENT_DECLINED.scope == "payments.cards", "guide-custom-code: origin and scope")
 }
@@ -273,12 +281,12 @@ func guideErrorDetails() {
     check(many.errors.count == 2 && many.message == "Validation failed", "guide-error-details: list")
 }
 
-func guideTypeUrl() {
+func guideTypeUrl() throws {
     section("Guide: Response: Type URL")
 
     // <example id="guide-type-url" tags="guide">
-    let stripe = Failed.Rejected(name: "DUPLICATE_CHARGE", title: "Duplicate charge", origin: "stripe.com", scope: "payments.cards")
-    let plain = Failed.Rejected(name: "OUT_OF_STOCK", title: "Out of stock", origin: "myapp1", scope: "")
+    let stripe = try Failed.Rejected(name: "DUPLICATE_CHARGE", title: "Duplicate charge", origin: "stripe.com", scope: "payments.cards")
+    let plain = try Failed.Rejected(name: "OUT_OF_STOCK", title: "Out of stock", origin: "myapp1", scope: "")
     let http = CodesToHttp(overrides: [:])
     let builder = ProblemConverterKt.defaultTypeBuilder
 
@@ -301,11 +309,11 @@ func guideTypeUrl() {
     check(registered.convert(status: stripe, err: nil, typeBuilder: builder).type == "https://stripe.com/errors/payments/cards/Failed/Rejected/DUPLICATE_CHARGE", "guide-type-url: registered")
 }
 
-func guideCustomTypeUrl() {
+func guideCustomTypeUrl() throws {
     section("Guide: Response: Custom type URL")
 
     // <example id="guide-custom-type-url" tags="guide">
-    let stripe = Failed.Rejected(name: "DUPLICATE_CHARGE", title: "Duplicate charge", origin: "stripe.com", scope: "payments.cards")
+    let stripe = try Failed.Rejected(name: "DUPLICATE_CHARGE", title: "Duplicate charge", origin: "stripe.com", scope: "payments.cards")
     let problems = ProblemConverter(baseUrls: [:], mapping: CodesToHttp(overrides: [:]))
 
     // 1. Your own suffix, with a type builder
@@ -341,11 +349,11 @@ func guideHttp() {
     check(grpc.toCode(status: Passed.Succeeded.companion.CREATED) == 0 && grpc.toCode(status: Failed.Rejected.companion.CONFLICT) == 6, "guide-http: grpc")
 }
 
-func guideCustomProtocol() {
+func guideCustomProtocol() throws {
     section("Guide: Response: Custom protocol")
 
     // <example id="guide-custom-protocol" tags="guide">
-    let PAYMENT_DECLINED = Failed.Rejected(name: "PAYMENT_DECLINED", title: "Payment declined", origin: "payments.example.com", scope: "")
+    let PAYMENT_DECLINED = try Failed.Rejected(name: "PAYMENT_DECLINED", title: "Payment declined", origin: "payments.example.com", scope: "")
 
     let http = CompositeLookup(
         base: CodesToHttp(overrides: CodesToHttp.companion.DEFAULT_OVERRIDES),
@@ -363,14 +371,14 @@ func guideCustomProtocol() {
 tutorialStatus()
 tutorialValidate()
 guideBuiltins()
-guideCustomCode()
+try guideCustomCode()
 guidePatternMatching()
 guideCollectErrors()
 guideErrorDetails()
-guideTypeUrl()
-guideCustomTypeUrl()
+try guideTypeUrl()
+try guideCustomTypeUrl()
 guideHttp()
-guideCustomProtocol()
+try guideCustomProtocol()
 
 print("")
 print("All \(checks) checks passed.")

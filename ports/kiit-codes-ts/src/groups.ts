@@ -7,12 +7,14 @@
  * any of them.
  */
 
+import { validateStatusFields } from "./status-rules.js";
+
 /** Well-known Status.origin values. */
 export const StatusConstants = {
   /**
    * Origin for every built-in code. It is kiit's own domain, but `ProblemConverter` doesn't build
    * `https://kiit.dev/docs/codes/...` for it, it points at kiit-codes' own docs instead. The origin is reserved for
-   * kiit-authored codes, a custom status must not use it. Nothing checks this.
+   * kiit-authored codes. It is a convention, nothing checks it.
    */
   KIIT: "kiit.dev",
   /**
@@ -58,7 +60,7 @@ interface StatusFields {
   /**
    * Optional, free-form internal-organization label: a department, product area, route, or
    * anything else the consumer wants to attach, e.g. "payments", "payments.cards". kiit-codes
-   * never parses or enforces scope's internal shape, only that it doesn't contain `:`.
+   * doesn't parse scope's internal shape. It only checks the characters, see StatusRules.
    *
    * Empty string means unset. Every built-in has StatusConstants.CODES, and a custom status that
    * doesn't set it explicitly defaults to "".
@@ -83,6 +85,7 @@ export function Succeeded(
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Succeeded {
+  validateStatusFields(origin, scope, name);
   return { group: Groups.SUCCEEDED, success: true, name, title, origin, scope };
 }
 export namespace Succeeded {
@@ -155,6 +158,7 @@ export function Pending(
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Pending {
+  validateStatusFields(origin, scope, name);
   return { group: Groups.PENDING, success: true, name, title, origin, scope };
 }
 export namespace Pending {
@@ -209,6 +213,7 @@ export function Excluded(
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Excluded {
+  validateStatusFields(origin, scope, name);
   return { group: Groups.EXCLUDED, success: true, name, title, origin, scope };
 }
 export namespace Excluded {
@@ -263,6 +268,7 @@ export function Information(
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Information {
+  validateStatusFields(origin, scope, name);
   return { group: Groups.INFORMATION, success: true, name, title, origin, scope };
 }
 export namespace Information {
@@ -317,6 +323,7 @@ export function Restricted(
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Restricted {
+  validateStatusFields(origin, scope, name);
   return { group: Groups.RESTRICTED, success: false, name, title, origin, scope };
 }
 export namespace Restricted {
@@ -371,6 +378,7 @@ export function Invalid(
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Invalid {
+  validateStatusFields(origin, scope, name);
   return { group: Groups.INVALID, success: false, name, title, origin, scope };
 }
 export namespace Invalid {
@@ -425,6 +433,7 @@ export function Rejected(
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Rejected {
+  validateStatusFields(origin, scope, name);
   return { group: Groups.REJECTED, success: false, name, title, origin, scope };
 }
 export namespace Rejected {
@@ -483,6 +492,7 @@ export function Unserved(
   origin: string = StatusConstants.CUSTOM,
   scope: string = "",
 ): Unserved {
+  validateStatusFields(origin, scope, name);
   return { group: Groups.UNSERVED, success: false, name, title, origin, scope };
 }
 export namespace Unserved {
