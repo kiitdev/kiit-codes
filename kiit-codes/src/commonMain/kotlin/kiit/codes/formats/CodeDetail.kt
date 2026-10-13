@@ -26,7 +26,7 @@ import kotlin.jvm.JvmOverloads
  * 3. Self-contained, no need for a public URI: [code] is [Status.origin], [Status.scope] and
  *    [Status.code], so it names the origin as well as the status. An empty scope leaves an empty
  *    value (`myapp1::Failed:Rejected:OUT_OF_STOCK`), so `code` always has five `:`-separated values.
- * 4. [status] is optional — pass a `mapping` to [toCodeDetail] when this shape is still going out
+ * 4. [status] is optional. Pass a `mapping` to [toCodeDetail] when this shape is still going out
  *    over HTTP and the status code is worth carrying alongside it.
  */
 data class CodeDetail<T : ErrorItem>(
@@ -53,7 +53,7 @@ fun toCodeDetail(status: Status, err: Err? = null, mapping: CodesToHttp? = null)
 
 /**
  * Builds a [CodeDetail]\<[T]\> for [status], mapping every error in [err] through
- * [mapper]. Use this when the default [ErrorDetail] shape (field + message only) isn't enough —
+ * [mapper]. Use this when the default [ErrorDetail] shape (field + message only) isn't enough:
  * `err.ref` is the usual place to stash whatever extra context [mapper] needs. Pass [mapping] to
  * also populate [CodeDetail.status].
  */
