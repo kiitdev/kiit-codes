@@ -45,7 +45,7 @@ export type Group = (typeof Groups)[keyof typeof Groups];
 /** Fields every Status variant carries, besides its own literal `group`/`success`. */
 interface StatusFields {
   /**
-   * Unique domain label, e.g. "TOKEN_EXPIRED", "RATE_LIMITED". SCREAMING_SNAKE_CASE and stable,
+   * Unique domain label, e.g. "TOKEN_EXPIRED", "RATE_LIMITED". CAPITAL_SNAKE_CASE and stable,
    * used as a searchable/aggregable key in logs and metrics.
    */
   readonly name: string;

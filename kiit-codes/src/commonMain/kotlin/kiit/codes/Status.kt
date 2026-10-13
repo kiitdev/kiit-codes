@@ -52,7 +52,7 @@ object StatusConstants {
 sealed interface Status {
     /**
      * Unique domain label, e.g. "TOKEN_EXPIRED", "RATE_LIMITED".
-     * SCREAMING_SNAKE_CASE and stable, used as a searchable/aggregable key in logs and metrics.
+     * CAPITAL_SNAKE_CASE and stable, used as a searchable/aggregable key in logs and metrics.
      * It can only contain the characters [StatusRules] allows, and can't be empty.
      */
     val name: String
