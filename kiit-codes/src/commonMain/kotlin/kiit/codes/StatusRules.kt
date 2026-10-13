@@ -48,7 +48,7 @@ object StatusRules {
         if (value.isEmpty()) return if (allowEmpty) null else "$field must not be empty"
         if (!isAlphaNumeric(value[0])) return invalid(field, value, "must start with a letter or digit")
         for (c in value) {
-            if (!isAlphaNumeric(c) && c != '.' && c != '-' && c != '_') {
+            if (!isAllowed(c)) {
                 return invalid(field, value, "allowed characters are a-z, A-Z, 0-9, '.', '-', '_'")
             }
         }
@@ -57,7 +57,11 @@ object StatusRules {
 
     private fun isAlphaNumeric(c: Char): Boolean = c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9'
 
-    private fun invalid(field: String, value: String, reason: String): String = "$field \"${shown(value)}\" is invalid: $reason"
+    private fun isAllowed(c: Char): Boolean = isAlphaNumeric(c) || c == '.' || c == '-' || c == '_'
+
+    private fun invalid(field: String, value: String, reason: String): String {
+        return "$field \"${shown(value)}\" is invalid: $reason"
+    }
 
     private fun shown(value: String): String {
         val head = if (value.length > MAX_SHOWN) value.substring(0, MAX_SHOWN) else value
