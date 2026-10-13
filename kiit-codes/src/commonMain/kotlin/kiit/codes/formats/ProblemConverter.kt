@@ -39,7 +39,7 @@ private fun isDomain(origin: String): Boolean = DOMAIN.matches(origin)
  *    URI of the response, so it points at the API's own host. Add an entry to get an absolute URL.
  * 4. An entry wins over the origin-derived baseUrl. It is always absolute, and only the suffix is built for it.
  * 5. `type` is the problem's identity, so pick the base once and keep it. Two statuses must not produce the same
- *    `type`. A name or scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. Nothing checks this.
+ *    `type`. An origin, a scope and a name can only contain the characters [StatusRules] allows.
  *
  *
  * EXAMPLE
@@ -69,7 +69,7 @@ private fun isDomain(origin: String): Boolean = DOMAIN.matches(origin)
  * 1. Keys of [baseUrls] are lowercased and a trailing `/` on a value is trimmed.
  * 2. [StatusConstants.KIIT] is always present and resolves to kiit-codes' own taxonomy docs.
  * 3. [StatusConstants.KIIT] can't be overridden. Its suffix is `?code=...#codes`, joined with no `/`. The origin is
- *    reserved for kiit-authored codes, a custom status must not use it. Nothing checks this.
+ *    reserved for kiit-authored codes. It is a convention, nothing checks it.
  * 4. Every `convert*` function ends in [convertCustomWithUrl], which is the only place a [Problem] is assembled.
  * 5. See [defaultTypeBuilder] for the suffix, and [Problem] for the RFC 9457 shape.
  * 6. [Problem.code] carries the full identity, origin and scope included. The suffix is a readable form of the same
@@ -201,7 +201,8 @@ class ProblemConverter
  * `scope` starts a new segment and an empty `scope` is skipped. `origin` is left out on purpose, the baseUrl is
  * already specific to one origin (see [ProblemConverter]), so repeating it would just name that origin twice.
  *
- * A name or scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. Nothing checks this.
+ * An origin, a scope and a name can only contain the characters [StatusRules] allows, so no segment can contain `/`
+ * or `:`.
  *
  * ```kotlin
  * val status = Failed.Rejected("DUPLICATE_CHARGE", "Duplicate", origin = "stripe.com", scope = "payments.cards")

@@ -195,7 +195,15 @@ private fun guideCustomCode() {
             origin = "payments.example.com",
             scope = "payments.cards",
         )
+
+    // A bad origin, scope or name throws when the status is created. For values from config, check them first
+    // null, the values are valid
+    println(StatusRules.check(origin = "payments.example.com", scope = "payments.cards", name = "PAYMENT_DECLINED"))
+    // origin "host:8080" is invalid: allowed characters are a-z, A-Z, 0-9, '.', '-', '_'
+    println(StatusRules.check(origin = "host:8080", scope = "", name = "PAYMENT_DECLINED"))
     // </example>
+    verify("guide-custom-code: check valid", StatusRules.check("payments.example.com", "payments.cards", "PAYMENT_DECLINED") == null)
+    verify("guide-custom-code: check invalid", StatusRules.check("host:8080", "", "PAYMENT_DECLINED") == "origin \"host:8080\" is invalid: allowed characters are a-z, A-Z, 0-9, '.', '-', '_'")
     verify("guide-custom-code: group", PAYMENT_DECLINED.group == "Rejected")
     verify("guide-custom-code: origin and scope", PAYMENT_DECLINED.origin == "payments.example.com" && PAYMENT_DECLINED.scope == "payments.cards")
 }

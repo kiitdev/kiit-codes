@@ -24,6 +24,7 @@ import type { Status } from "{{module.package}}";
 */
 
 import {
+  StatusRules,
   Succeeded,
   Pending,
   Excluded,
@@ -509,7 +510,15 @@ function guideCustomCode(): void {
 
   // <example id="guide-custom-code" tags="guide">
   const PAYMENT_DECLINED = Rejected("PAYMENT_DECLINED", "Payment declined", "payments.example.com", "payments.cards");
+
+  // A bad origin, scope or name throws when the status is created. For values from config, check them first
+  // null, the values are valid
+  console.log(StatusRules.check("payments.example.com", "payments.cards", "PAYMENT_DECLINED"));
+  // origin "host:8080" is invalid: allowed characters are a-z, A-Z, 0-9, '.', '-', '_'
+  console.log(StatusRules.check("host:8080", "", "PAYMENT_DECLINED"));
   // </example>
+  check(StatusRules.check("payments.example.com", "payments.cards", "PAYMENT_DECLINED") === null, "guide-custom-code: check valid");
+  check(StatusRules.check("host:8080", "", "PAYMENT_DECLINED") === `origin "host:8080" is invalid: allowed characters are a-z, A-Z, 0-9, '.', '-', '_'`, "guide-custom-code: check invalid");
   check(PAYMENT_DECLINED.group === Groups.REJECTED, "guide-custom-code: group");
   check(
     PAYMENT_DECLINED.origin === "payments.example.com" && PAYMENT_DECLINED.scope === "payments.cards",

@@ -194,7 +194,7 @@ The rules behind them:
 2. **Base:** a `baseUrls` entry for the origin, which is always absolute. With no entry, a domain origin gives `https://{origin}/docs/codes`, and any other id, such as `myapp1`, gives the relative `/docs/codes`. RFC 9457 prefers absolute URIs, and a relative `type` resolves against the response's own host, so register a base URL for a plain id.
 3. **Origin:** it is not in the tail, since the base already belongs to one origin.
 4. **Built-ins:** the origin `kiit.dev` links to the Codes section of these docs, as `?code=Failed:Invalid:INVALID_VALUE#codes`, and a `baseUrls` entry for `kiit.dev` is ignored. The origin is reserved for kiit-authored codes, so a custom status must not use it.
-5. **Names:** a name and a scope must not contain `/` or `:`, and should avoid `?`, `#` and `%`. An origin must not contain `:`. Nothing checks this.
+5. **Names:** an origin, a scope and a name can only contain letters, digits, `.`, `-` and `_`, and start with a letter or digit. A bad value throws when the status is created, and `StatusRules.check` tests one without throwing.
 
 ```json
 {

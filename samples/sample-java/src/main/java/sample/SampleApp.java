@@ -37,6 +37,7 @@ import kiit.codes.Passed;
 import kiit.codes.Status;
 import kiit.codes.StatusException;
 import kiit.codes.StatusExceptions;
+import kiit.codes.StatusRules;
 import kiit.codes.formats.CodeDetail;
 import kiit.codes.formats.CodeDetails;
 import kiit.codes.formats.ErrorDetail;
@@ -202,7 +203,15 @@ public class SampleApp {
         // <example id="guide-custom-code" tags="guide">
         Failed.Rejected PAYMENT_DECLINED =
                 new Failed.Rejected("PAYMENT_DECLINED", "Payment declined", "payments.example.com", "payments.cards");
+
+        // A bad origin, scope or name throws when the status is created. For values from config, check them first
+        // null, the values are valid
+        System.out.println(StatusRules.check("payments.example.com", "payments.cards", "PAYMENT_DECLINED"));
+        // origin "host:8080" is invalid: allowed characters are a-z, A-Z, 0-9, '.', '-', '_'
+        System.out.println(StatusRules.check("host:8080", "", "PAYMENT_DECLINED"));
         // </example>
+        check(StatusRules.check("payments.example.com", "payments.cards", "PAYMENT_DECLINED") == null, "guide-custom-code: check valid");
+        check(StatusRules.check("host:8080", "", "PAYMENT_DECLINED").equals("origin \"host:8080\" is invalid: allowed characters are a-z, A-Z, 0-9, '.', '-', '_'"), "guide-custom-code: check invalid");
         check(PAYMENT_DECLINED.getGroup().equals("Rejected"), "guide-custom-code: group");
         check(PAYMENT_DECLINED.getOrigin().equals("payments.example.com") && PAYMENT_DECLINED.getScope().equals("payments.cards"), "guide-custom-code: origin and scope");
     }
