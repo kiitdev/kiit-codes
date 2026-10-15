@@ -9,7 +9,7 @@ package kiit.codes
  *
  * Swift usage, construction and property access work directly:
  * ```swift
- * let e = RestrictedError(status: Failed.Restricted.companion.UNAUTHENTICATED, errors: [], cause: nil)
+ * let e = RestrictedError(status: Failed.Restricted.companion.UNAUTHENTICATED, message: nil, errors: [], cause: nil)
  * print(e.status.name)  // "UNAUTHENTICATED"
  * ```
  *
@@ -24,30 +24,34 @@ package kiit.codes
 @ObjCName("RestrictedError", swiftName = "RestrictedError")
 class RestrictedError(
     status: Failed.Restricted,
+    message: String? = null,
     errors: List<Err> = emptyList(),
     cause: Throwable? = null,
-) : StatusException.RestrictedException(status, errors, cause)
+) : StatusException.RestrictedException(status, message, errors, cause)
 
 @OptIn(kotlin.experimental.ExperimentalObjCName::class)
 @ObjCName("InvalidError", swiftName = "InvalidError")
 class InvalidError(
     status: Failed.Invalid,
+    message: String? = null,
     errors: List<Err> = emptyList(),
     cause: Throwable? = null,
-) : StatusException.InvalidException(status, errors, cause)
+) : StatusException.InvalidException(status, message, errors, cause)
 
 @OptIn(kotlin.experimental.ExperimentalObjCName::class)
 @ObjCName("RejectedError", swiftName = "RejectedError")
 class RejectedError(
     status: Failed.Rejected,
+    message: String? = null,
     errors: List<Err> = emptyList(),
     cause: Throwable? = null,
-) : StatusException.RejectedException(status, errors, cause)
+) : StatusException.RejectedException(status, message, errors, cause)
 
 @OptIn(kotlin.experimental.ExperimentalObjCName::class)
 @ObjCName("UnservedError", swiftName = "UnservedError")
 class UnservedError(
     status: Failed.Unserved,
+    message: String? = null,
     errors: List<Err> = emptyList(),
     cause: Throwable? = null,
-) : StatusException.UnservedException(status, errors, cause)
+) : StatusException.UnservedException(status, message, errors, cause)
