@@ -29,19 +29,50 @@ describe("RestrictedError / InvalidError / RejectedError / UnservedError", () =>
 
   it("stores explicit errors instead of the default", () => {
     const errors = [Err.of("bad field")];
-    const e = new InvalidError(Invalid.BAD_REQUEST, errors);
+    const e = new InvalidError(Invalid.BAD_REQUEST, undefined, errors);
     expect(e.errors).toEqual(errors);
   });
 
   it("propagates cause via the standard Error options", () => {
     const root = new Error("root");
-    const e = new RejectedError(Rejected.CONFLICT, [], { cause: root });
+    const e = new RejectedError(Rejected.CONFLICT, undefined, [], { cause: root });
     expect(e.cause).toBe(root);
   });
 
   it("takes its message from the underlying status", () => {
     const e = new UnservedError(Unserved.UNREACHABLE);
     expect(e.message).toBe(e.checked.status.title);
+  });
+
+  it("defaults the message to the status title and an explicit message replaces it", () => {
+    expect(new RejectedError(Rejected.CONFLICT).message).toBe(Rejected.CONFLICT.title);
+    const e = new RejectedError(Rejected.CONFLICT, "Order 5 already shipped");
+    expect(e.message).toBe("Order 5 already shipped");
+    // errors are independent of message: the default is still the status title
+    expect(e.errors[0]?.message).toBe(Rejected.CONFLICT.title);
+  });
+
+  it("keeps message and errors independent", () => {
+    const errors = [Err.of("bad field"), Err.of("bad value")];
+    const e = new InvalidError(Invalid.BAD_REQUEST, "Validation failed", errors);
+    expect(e.message).toBe("Validation failed");
+    expect(e.errors).toEqual(errors);
+  });
+
+  it("narrows status to the group without a cast", () => {
+    const restricted: Restricted = new RestrictedError(Restricted.UNAUTHORIZED).status;
+    const invalid: Invalid = new InvalidError(Invalid.BAD_REQUEST).status;
+    const rejected: Rejected = new RejectedError(Rejected.CONFLICT).status;
+    const unserved: Unserved = new UnservedError(Unserved.TIMEOUT).status;
+    expect(restricted).toBe(Restricted.UNAUTHORIZED);
+    expect(invalid).toBe(Invalid.BAD_REQUEST);
+    expect(rejected).toBe(Rejected.CONFLICT);
+    expect(unserved).toBe(Unserved.TIMEOUT);
+  });
+
+  it("status and checked.status are the same object", () => {
+    const e = new UnservedError(Unserved.TIMEOUT);
+    expect(e.status).toBe(e.checked.status);
   });
 
   it("sets .name to the concrete subclass name, not the abstract base", () => {
@@ -94,9 +125,13 @@ describe("toError", () => {
     expect(toError(Unserved.TIMEOUT)).toBeInstanceOf(UnservedError);
   });
 
+  it("propagates the message", () => {
+    expect(toError(Invalid.BAD_REQUEST, "Validation failed").message).toBe("Validation failed");
+  });
+
   it("propagates explicit errors", () => {
     const errors = [Err.of("bad field")];
-    const e = toError(Invalid.BAD_REQUEST, errors);
+    const e = toError(Invalid.BAD_REQUEST, undefined, errors);
     expect(e.errors).toEqual(errors);
   });
 });

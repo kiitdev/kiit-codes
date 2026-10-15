@@ -65,9 +65,61 @@ public class JavaInteropTest {
 
     @Test
     public void statusExceptionConstructorsHaveOverloads() {
-        // @JvmOverloads: only the required Failed.Restricted argument, no explicit errors/cause
+        // @JvmOverloads: only the required Failed.Restricted argument, no explicit message/errors/cause
         StatusException.RestrictedException ex = new StatusException.RestrictedException(Failed.Restricted.DENIED);
         assertEquals(Failed.Restricted.DENIED, ex.getStatus());
+
+        // message is the second parameter, so (status, message) is its own overload
+        StatusException.RestrictedException withMessage =
+                new StatusException.RestrictedException(Failed.Restricted.DENIED, "Account a-1 is locked");
+        assertEquals("Account a-1 is locked", withMessage.getMessage());
+    }
+
+    @Test
+    public void statusExceptionStatusIsNarrowedToTheGroupWithoutACast() {
+        StatusException.RestrictedException ex = new StatusException.RestrictedException(Failed.Restricted.DENIED);
+        Failed.Restricted status = ex.getStatus();
+        assertEquals(Failed.Restricted.DENIED, status);
+    }
+
+    /** A Java subclass: extra data, message passed through super(status, message). */
+    private static class AccountLockedException extends StatusException.RestrictedException {
+        private final String accountId;
+
+        AccountLockedException(String accountId) {
+            super(Failed.Restricted.DENIED, "Account " + accountId + " is locked");
+            this.accountId = accountId;
+        }
+
+        String getAccountId() {
+            return accountId;
+        }
+    }
+
+    @Test
+    public void statusExceptionCanBeSubclassedFromJava() {
+        AccountLockedException ex = new AccountLockedException("a-1");
+        assertEquals("a-1", ex.getAccountId());
+        assertEquals("Account a-1 is locked", ex.getMessage());
+        assertEquals(Failed.Restricted.DENIED, ex.getStatus());
+        assertEquals(1, ex.getErrors().size());
+    }
+
+    @Test
+    public void narrowSubclassIsCaughtBeforeItsGroupInJava() {
+        // Java rejects a broader catch placed first, so the order here is narrow, group, base
+        StatusException thrown = new AccountLockedException("a-1");
+        String caught;
+        try {
+            throw thrown;
+        } catch (AccountLockedException e) {
+            caught = "locked";
+        } catch (StatusException.RestrictedException e) {
+            caught = "restricted";
+        } catch (StatusException e) {
+            caught = "other";
+        }
+        assertEquals("locked", caught);
     }
 
     @Test
@@ -81,6 +133,12 @@ public class JavaInteropTest {
         } catch (StatusException caught) {
             assertEquals(Failed.Invalid.NOT_FOUND, caught.getStatus());
         }
+    }
+
+    @Test
+    public void statusExceptionsFacadeAcceptsAMessage() {
+        StatusException ex = StatusExceptions.toException(Failed.Invalid.NOT_FOUND, "Order 5 not found");
+        assertEquals("Order 5 not found", ex.getMessage());
     }
 
     @Test
