@@ -13,7 +13,7 @@ plugins {
 // Single source of truth for the published version — feeds Maven Central (below) and the release
 // workflow's printVersion task, so the git tag, GitHub release, and Maven artifact can never drift
 // apart. The npm package (ports/kiit-codes-ts) is a separate native port with its own version.
-val libraryVersion = "1.1.0"
+val libraryVersion = "1.2.0"
 
 kotlin {
     jvm {

@@ -57,7 +57,7 @@ A fixed taxonomy provides consistent classification, extensible codes preserve d
 
 ```kotlin
 dependencies {
-    implementation("dev.kiit:kiit-codes:1.1.0")
+    implementation("dev.kiit:kiit-codes:1.2.0")
 }
 ```
 

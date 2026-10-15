@@ -6,112 +6,71 @@ All notable changes to kiit-codes are documented here. Format follows
 
 ## [Unreleased]
 
-### Added
-- `DEFAULT` on each group's companion (`Invalid.DEFAULT`, `Restricted.DEFAULT`, ...), an alias for that group's
-  default code (`INVALID_VALUE`, `DENIED`, ...). It is the same instance, not a new registry entry.
-- `Status.isDefault`, true when a status equals its group's `DEFAULT`. Compared by value, so a `copy()` that
-  changes any field, `title` included, is not the default.
-- TypeScript port: the same `DEFAULT` constants and a standalone `isDefault(status)` function.
-- An origin can be a real domain. With no `baseUrls` entry, `ProblemConverter` builds the RFC 9457 `type` as
-  `{base}/docs/codes/{scope...}/{status}/{group}/{name}`, in exact case. `status` is `Passed` or `Failed`, and
-  each `.` in a scope starts a new segment. A domain origin (two or more dot-separated labels of letters, digits and
-  hyphens) gives an absolute `https://{origin}/docs/codes/...`. Any other id, such as `"myapp1"`, gives the relative
-  `/docs/codes/...`, since it is not a host. RFC 9457 prefers absolute URIs, so register a base URL to get one. An
-  entry always wins and is always absolute, and only the suffix is built for it. `type` is the problem's identity, so
-  pick the base once and keep it, and do not let two statuses produce the same `type`. The default suffix is
-  `defaultTypeBuilder`. For your own URL, pass a `typeBuilder`, call `convertWithUrl` with a base and an empty
-  suffix, or replace the field with `copy(type = ...)`.
-- `Problem.code`, the exact `{origin}:{scope}:{Status.code}` string, the same value as `CodeDetail.code`. It is a kiit
-  extension member, always set by `ProblemConverter`, and `null` by default for a `Problem` built by hand. Read it
-  instead of parsing `type`. The TypeScript port builds the same `type` and has the same optional `code`.
-- `StatusRules.check(origin, scope, name)` returns the first problem with the three values as a message, or `null`
-  when they are valid. It never throws, so use it for values from config or other runtime input. The TypeScript port
-  has the same `StatusRules.check`, returning `string | null`.
-- Documented: the origin `kiit.dev` is reserved for kiit-authored codes. It is a convention, nothing checks it.
-- `ProblemConverter()` needs no arguments. Both `baseUrls` and `mapping` have defaults.
-- TypeScript port: the same `ProblemConverter` changes. `ProblemConverter(baseUrls = {}, mapping = CodesToHttp())` is a
-  factory function with the same `convert`, `convertCustom`, `convertWithUrl` and `convertCustomWithUrl` members.
-  `mapper` comes before the defaulted `typeBuilder` in the two `*Custom*` members, as TypeScript requires.
-- `StatusException` takes an optional `message`, the one line summary. It defaults to the status title and is separate
-  from `errors`, so setting one does not change the other. `Failed.toException` takes it too, and so do the iOS
-  `*Error` classes and the TypeScript `StatusError` subclasses. A subclass can still override `message`.
-- `StatusException.status` has the type of its group: a `RestrictedException` gives a `Failed.Restricted`, with no cast.
-  The TypeScript `StatusError` subclasses narrow `status` the same way.
-- Documented subclassing: the guide shows an exception that carries its own data, and matching the narrow type before
-  its group in `when`, `catch` and `instanceof`.
+## [1.2.0] - 2026-10-14
 
-### Changed
-- **Breaking**: `origin`, `scope` and `name` are checked when a status is created. They can only contain ASCII
-  letters, digits, `.`, `-` and `_`, and a value starts with a letter or digit. `origin` and `name` can't be empty,
-  `scope` can. Case is not checked and there is no length limit. Any other value, such as `host:8080`, `a/b` or a name
-  with a space, throws `IllegalArgumentException` (an `Error` in the TypeScript port), and `copy()` is checked too.
-  Before, any text was accepted and a `:` or `/` silently changed `code` and `type`. The message names the field and
-  shows the value, with control characters escaped and long values cut at 32 characters. Kotlin constructors have
-  `@Throws(IllegalArgumentException::class)`, so in Swift they are `throws` and calls need `try`. A TypeScript object made without a constructor, such as one
-  from `JSON.parse`, is not checked.
-- **Breaking**: `Problem.type` changes against 1.1.0. A custom status's suffix is now `{scope...}/{status}/{group}/{name}`
-  in exact case, for example `payments/cards/Failed/Rejected/DUPLICATE_CHARGE`. 1.1.0 built `{scope...}/{group}/{name}`
-  in lowercase with dashes. A built-in's `type` now ends in `#codes` instead of `#taxonomy`, for example
-  `https://www.kiit.dev/docs/kiit-codes?code=Failed:Invalid:INVALID_VALUE#codes`. The last three segments are the same
-  values as `Status.code`, with `/` in place of `:`. Anything that stores or compares `type` needs updating. The
-  TypeScript port changes the same way.
-- **Breaking**: `Status.message` is now `title`, on every status. It is the fixed text of a code, and `Err.message`
-  stays the text of one occurrence. Named `message =` arguments in a custom status become `title =`, and Java
-  `getMessage()` becomes `getTitle()`. `Problem.title` and `CodeDetail.title` are filled from it. The TypeScript
-  port's `Status` has `title` too.
-- **Breaking**: `CodeDetail.message` is now `title`, matching `Problem.title`. The TypeScript port's `CodeDetail` too.
-- `toCodeDetail` and `ProblemConverter` put every error in `errors`. A single `Err.ErrorField` is one entry that keeps
-  its field, a plain `Err.ErrorInfo` is one entry with no field, and an `Err.ErrorList` is expanded, including lists
-  nested in lists. Before, only an `Err.ErrorList` filled `errors`, and a single error left it `null` and lost its
-  field. `detail` is the error's message, or the first non-blank error message when that is blank. The TypeScript
-  port does the same.
-- **Breaking**: the built-in origin value changed from `"dev.kiit"` to `"kiit.dev"`. Anything comparing against or
-  storing the old value needs updating. The Maven group ID is still `dev.kiit`.
-- **Breaking**: `CodeDetail` has one identifier instead of two. `path` is removed, and `code` is now
-  `"{origin}:{scope}:{Status.code}"`, for example `stripe.com:payments.cards:Failed:Rejected:DUPLICATE_CHARGE`. An
-  empty scope stays as an empty slot (`kiit.dev::Failed:Restricted:FORBIDDEN`), so `code` always has five
-  `:`-separated values, unlike `Status.path`, which skips it. `Status.path` and `Status.code` are unchanged, and
-  `Status.code` is the suffix of `CodeDetail.code`. Read `origin` and `scope` off the front of `code` where you used
-  `path`. The TypeScript port's `CodeDetail` changes the same way.
-- **Breaking**: every built-in status now has the scope `codes` (`StatusConstants.CODES`, `StatusConstants.CODES` in
-  the TypeScript port). `Status.path` of a built-in is `kiit.dev:codes` instead of `kiit.dev`, and
-  `CodeDetail.code` is `kiit.dev:codes:Failed:Restricted:FORBIDDEN`. A built-in is no longer equal to the same
-  status with an empty scope, so a custom status built with `origin = StatusConstants.KIIT` and no scope is no
-  longer a built-in. `CodesToHttp` and `CodesToGrpc` overrides are keyed by `origin:scope:group:name`, so a
-  hand-written key for a built-in needs `codes` in the scope slot. `Codes.statusFor(origin, group, name)` finds
-  built-ins by the same arguments. This scope change does not change the `Problem.type` of a built-in, since it never uses the scope.
-- **Breaking**: `CodesToProblem` is now `ProblemConverter`, and it takes the origin-to-baseUrl map directly:
-  `ProblemConverter(baseUrls = mapOf("stripe.com" to "https://stripe.com/errors"))`. This replaces
-  `CodesToProblem(Catalog.of(...), mapping)`.
-- **Breaking**: the methods are renamed, with the same parameters unless noted.
-  - `build` is now `convert`, and `buildCustom` is now `convertCustom`.
-  - The old `convert` (explicit `baseUrl`) is now `convertWithUrl`, and `convertCustom` is now
-    `convertCustomWithUrl`.
-- An origin with no registered base URL no longer throws `IllegalArgumentException`. It builds `type` from the
-  origin instead.
-- `convertWithUrl` and `convertCustomWithUrl` trim a trailing `/` from `baseUrl`, like `baseUrls` values.
-- **Breaking**: `StatusException` constructors take `message` second: `(status, message, errors, cause)`. Pass
-  `errors` by name or after `message`, as in `InvalidException(status, errors = errors)`. The same goes for the iOS
-  `*Error` classes and the TypeScript `StatusError` subclasses, which are `(status, message, errors, options)`.
-- **Breaking**: `Failed.toException` is `toException(message, errors)`, and `toError` in the TypeScript port is
-  `toError(failed, message, errors)`. A call that passed `errors` positionally needs `errors = errors`.
-- **Breaking**: `StatusException.getStatus()` returns the group's type instead of `Status`. Source that only reads the
-  status is unaffected, but code compiled against the old signature needs a rebuild.
+Items marked "TS" also apply to the TypeScript port.
 
-### Removed
-- **Breaking**: `CodeLookup.toStatus(code)`, and with it `CodesToHttp.toStatus`, `CodesToGrpc.toStatus` and
-  `CompositeLookup.toStatus`. Many statuses share one protocol code, so the reverse lookup was lossy and relied on
-  a hand-kept preference list to pick a winner. `toCode` is unchanged. To carry a status across a boundary, use
-  `CodeDetail.code` or `Problem.code`. The TypeScript port's `toStatus` is removed too.
-- **Breaking**: `Catalog`. Pass the map to `ProblemConverter(baseUrls = ...)` instead. Keys are lowercased and
-  `kiit.dev` is always fixed to kiit-codes' own docs, as before.
-- **Breaking**: the TypeScript port's `Catalog` and `CodesToProblem`, replaced by `ProblemConverter`.
-- **Breaking**: the TypeScript port's one-shot `problemFor(catalog, mapping, status, err)`. Use
-  `ProblemConverter().convert(status, err)`. Kotlin never had an equivalent.
-- **Breaking**: `Status.ofStatus(message, rawStatus, status)`. Overriding `message` produced a status with the same
-  origin/scope/group/name as a built-in but not equal to it. Use the status directly, or `copy()` it if you need
-  a different message. The TypeScript port's `ofStatus` is removed for the same reason. `Err.ofStatus(status)` is
-  unaffected.
+| Area | Type | Impact | Description |
+|---|---|---|---|
+| `Status.DEFAULT`, `Status.isDefault` | Added | n/a | Each group has a `DEFAULT` alias (`Invalid.DEFAULT`), and `isDefault` tests for it. TS |
+| `ProblemConverter` | Added | n/a | Builds `type` from the origin when no base URL is registered. `ProblemConverter()` needs no arguments. TS |
+| `Problem.code` | Added | n/a | The `{origin}:{scope}:{Status.code}` string, same as `CodeDetail.code`. TS |
+| `StatusRules.check` | Added | n/a | Returns the first problem with an origin, scope and name as a message, or `null`. Never throws. TS |
+| `StatusException` | Added | n/a | Optional `message`, defaulting to the status title and separate from `errors`. Also on `toException` and the iOS `*Error` classes. TS |
+| `StatusException.status` | Updated | Breaking | Typed to its group, so `RestrictedException.status` is a `Failed.Restricted`. `getStatus()` changes type. TS |
+| `StatusException` constructors | Updated | Breaking | Order is now `(status, message, errors, cause)`, and `toException(message, errors)`. TS |
+| Docs | Added | n/a | Subclassing an exception, and the `kiit.dev` origin being reserved for kiit codes |
+| `Status` creation | Updated | Breaking | `origin`, `scope` and `name` are checked and throw `IllegalArgumentException` on bad values. TS |
+| `Status.message`, `CodeDetail.message` | Updated | Breaking | Renamed `title`. `Err.message` is unchanged. TS |
+| Built-in origin | Updated | Breaking | `"dev.kiit"` is now `"kiit.dev"`. |
+| Built-in scope | Updated | Breaking | Every built-in has the scope `codes`, which changes `Status.path` and `CodeDetail.code`. TS |
+| `CodeDetail` | Updated | Breaking | `path` is removed and `code` is `{origin}:{scope}:{Status.code}`. `errors` holds every error. TS |
+| `Problem.type` | Updated | Breaking | Suffix is `{scope...}/{status}/{group}/{name}` in exact case. A built-in ends in `#codes`. TS |
+| `CodesToProblem` | Updated | Breaking | Now `ProblemConverter(baseUrls)`. `build` is `convert`, `convert` is `convertWithUrl`. TS |
+| `convertWithUrl` | Updated | n/a | Trims a trailing `/` from `baseUrl`. An unregistered origin no longer throws. |
+| `CodeLookup.toStatus` | Removed | Breaking | Also on `CodesToHttp`, `CodesToGrpc` and `CompositeLookup`. `toCode` is unchanged. TS |
+| `Catalog` | Removed | Breaking | Pass the map to `ProblemConverter(baseUrls = ...)`. TS also loses `CodesToProblem` and `problemFor`. |
+| `Status.ofStatus` | Removed | Breaking | Use the status directly, or `copy()` it. `Err.ofStatus` is unchanged. TS |
+
+### Migration
+
+Each step applies only if you use that API. The TypeScript port follows the same steps.
+
+1. **Converter**: replace `CodesToProblem` and `Catalog` with `ProblemConverter`, then rename the methods.
+   Rename the old `convert` to `convertWithUrl` first, so the next rename does not collide with it.
+   ```kotlin
+   // Before
+   CodesToProblem(Catalog.of("stripe.com" to "https://stripe.com/errors"), mapping).build(status, err)
+   // After
+   ProblemConverter(baseUrls = mapOf("stripe.com" to "https://stripe.com/errors")).convert(status, err)
+   ```
+   `convert` with an explicit `baseUrl` becomes `convertWithUrl`, `build` becomes `convert`, `buildCustom` becomes
+   `convertCustom`, and the old `convertCustom` becomes `convertCustomWithUrl`. TS also replaces
+   `problemFor(catalog, mapping, status, err)` with `ProblemConverter().convert(status, err)`.
+2. **Title**: rename `message` to `title` on a custom `Status` (`title = "..."`), on `CodeDetail`, and in Java
+   (`getMessage()` is `getTitle()`). `Err.message` stays.
+3. **Origin**: update anything that stores or compares `"dev.kiit"` to `"kiit.dev"`. The Maven group is still `dev.kiit`.
+4. **Code ids**: read `origin` and `scope` from the front of `CodeDetail.code` where you used `path`. A built-in is
+   now `kiit.dev:codes:Failed:Restricted:FORBIDDEN`. A `CodesToHttp` or `CodesToGrpc` override key for a built-in
+   needs `codes` in the scope slot (`origin:scope:group:name`).
+5. **Stored `type`**: anything that saves or compares `Problem.type` needs the new form, for example
+   `payments/cards/Failed/Rejected/DUPLICATE_CHARGE`, or `...?code=Failed:Invalid:INVALID_VALUE#codes` for a built-in.
+6. **Validation**: `origin`, `scope` and `name` may only contain ASCII letters, digits, `.`, `-` and `_`. They start
+   with a letter or digit, and `origin` and `name` cannot be empty. Fix values such as `host:8080` or `a/b`. Check a
+   runtime value with `StatusRules.check(origin, scope, name)`. In Swift, constructors are `throws`, so calls need `try`.
+7. **Removed**: replace `toStatus(code)` with `CodeDetail.code` or `Problem.code` to carry a status across a
+   boundary. Replace `Status.ofStatus(...)` with the status itself, or `copy()` it.
+8. **Exceptions**: pass `errors` by name, and rebuild code compiled against the old `getStatus()`.
+   ```kotlin
+   // Before
+   InvalidException(status, errors)
+   status.toException(errors)
+   // After
+   InvalidException(status, errors = errors)
+   status.toException(errors = errors)
+   ```
+   The TS `StatusError` subclasses and `toError` change the same way. You can drop casts such as
+   `status as Failed.Restricted`, since `status` now has that type.
 
 ## [1.1.0] - 2026-09-09
 
