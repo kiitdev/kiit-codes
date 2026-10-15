@@ -42,18 +42,22 @@ import { Checked } from "./checked.js";
 import { Err } from "./err.js";
 
 export abstract class StatusError extends Error {
+  /** The failed status, narrowed to this error's group (e.g. `Restricted` on `RestrictedError`). */
+  abstract readonly status: Failed;
+
+  /**
+   * The same status and errors as one `Checked`. `checked.status` is the same object as `status`,
+   * typed `Status` since a `Checked` can also represent a pass.
+   */
   readonly checked: Checked;
 
-  constructor(checked: Checked, options?: ErrorOptions) {
-    super(checked.status.title, options);
-    this.checked = checked;
+  constructor(failed: Failed, message: string | undefined, errors: readonly Err[], options?: ErrorOptions) {
+    super(message ?? failed.title, options);
+    this.checked = Checked.failure(failed, errors.length > 0 ? errors : [Err.ofStatus(failed)]);
     this.name = new.target.name;
   }
 
-  get status(): Status {
-    return this.checked.status;
-  }
-
+  /** Every error for this failure. Defaults to the status title when none were given. */
   get errors(): readonly Err[] {
     return this.checked.errors;
   }
@@ -61,29 +65,41 @@ export abstract class StatusError extends Error {
 
 /** Thrown for a `Failed.Restricted` status: a security or access-control failure. */
 export class RestrictedError extends StatusError {
-  constructor(status: Restricted, errors: readonly Err[] = [], options?: ErrorOptions) {
-    super(Checked.failure(status, errors.length > 0 ? errors : [Err.ofStatus(status)]), options);
+  override readonly status: Restricted;
+
+  constructor(status: Restricted, message?: string, errors: readonly Err[] = [], options?: ErrorOptions) {
+    super(status, message, errors, options);
+    this.status = status;
   }
 }
 
 /** Thrown for a `Failed.Invalid` status: the request as given cannot be satisfied. */
 export class InvalidError extends StatusError {
-  constructor(status: Invalid, errors: readonly Err[] = [], options?: ErrorOptions) {
-    super(Checked.failure(status, errors.length > 0 ? errors : [Err.ofStatus(status)]), options);
+  override readonly status: Invalid;
+
+  constructor(status: Invalid, message?: string, errors: readonly Err[] = [], options?: ErrorOptions) {
+    super(status, message, errors, options);
+    this.status = status;
   }
 }
 
 /** Thrown for a `Failed.Rejected` status: a known, expected business-rule failure. */
 export class RejectedError extends StatusError {
-  constructor(status: Rejected, errors: readonly Err[] = [], options?: ErrorOptions) {
-    super(Checked.failure(status, errors.length > 0 ? errors : [Err.ofStatus(status)]), options);
+  override readonly status: Rejected;
+
+  constructor(status: Rejected, message?: string, errors: readonly Err[] = [], options?: ErrorOptions) {
+    super(status, message, errors, options);
+    this.status = status;
   }
 }
 
 /** Thrown for a `Failed.Unserved` status: valid and permitted, but can't be serviced right now. */
 export class UnservedError extends StatusError {
-  constructor(status: Unserved, errors: readonly Err[] = [], options?: ErrorOptions) {
-    super(Checked.failure(status, errors.length > 0 ? errors : [Err.ofStatus(status)]), options);
+  override readonly status: Unserved;
+
+  constructor(status: Unserved, message?: string, errors: readonly Err[] = [], options?: ErrorOptions) {
+    super(status, message, errors, options);
+    this.status = status;
   }
 }
 
@@ -94,16 +110,16 @@ export class UnservedError extends StatusError {
  * Exhaustive over `Failed`'s four groups via `assertNever`: if `Failed` ever gains a new group,
  * this becomes a compile error to fix here, not something a default case would silently mishandle.
  */
-export function toError(failed: Failed, errors: readonly Err[] = []): StatusError {
+export function toError(failed: Failed, message?: string, errors: readonly Err[] = []): StatusError {
   switch (failed.group) {
     case Groups.RESTRICTED:
-      return new RestrictedError(failed, errors);
+      return new RestrictedError(failed, message, errors);
     case Groups.INVALID:
-      return new InvalidError(failed, errors);
+      return new InvalidError(failed, message, errors);
     case Groups.REJECTED:
-      return new RejectedError(failed, errors);
+      return new RejectedError(failed, message, errors);
     case Groups.UNSERVED:
-      return new UnservedError(failed, errors);
+      return new UnservedError(failed, message, errors);
     default:
       return assertNever(failed);
   }
