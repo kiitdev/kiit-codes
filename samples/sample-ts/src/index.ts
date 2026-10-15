@@ -47,7 +47,10 @@ import {
   isDefault,
   toError,
   RejectedError,
+  InvalidError,
+  UnservedError,
 } from "@kiitdev/codes";
+import type { StatusError } from "@kiitdev/codes";
 import type { Status, Passed, Failed, ErrorItem, CodeLookup } from "@kiitdev/codes";
 
 function check(condition: boolean, label: string): void {
@@ -478,6 +481,7 @@ function showGuide(): void {
   guideCollectErrors();
   guideErrorDetails();
   guideExceptions();
+  guideExceptionsSubclass();
   guideJson();
   guideTypeUrl();
   guideCustomTypeUrl();
@@ -669,6 +673,50 @@ function guideExceptions(): void {
     if (e instanceof RejectedError) caught = e.status.name;
   }
   check(caught === "CONFLICT", "guide-exceptions: caught");
+}
+
+function guideExceptionsSubclass(): void {
+  section("Guide: Error Handling: Exceptions: Subclass");
+
+  // <example id="guide-exceptions-subclass" tags="guide">
+  // A domain error: the status is fixed, the data and the message are yours
+  class OrderShippedError extends RejectedError {
+    readonly orderId: string;
+
+    constructor(orderId: string) {
+      super(Rejected.CONFLICT, `Order ${orderId} already shipped`);
+      this.orderId = orderId;
+    }
+  }
+
+  function describe(e: StatusError): string {
+    // The narrow class goes first, the first match wins
+    if (e instanceof OrderShippedError) return `order ${e.orderId} shipped`;
+    if (e instanceof RejectedError) return "rejected";
+    if (e instanceof InvalidError) return "invalid";
+    if (e instanceof UnservedError) return "unserved";
+    return "restricted";
+  }
+
+  // order A-1 shipped
+  console.log(describe(new OrderShippedError("A-1")));
+  // rejected
+  console.log(describe(toError(Rejected.CONFLICT)));
+
+  try {
+    throw new OrderShippedError("A-1");
+  } catch (e) {
+    if (e instanceof OrderShippedError) {
+      // Order A-1 already shipped
+      console.log(e.message);
+    } else if (e instanceof RejectedError) {
+      console.log(e.status.name);
+    }
+  }
+  // </example>
+  check(describe(new OrderShippedError("A-1")) === "order A-1 shipped", "guide-exceptions-subclass: narrow first");
+  check(describe(toError(Rejected.CONFLICT)) === "rejected", "guide-exceptions-subclass: group");
+  check(new OrderShippedError("A-1").message === "Order A-1 already shipped", "guide-exceptions-subclass: message");
 }
 
 function guideJson(): void {

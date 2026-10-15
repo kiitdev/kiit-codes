@@ -32,6 +32,13 @@ All notable changes to kiit-codes are documented here. Format follows
 - TypeScript port: the same `ProblemConverter` changes. `ProblemConverter(baseUrls = {}, mapping = CodesToHttp())` is a
   factory function with the same `convert`, `convertCustom`, `convertWithUrl` and `convertCustomWithUrl` members.
   `mapper` comes before the defaulted `typeBuilder` in the two `*Custom*` members, as TypeScript requires.
+- `StatusException` takes an optional `message`, the one line summary. It defaults to the status title and is separate
+  from `errors`, so setting one does not change the other. `Failed.toException` takes it too, and so do the iOS
+  `*Error` classes and the TypeScript `StatusError` subclasses. A subclass can still override `message`.
+- `StatusException.status` has the type of its group: a `RestrictedException` gives a `Failed.Restricted`, with no cast.
+  The TypeScript `StatusError` subclasses narrow `status` the same way.
+- Documented subclassing: the guide shows an exception that carries its own data, and matching the narrow type before
+  its group in `when`, `catch` and `instanceof`.
 
 ### Changed
 - **Breaking**: `origin`, `scope` and `name` are checked when a status is created. They can only contain ASCII
@@ -83,6 +90,13 @@ All notable changes to kiit-codes are documented here. Format follows
 - An origin with no registered base URL no longer throws `IllegalArgumentException`. It builds `type` from the
   origin instead.
 - `convertWithUrl` and `convertCustomWithUrl` trim a trailing `/` from `baseUrl`, like `baseUrls` values.
+- **Breaking**: `StatusException` constructors take `message` second: `(status, message, errors, cause)`. Pass
+  `errors` by name or after `message`, as in `InvalidException(status, errors = errors)`. The same goes for the iOS
+  `*Error` classes and the TypeScript `StatusError` subclasses, which are `(status, message, errors, options)`.
+- **Breaking**: `Failed.toException` is `toException(message, errors)`, and `toError` in the TypeScript port is
+  `toError(failed, message, errors)`. A call that passed `errors` positionally needs `errors = errors`.
+- **Breaking**: `StatusException.getStatus()` returns the group's type instead of `Status`. Source that only reads the
+  status is unaffected, but code compiled against the old signature needs a rebuild.
 
 ### Removed
 - **Breaking**: `CodeLookup.toStatus(code)`, and with it `CodesToHttp.toStatus`, `CodesToGrpc.toStatus` and

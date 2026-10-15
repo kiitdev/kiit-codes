@@ -88,6 +88,7 @@ public class SampleApp {
         guideCollectErrors();
         guideErrorDetails();
         guideExceptions();
+        guideExceptionsSubclass();
         guideTypeUrl();
         guideCustomTypeUrl();
         guideHttp();
@@ -336,6 +337,56 @@ public class SampleApp {
             caught = e.getStatus().getName() + (e instanceof StatusException.RejectedException ? " rejected" : "");
         }
         check(caught.equals("CONFLICT rejected"), "guide-exceptions: caught");
+    }
+
+    private static void guideExceptionsSubclass() {
+        section("Guide: Error Handling: Exceptions: Subclass");
+
+        // <example id="guide-exceptions-subclass" tags="guide">
+        // A domain exception: the status is fixed, the data and the message are yours
+        class OrderShippedException extends StatusException.RejectedException {
+            private final String orderId;
+
+            OrderShippedException(String orderId) {
+                super(Failed.Rejected.CONFLICT, "Order " + orderId + " already shipped");
+                this.orderId = orderId;
+            }
+
+            String getOrderId() {
+                return orderId;
+            }
+        }
+
+        Function<StatusException, String> describe = e -> switch (e) {
+            // The narrow type goes first, Java rejects a broader case before it
+            case OrderShippedException o -> "order " + o.getOrderId() + " shipped";
+            case StatusException.RejectedException r -> "rejected";
+            case StatusException.RestrictedException r -> "restricted";
+            case StatusException.InvalidException i -> "invalid";
+            case StatusException.UnservedException u -> "unserved";
+        };
+
+        // order A-1 shipped
+        System.out.println(describe.apply(new OrderShippedException("A-1")));
+        // rejected
+        System.out.println(describe.apply(StatusExceptions.toException(Failed.Rejected.CONFLICT)));
+
+        StatusException thrown = new OrderShippedException("A-1");
+        try {
+            throw thrown;
+        } catch (OrderShippedException e) {
+            // Order A-1 already shipped
+            System.out.println(e.getMessage());
+        } catch (StatusException.RejectedException e) {
+            System.out.println(e.getStatus().getName());
+        } catch (StatusException e) {
+            // Checked in Java, so the base type is caught last
+            System.out.println(e.getStatus().getName());
+        }
+        // </example>
+        check(describe.apply(new OrderShippedException("A-1")).equals("order A-1 shipped"), "guide-exceptions-subclass: narrow first");
+        check(describe.apply(StatusExceptions.toException(Failed.Rejected.CONFLICT)).equals("rejected"), "guide-exceptions-subclass: group");
+        check(new OrderShippedException("A-1").getMessage().equals("Order A-1 already shipped"), "guide-exceptions-subclass: message");
     }
 
     private static void guideTypeUrl() {

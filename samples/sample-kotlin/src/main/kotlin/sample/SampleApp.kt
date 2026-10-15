@@ -157,6 +157,7 @@ fun showGuide() {
     guideCollectErrors()
     guideErrorDetails()
     guideExceptions()
+    guideExceptionsSubclass()
     guideJson()
     guideTypeUrl()
     guideCustomTypeUrl()
@@ -340,6 +341,43 @@ private fun guideExceptions() {
             e.status.name
         }
     verify("guide-exceptions: caught", caught == "CONFLICT")
+}
+
+private fun guideExceptionsSubclass() {
+    section("Guide: Error Handling: Exceptions: Subclass")
+
+    // <example id="guide-exceptions-subclass" tags="guide">
+    // A domain exception: the status is fixed, the data and the message are yours
+    class OrderShippedException(val orderId: String) :
+        StatusException.RejectedException(Rejected.CONFLICT, message = "Order $orderId already shipped")
+
+    fun describe(e: StatusException): String =
+        when (e) {
+            // The narrow type goes first, the first match wins
+            is OrderShippedException -> "order ${e.orderId} shipped"
+            is StatusException.RejectedException -> "rejected"
+            is StatusException.RestrictedException -> "restricted"
+            is StatusException.InvalidException -> "invalid"
+            is StatusException.UnservedException -> "unserved"
+        }
+
+    // order A-1 shipped
+    println(describe(OrderShippedException("A-1")))
+    // rejected
+    println(describe(Rejected.CONFLICT.toException()))
+
+    try {
+        throw OrderShippedException("A-1")
+    } catch (e: OrderShippedException) {
+        // Order A-1 already shipped
+        println(e.message)
+    } catch (e: StatusException.RejectedException) {
+        println(e.status.name)
+    }
+    // </example>
+    verify("guide-exceptions-subclass: narrow first", describe(OrderShippedException("A-1")) == "order A-1 shipped")
+    verify("guide-exceptions-subclass: group", describe(Rejected.CONFLICT.toException()) == "rejected")
+    verify("guide-exceptions-subclass: message", OrderShippedException("A-1").message == "Order A-1 already shipped")
 }
 
 private fun guideJson() {
