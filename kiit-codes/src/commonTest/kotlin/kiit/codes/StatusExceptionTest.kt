@@ -232,4 +232,32 @@ class StatusExceptionTest {
             }
         assertIs<StatusException.RestrictedException>(viaBase)
     }
+
+    @Test
+    fun narrowSubclassMatchesBeforeItsGroupInWhenAndCatch() {
+        fun describe(e: StatusException): String =
+            when (e) {
+                is AccountLockedException -> "locked"
+                is StatusException.RestrictedException -> "restricted"
+                is StatusException.InvalidException -> "invalid"
+                is StatusException.RejectedException -> "rejected"
+                is StatusException.UnservedException -> "unserved"
+            }
+        assertEquals("locked", describe(AccountLockedException("a-1", 30)))
+        assertEquals("restricted", describe(StatusException.RestrictedException(Restricted.UNAUTHORIZED)))
+
+        fun caught(ex: StatusException): String =
+            try {
+                throw ex
+            } catch (e: AccountLockedException) {
+                "locked"
+            } catch (e: StatusException.RestrictedException) {
+                "restricted"
+            } catch (e: StatusException) {
+                "other"
+            }
+        assertEquals("locked", caught(AccountLockedException("a-1", 30)))
+        assertEquals("restricted", caught(StatusException.RestrictedException(Restricted.UNAUTHORIZED)))
+        assertEquals("other", caught(StatusException.InvalidException(Invalid.BAD_REQUEST)))
+    }
 }
