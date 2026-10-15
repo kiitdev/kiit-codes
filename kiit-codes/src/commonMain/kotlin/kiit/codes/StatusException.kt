@@ -118,10 +118,7 @@ sealed class StatusException(
  * compile error to fix here, not something a wildcard branch would silently mishandle.
  */
 @JvmOverloads
-fun Failed.toException(
-    message: String? = null,
-    errors: List<Err> = emptyList(),
-): StatusException =
+fun Failed.toException(message: String? = null, errors: List<Err> = emptyList()): StatusException =
     when (this) {
         is Failed.Restricted -> StatusException.RestrictedException(this, message, errors)
         is Failed.Invalid -> StatusException.InvalidException(this, message, errors)
