@@ -14,6 +14,7 @@ application {
 
 dependencies {
     implementation(project(":kiit-codes"))
+    //api("dev.kiit:kiit-codes:1.2.0")
     // Only used to show a Problem as JSON in SampleApp, kiit-codes has no serialization dependency
     implementation(libs.kotlinx.serialization.json)
 }
