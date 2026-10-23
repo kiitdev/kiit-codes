@@ -43,6 +43,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:consumers": "bash scripts/check-consumers.sh",
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {

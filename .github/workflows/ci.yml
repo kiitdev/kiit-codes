@@ -58,3 +58,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Consumer check (import and require)
+        run: npm run test:consumers
