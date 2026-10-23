@@ -17,7 +17,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -35,7 +36,7 @@
   },
   "author": "CodeHelix <https://kiit.dev>",
   "engines": {
-    "node": ">=24"
+    "node": ">=22.12"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
