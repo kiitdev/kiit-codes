@@ -36,7 +36,7 @@
   },
   "author": "CodeHelix <https://kiit.dev>",
   "engines": {
-    "node": ">=22.12"
+    "node": ">=22.13"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

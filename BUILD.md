@@ -11,7 +11,7 @@
 | JDK  | 17+     | `java -version` to verify |
 | Android SDK | any | Required for `androidTarget` compilation |
 | GPG  | 2.x     | `gpg --version`; must have the dev.kiit secret key imported |
-| Node / npm | 22.12+ | Needed for `ports/kiit-codes-ts`, `scripts/publish-npm.sh`, and `samples/sample-ts` — not for the Kotlin build itself |
+| Node / npm | 22.13+ | Needed for `ports/kiit-codes-ts`, `scripts/publish-npm.sh`, and `samples/sample-ts` — not for the Kotlin build itself |
 
 Import the signing key if not already present:
 ```bash
