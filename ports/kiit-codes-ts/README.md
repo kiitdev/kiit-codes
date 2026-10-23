@@ -12,6 +12,20 @@ Pre-1.0: the API may still shift before a stable release.
 npm install @kiitdev/codes
 ```
 
+## Requirements
+
+Node 22.12 or later. The package is ESM-first with one build, and it works from both module systems:
+
+```ts
+import { Succeeded } from "@kiitdev/codes";
+```
+
+```js
+const { Succeeded } = require("@kiitdev/codes");
+```
+
+`require()` loads the ES module directly, which Node supports without a flag from 22.12. Node 22.12 prints an `ExperimentalWarning` for it, and 22.13 and later do not. A project on Jest's default CommonJS setup may need `transformIgnorePatterns` changed to let Jest handle the package. Browser, Deno and Bun are not covered by this range.
+
 ## Quick example
 
 ```ts
