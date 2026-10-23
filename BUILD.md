@@ -11,7 +11,7 @@
 | JDK  | 17+     | `java -version` to verify |
 | Android SDK | any | Required for `androidTarget` compilation |
 | GPG  | 2.x     | `gpg --version`; must have the dev.kiit secret key imported |
-| Node / npm | 24+ | Needed for `ports/kiit-codes-ts`, `scripts/publish-npm.sh`, and `samples/sample-ts` — not for the Kotlin build itself |
+| Node / npm | 22.13+ | Needed for `ports/kiit-codes-ts`, `scripts/publish-npm.sh`, and `samples/sample-ts` — not for the Kotlin build itself |
 
 Import the signing key if not already present:
 ```bash
@@ -83,7 +83,7 @@ Two workflows live under [`.github/workflows`](.github/workflows):
 
 | Workflow | File | Trigger | What it does |
 |----------|------|---------|---------------|
-| CI | `ci.yml` | Every PR into `main` | `ktlintCheck`, `detekt`, `jvmTest` for the Kotlin library, plus `typecheck`/`test`/`build` for the TypeScript port (`ports/kiit-codes-ts`), on `ubuntu-latest`. iOS tests are not run in CI (no macOS runner). |
+| CI | `ci.yml` | Every PR into `main` | `ktlintCheck`, `detekt`, `jvmTest` for the Kotlin library, plus `typecheck`/`test`/`build` and a consumer check (`npm run test:consumers`: packs the package and loads it with `import` and `require()`, and type-checks it) for the TypeScript port (`ports/kiit-codes-ts`), on Node 22 and 24 on `ubuntu-latest`. iOS tests are not run in CI (no macOS runner). |
 | Release | `release.yml` | Manual (`workflow_dispatch`) | Builds, tests, publishes to Maven Central, tags, and cuts a GitHub release. Runs on `macos-latest` — required to build/sign the iOS targets. |
 | Release npm | `release-npm.yml` | Manual (`workflow_dispatch`) | Builds, tests, publishes `@kiitdev/codes` to npm, tags, and cuts a GitHub release. Independent version/cadence from the Kotlin release above. |
 

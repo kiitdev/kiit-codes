@@ -6,6 +6,11 @@ All notable changes to kiit-codes are documented here. Format follows
 
 ## [Unreleased]
 
+| Area | Type | Impact | Description |
+|---|---|---|---|
+| `engines.node` | Updated | n/a | Lowered from `>=24` to `>=22.13`. TS |
+| `exports` | Added | n/a | A `default` condition, so `require()` loads the ES module on Node 22.13 and later. TS |
+
 ## [1.2.0] - 2026-10-14
 
 Items marked "TS" also apply to the TypeScript port.

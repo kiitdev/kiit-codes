@@ -17,7 +17,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -35,13 +36,14 @@
   },
   "author": "CodeHelix <https://kiit.dev>",
   "engines": {
-    "node": ">=24"
+    "node": ">=22.13"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:consumers": "bash scripts/check-consumers.sh",
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {
