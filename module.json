@@ -18,7 +18,7 @@
     "kotlin": ["jvm", "android", "iosArm64", "iosSimulatorArm64", "iosX64"],
     "typescript": ["node", "browser"]
   },
-  "requirements": {"node": ">=24"},
+  "requirements": {"node": ">=22.13"},
   "dependencies": [],
   "folders": {
     "source": "kiit-codes",
