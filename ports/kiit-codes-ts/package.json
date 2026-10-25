@@ -1,6 +1,6 @@
 {
   "name": "@kiitdev/codes",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "General purpose status codes, for any layer of your app, to classify success and failure",
   "keywords": [
     "status",

@@ -6,10 +6,16 @@ All notable changes to kiit-codes are documented here. Format follows
 
 ## [Unreleased]
 
+## [TS 1.0.0] - 2026-10-25
+
+First stable release of `@kiitdev/codes`, the TypeScript port. It is versioned on its own and is not tied to the Kotlin release numbers below.
+
 | Area | Type | Impact | Description |
 |---|---|---|---|
 | `engines.node` | Updated | n/a | Lowered from `>=24` to `>=22.13`. TS |
 | `exports` | Added | n/a | A `default` condition, so `require()` loads the ES module on Node 22.13 and later. TS |
+| Package `description` | Updated | n/a | Now "General purpose status codes, for any layer of your app, to classify success and failure". TS |
+| Docs | Updated | n/a | The Node requirement, `require()` support and the Jest note are on the docs site. TS |
 
 ## [1.2.0] - 2026-10-14
 
