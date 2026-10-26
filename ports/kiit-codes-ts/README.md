@@ -1,8 +1,12 @@
 # @kiitdev/codes
 
-A native TypeScript port of [kiit-codes](https://github.com/kiitdev/kiit-codes). General purpose status codes, for any layer of your app, to classify success and failure. Small and dependency-free: extensible codes, HTTP mapping, validation, typed errors, and RFC 9457 support.
+**General purpose status codes, for any layer of your app, to classify success and failure.**
 
-Kotlin is the canonical implementation. This package is a port checked against it, not an independent implementation that happens to agree today — see [`kiit-codes`](https://github.com/kiitdev/kiit-codes/tree/main/kiit-codes).
+A small, dependency-free status and error taxonomy for application outcomes, with extensible codes, HTTP mapping, validation, typed errors, and RFC 9457 support.
+
+Part of [Kiit](https://www.kiit.dev) · [Docs](https://www.kiit.dev/docs/kiit-codes)
+
+This is the native TypeScript port of [kiit-codes](https://github.com/kiitdev/kiit-codes). Kotlin is the canonical implementation. This package is a port checked against it, not an independent implementation that happens to agree today — see [`kiit-codes`](https://github.com/kiitdev/kiit-codes/tree/main/kiit-codes).
 
 ## Install
 
@@ -24,18 +28,39 @@ const { Succeeded } = require("@kiitdev/codes");
 
 `require()` loads the ES module directly, which Node supports without a flag or warning from 22.13. A project on Jest's default CommonJS setup may need `transformIgnorePatterns` changed to let Jest handle the package. Browser, Deno and Bun are not covered by this range.
 
-## Quick example
+## Start
+
+A code is a name, a title, an origin that says who owns it, and an optional scope inside that origin.
 
 ```ts
-import { Succeeded, Restricted, CodesToHttp } from "@kiitdev/codes";
+import { Invalid } from "@kiitdev/codes";
 
-function authorize(userId: string, requesterId: string) {
-  return userId === requesterId ? Succeeded.SUCCESS : Restricted.UNAUTHORIZED;
+const MISSING_DATE = Invalid("MISSING_DATE", "Date not supplied", "samples.kiit.dev", "tasks");
+```
+
+Codes expose stable fields suitable for application logic, logging, APIs, and diagnostics:
+
+```json
+{
+    "group"   : "Rejected",
+    "success" : false,
+    "name"    : "CONFLICT",
+    "title"   : "The request conflicts with the current state.",
+    "origin"  : "kiit.dev",
+    "scope"   : "codes"
 }
+```
 
-const status = authorize("alice", "bob");
+`CodesToHttp` maps a status to an HTTP code, using group defaults plus specific overrides.
+
+```ts
+import { Succeeded, Invalid, CodesToHttp } from "@kiitdev/codes";
+
 const http = CodesToHttp();
-console.log(http.toCode(status)); // 401
+
+http.toCode(Succeeded.CREATED); // 201
+http.toCode(Invalid.INVALID_VALUE); // 400
+http.toCode(Invalid.NOT_FOUND); // 404
 ```
 
 Every group is a plain object, not a class. Construct one without `new` (`Restricted.UNAUTHORIZED`, or `Restricted("CUSTOM_CODE", "Title of the code")` for a domain-specific one), and a value survives `JSON.parse` unchanged, since nothing about it depends on how it was constructed.
@@ -102,21 +127,14 @@ const outOfStock = Rejected("OUT_OF_STOCK", "Out of stock", "myapp1");
 6. **errors:** every error in the `Err` goes into `errors`. A list is expanded, and a single `Err.onField(...)` is one entry that keeps its field.
 7. **Your own type URL:** pass a `typeBuilder` to `convert`, call `convertWithUrl` with a base and an empty suffix, or spread the problem with your own `type`: `{ ...problem, type: "https://..." }`. `code` does not change.
 
-## Publishing
-
-Run from the repo root (or use `../../scripts/publish-npm.sh` if you're already in this directory):
-
-```bash
-npm login          # one-time; verify with `npm whoami`
-./scripts/publish-npm.sh
-```
-
-The script runs typecheck/test/build, previews the package contents (`npm pack --dry-run`), asks for confirmation, then publishes. See [`BUILD.md`](../../BUILD.md#publish--npm-kiitdevcodes) for the CI-driven release path.
-
 ## Learn more
 
 - [Full taxonomy and design docs](https://www.kiit.dev/docs/kiit-codes) (Kotlin-focused, same taxonomy)
 - [Kotlin source](https://github.com/kiitdev/kiit-codes): the canonical implementation
+
+## Contributing
+
+Contributions and design feedback are welcome. See [BUILD.md](https://github.com/kiitdev/kiit-codes/blob/main/BUILD.md) for build, test, and publish instructions.
 
 ## License
 
