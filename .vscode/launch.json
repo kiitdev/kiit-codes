@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "sample-ts",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/samples/sample-ts/dist/index.js",
+      "preLaunchTask": "tsc: build - samples/sample-ts/tsconfig.json",
+      "outFiles": ["${workspaceFolder}/samples/sample-ts/dist/**/*.js"],
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}
