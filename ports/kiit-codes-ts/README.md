@@ -1,10 +1,8 @@
 # @kiitdev/codes
 
-A native TypeScript port of [kiit-codes](https://github.com/kiitdev/kiit-codes). A small, dependency-free taxonomy for classifying success and failure: extensible codes, HTTP mapping, validation, typed errors, and RFC 9457 support.
+A native TypeScript port of [kiit-codes](https://github.com/kiitdev/kiit-codes). General purpose status codes, for any layer of your app, to classify success and failure. Small and dependency-free: extensible codes, HTTP mapping, validation, typed errors, and RFC 9457 support.
 
 Kotlin is the canonical implementation. This package is a port checked against it, not an independent implementation that happens to agree today — see [`kiit-codes`](https://github.com/kiitdev/kiit-codes/tree/main/kiit-codes).
-
-Pre-1.0: the API may still shift before a stable release.
 
 ## Install
 

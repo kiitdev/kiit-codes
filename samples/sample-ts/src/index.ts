@@ -229,28 +229,14 @@ function showFormats(): void {
   check(withErrors.errors?.length === 2, "rfc9457-minimal: errors");
 
   // A validation failure as an RFC 9457 problem, written as JSON
-  const fieldErrors = ErrorList(
-    [
-      Err.on("title", "", "must be 1-100 characters"),
-      Err.on("listId", "x", "unknown list"),
-    ],
-    "Validation failed",
-  );
-  const body = ProblemConverter().convert(Invalid.INVALID_VALUE, fieldErrors);
+  const body = ProblemConverter().convert(Invalid.INVALID_VALUE, validation);
 
   console.log(JSON.stringify(body, null, 2));
   check(body.status === 400, "rfc9457-problem: status");
   check(body.errors?.length === 2, "rfc9457-problem: errors");
 
   // A validation failure as a CodeDetail, written as JSON
-  const codeFailures = ErrorList(
-    [
-      Err.on("title", "", "must be 1-100 characters"),
-      Err.on("listId", "x", "unknown list"),
-    ],
-    "Validation failed",
-  );
-  const codeDetail = toCodeDetail(Invalid.INVALID_VALUE, codeFailures);
+  const codeDetail = toCodeDetail(Invalid.INVALID_VALUE, validation);
 
   console.log(JSON.stringify(codeDetail, null, 2));
   check(codeDetail.code === "kiit.dev:codes:Failed:Invalid:INVALID_VALUE", "codedetail-json: code");
