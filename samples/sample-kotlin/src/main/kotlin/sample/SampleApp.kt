@@ -527,10 +527,44 @@ private fun guideCustomProtocol() {
     verify("guide-custom-protocol: falls back to the base", http.toCode(Rejected.CONFLICT) == 409)
 }
 
+// ============================================================
+// Formats: checked here, not shown on the docs site
+// ============================================================
+
+/** When field + message isn't enough, map each error into your own type with `convertCustom`. */
+fun showCustomErrorItem() {
+    section("Formats: Custom error item")
+
+    data class RichError(
+        override val field: String?,
+        override val message: String,
+        val hint: String,
+    ) : ErrorItem
+
+    val validation = Err.ErrorList(
+        listOf(
+            Err.on("title", "", "must be 1-100 characters"),
+            Err.on("listId", "x", "unknown list"),
+        ),
+        "Validation failed",
+    )
+    val problem = ProblemConverter().convertCustom(Restricted.FORBIDDEN, validation) { err ->
+        RichError((err as? Err.ErrorField)?.field, err.message, "ask the list owner instead")
+    }
+
+    // RichError(field=title, message=must be 1-100 characters, hint=ask the list owner instead)
+    println(problem.errors?.first())
+    verify("convertCustom: hint", problem.errors?.first()?.hint == "ask the list owner instead")
+    verify("convertCustom: field", problem.errors?.first()?.field == "title")
+    verify("convertCustom: count", problem.errors?.size == 2)
+    verify("convertCustom: status", problem.status == 403)
+}
+
 fun main() {
     showTutorialStatus()
     showTutorialValidate()
     showGuide()
+    showCustomErrorItem()
 
     println()
     println("All $checks checks passed.")
