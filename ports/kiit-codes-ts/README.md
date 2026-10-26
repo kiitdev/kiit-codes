@@ -1,10 +1,15 @@
-# @kiitdev/codes
+<div align="center">
+<h1>
+  <img src="https://raw.githubusercontent.com/kiitdev/kiit-codes/main/assets/kiit-codes-header.png" alt="@kiitdev/codes" align="center" />
+</h1>
 
 **General purpose status codes, for any layer of your app, to classify success and failure.**
 
 A small, dependency-free status and error taxonomy for application outcomes, with extensible codes, HTTP mapping, validation, typed errors, and RFC 9457 support.
 
 Part of [Kiit](https://www.kiit.dev) · [Docs](https://www.kiit.dev/docs/kiit-codes)
+
+</div>
 
 This is the native TypeScript port of [kiit-codes](https://github.com/kiitdev/kiit-codes). Kotlin is the canonical implementation. This package is a port checked against it, not an independent implementation that happens to agree today — see [`kiit-codes`](https://github.com/kiitdev/kiit-codes/tree/main/kiit-codes).
 
@@ -64,6 +69,27 @@ http.toCode(Invalid.NOT_FOUND); // 404
 ```
 
 Every group is a plain object, not a class. Construct one without `new` (`Restricted.UNAUTHORIZED`, or `Restricted("CUSTOM_CODE", "Title of the code")` for a domain-specific one), and a value survives `JSON.parse` unchanged, since nothing about it depends on how it was constructed.
+
+## Taxonomy
+
+Codes uses a three-tier model:
+
+| Tier   | Name       | Fixed/Open | Suggested wording                                                      |
+| ------ | ---------- | ---------- | ---------------------------------------------------------------------- |
+| Tier 1 | **Status** | Fixed      | Classifies an outcome as `Passed` or `Failed`.                         |
+| Tier 2 | **Group**  | Fixed      | Classifies the kind of success or failure.                             |
+| Tier 3 | **Code**   | Open       | Identifies a specific outcome using built-in or domain-specific codes. |
+
+**Status → Group → Code**
+
+`Status` and `Group` are fixed so applications share the same high-level meaning. `Code` is open: Kiit supplies common defaults while applications can add their own domain-specific codes.
+
+![Kiit Codes taxonomy](https://raw.githubusercontent.com/kiitdev/kiit-codes/main/assets/kiit-codes-taxonomy.png)
+
+The two statuses are:
+
+- **Passed**: `Succeeded`, `Pending`, `Excluded`, `Information`
+- **Failed**: `Restricted`, `Invalid`, `Rejected`, `Unserved`
 
 ## Exhaustive narrowing
 
