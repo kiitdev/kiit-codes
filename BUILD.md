@@ -1,5 +1,16 @@
 # kiit-codes — Build & Publish Guide
 
+## Contents
+
+1. [Install](#install)
+2. [Setup](#setup)
+3. [CI — GitHub Actions](#ci--github-actions)
+4. [Build](#build)
+5. [Test (local)](#test-local)
+6. [Publish](#publish)
+7. [Publish — npm (`@kiitdev/codes`)](#publish--npm-kiitdevcodes)
+8. [FAQ](#faq)
+
 ---
 
 ## Install
