@@ -6,6 +6,10 @@ All notable changes to kiit-codes are documented here. Format follows
 
 ## [Unreleased]
 
+| Area | Type | Impact | Description |
+|---|---|---|---|
+| TS README | Updated | n/a | Same sections in the same order as the main README, with a table of contents. States that the TS port has no `CodesToGrpc` or `CompositeLookup`. TS |
+
 ## [TS 1.0.0] - 2026-10-25
 
 First stable release of `@kiitdev/codes`, the TypeScript port. It is versioned on its own and is not tied to the Kotlin release numbers below.
